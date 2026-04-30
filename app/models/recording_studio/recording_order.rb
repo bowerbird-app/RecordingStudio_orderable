@@ -7,67 +7,75 @@ module RecordingStudio
     UUID_FORMAT = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
 
     attr_accessor :parent_recording_for_validation
+    attr_accessor :recording_id_for_validation
 
     has_many :recordings, as: :recordable, class_name: "RecordingStudio::Recording", inverse_of: :recordable
 
-    validates :parent_recording_id, :order_group, presence: true
-    validate :ordered_recording_ids_must_be_an_array
+    validates :parent_recording_id, :group_key, presence: true
+    validate :group_key_must_be_supported
+    validate :order_scope_must_be_unique
     validate :ordered_recording_ids_must_be_unique
     validate :ordered_recording_ids_must_be_uuids
-    validate :ordered_recording_ids_must_belong_to_eligible_children, if: -> { parent_recording_for_validation.present? }
+    validate :ordered_recording_ids_must_belong_to_eligible_children, if: -> { resolved_parent_recording.present? }
 
     before_validation :normalize_ordered_recording_ids
 
+    alias_attribute :order_group, :group_key
+
     def eligible_children
-      resolved_parent_recording&.children_for_order_group(order_group) || []
+      resolved_parent_recording&.children_for_order_group(group_key) || []
     end
 
-    def ordered_children
-      resolved_parent_recording&.ordered_children_for(order_group) || []
+    def ordered_child_recordings(owner: resolved_owner)
+      resolved_parent_recording&.ordered_children_for(group_key, owner: owner) || []
     end
 
-    def include_recording!(recording_or_id, at: nil, actor: nil, metadata: {})
-      updated_ids = normalized_mutation_ids.tap do |ids|
-        recording_id = normalize_recording_id(recording_or_id)
-        ids.delete(recording_id)
-
-        if at
-          ids.insert([[at.to_i, 0].max, ids.length].min, recording_id)
-        else
-          ids << recording_id
-        end
-      end
+    def include_child!(child_recording, actor: nil, metadata: {})
+      updated_ids = normalized_mutation_ids
+      child_recording_id = normalize_recording_id(child_recording)
+      updated_ids.delete(child_recording_id)
+      updated_ids << child_recording_id
 
       persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "included")
     end
 
-    def remove_recording!(recording_or_id, actor: nil, metadata: {})
-      updated_ids = normalized_mutation_ids - [normalize_recording_id(recording_or_id)]
+    def remove_child!(child_recording, actor: nil, metadata: {})
+      updated_ids = normalized_mutation_ids - [normalize_recording_id(child_recording)]
       persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "removed")
     end
 
-    def reorder_recordings!(recording_ids, actor: nil, metadata: {})
-      persist_updated_ids!(Array(recording_ids), actor: actor, metadata: metadata, action: "reordered")
+    def move_before!(moving:, before:, actor: nil, metadata: {})
+      move_relative!(moving: moving, anchor: before, placement: :before, actor: actor, metadata: metadata)
     end
 
-    def move_recording_to!(recording_or_id, position, actor: nil, metadata: {})
-      ids = normalized_mutation_ids
-      recording_id = normalize_recording_id(recording_or_id)
-      ids.delete(recording_id)
-      ids.insert([[position.to_i, 0].max, ids.length].min, recording_id)
-
-      persist_updated_ids!(ids, actor: actor, metadata: metadata, action: "moved")
+    def move_after!(moving:, after:, actor: nil, metadata: {})
+      move_relative!(moving: moving, anchor: after, placement: :after, actor: actor, metadata: metadata)
     end
 
-    def move_recording_higher!(recording_or_id, actor: nil, metadata: {})
-      move_by_offset!(recording_or_id, -1, actor: actor, metadata: metadata)
+    def move_to_start!(moving:, actor: nil, metadata: {})
+      updated_ids = normalized_mutation_ids
+      moving_id = normalize_recording_id(moving)
+      updated_ids.delete(moving_id)
+      updated_ids.unshift(moving_id)
+
+      persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "moved")
     end
 
-    def move_recording_lower!(recording_or_id, actor: nil, metadata: {})
-      move_by_offset!(recording_or_id, 1, actor: actor, metadata: metadata)
+    def move_to_end!(moving:, actor: nil, metadata: {})
+      updated_ids = normalized_mutation_ids.tap do |ids|
+        moving_id = normalize_recording_id(moving)
+        ids.delete(moving_id)
+        ids << moving_id
+      end
+
+      persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "moved")
     end
 
-    def cleanup!(actor: nil, metadata: {})
+    def reorder!(ordered_recording_ids:, actor: nil, metadata: {})
+      persist_updated_ids!(Array(ordered_recording_ids), actor: actor, metadata: metadata, action: "reordered")
+    end
+
+    def cleanup_missing_children!(actor: nil, metadata: {})
       persist_updated_ids!(normalized_mutation_ids, actor: actor, metadata: metadata, action: "cleaned")
     end
 
@@ -75,7 +83,7 @@ module RecordingStudio
       parent_recording = resolved_parent_recording
       return Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }.uniq unless parent_recording
 
-      RecordingStudioOrderable::RecordingOrderManager.normalize_requested_ids(parent_recording, order_group, ordered_recording_ids)
+      RecordingStudioOrderable::RecordingOrderManager.normalize_requested_ids(parent_recording, group_key, ordered_recording_ids)
     end
 
     def resolved_parent_recording
@@ -88,6 +96,18 @@ module RecordingStudio
 
     private
 
+    def raw_owner_scope
+      { owner_type: owner_type, owner_id: owner_id }
+    end
+
+    def resolved_owner
+      return if owner_type.blank? || owner_id.blank?
+
+      owner_type.safe_constantize&.find_by(id: owner_id)
+    rescue StandardError
+      nil
+    end
+
     def normalized_mutation_ids
       normalized_ordered_recording_ids.dup
     end
@@ -96,11 +116,10 @@ module RecordingStudio
       parent_recording = resolved_parent_recording
       raise ArgumentError, "parent recording is required" unless parent_recording
 
-      current_order = parent_recording.recording_order_for(order_group) || self
-      current_recording = parent_recording.recording_order_recording_for(order_group)
+      current_recording = parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope)
       normalized_ids = RecordingStudioOrderable::RecordingOrderManager.normalize_requested_ids(
         parent_recording,
-        order_group,
+        group_key,
         recording_ids
       )
 
@@ -108,7 +127,11 @@ module RecordingStudio
         revised_recording = parent_recording.revise(current_recording, actor: actor, metadata: metadata) do |recordable|
           recordable.parent_recording_id = parent_recording.id
           recordable.parent_recording_for_validation = parent_recording
-          recordable.order_group = order_group
+          recordable.recording_id_for_validation = current_recording.id
+          recordable.group_key = group_key
+          recordable.name = name
+          recordable.owner_type = owner_type
+          recordable.owner_id = owner_id
           recordable.ordered_recording_ids = normalized_ids
         end
 
@@ -116,12 +139,14 @@ module RecordingStudio
         revised_recording.recordable
       else
         order_record = parent_recording.find_or_create_recording_order!(
-          order_group,
+          group_key,
+          owner: raw_owner_scope,
           actor: actor,
           metadata: metadata,
+          name: name,
           ordered_recording_ids: normalized_ids
         )
-        maybe_log_event!(parent_recording, parent_recording.recording_order_recording_for(order_group), action, metadata, actor)
+        maybe_log_event!(parent_recording, parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope), action, metadata, actor)
         order_record
       end
     end
@@ -134,19 +159,22 @@ module RecordingStudio
         order_recording,
         action: "#{RecordingStudioOrderable.configuration.event_action_prefix}_#{action}",
         actor: actor,
-        metadata: metadata.merge(order_group: order_group)
+        metadata: metadata.merge(group_key: group_key)
       )
     end
 
-    def move_by_offset!(recording_or_id, offset, actor:, metadata:)
+    def move_relative!(moving:, anchor:, placement:, actor:, metadata:)
       ids = normalized_mutation_ids
-      recording_id = normalize_recording_id(recording_or_id)
-      current_index = ids.index(recording_id)
-      return self unless current_index
+      moving_id = normalize_recording_id(moving)
+      anchor_id = normalize_recording_id(anchor)
+      return self if moving_id.blank? || anchor_id.blank?
 
-      target_index = [[current_index + offset, 0].max, ids.length - 1].min
-      ids.delete_at(current_index)
-      ids.insert(target_index, recording_id)
+      ids.delete(moving_id)
+      anchor_index = ids.index(anchor_id)
+      return self unless anchor_index
+
+      insert_index = placement == :before ? anchor_index : anchor_index + 1
+      ids.insert(insert_index, moving_id)
 
       persist_updated_ids!(ids, actor: actor, metadata: metadata, action: "moved")
     end
@@ -155,8 +183,25 @@ module RecordingStudio
       self.ordered_recording_ids = Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }
     end
 
-    def ordered_recording_ids_must_be_an_array
-      errors.add(:ordered_recording_ids, "must be an array") unless ordered_recording_ids.is_a?(Array)
+    def group_key_must_be_supported
+      return if resolved_parent_recording.blank? || group_key.blank?
+
+      RecordingStudioOrderable::RecordingOrderManager.resolve_group_definition!(resolved_parent_recording, group_key)
+    rescue RecordingStudioOrderable::RecordingOrderManager::ConfigurationError => e
+      errors.add(:group_key, e.message)
+    end
+
+    def order_scope_must_be_unique
+      return if resolved_parent_recording.blank? || group_key.blank?
+
+      matches = RecordingStudioOrderable::RecordingOrderManager.matching_order_recordings(
+        resolved_parent_recording,
+        group_key: group_key,
+        owner: raw_owner_scope
+      ).reject { |recording| recording.id == recording_id_for_validation }
+      return if matches.empty?
+
+      errors.add(:base, "an order already exists for this parent, group, and owner scope")
     end
 
     def ordered_recording_ids_must_be_unique
@@ -172,15 +217,50 @@ module RecordingStudio
     end
 
     def ordered_recording_ids_must_belong_to_eligible_children
-      eligible_ids = parent_recording_for_validation.children_for_order_group(order_group).map { |recording| recording.id.to_s }
-      invalid_ids = Array(ordered_recording_ids) - eligible_ids
-      return if invalid_ids.empty?
+      allowed_types = RecordingStudioOrderable::RecordingOrderManager.resolve_group_definition!(
+        resolved_parent_recording,
+        group_key
+      ).fetch(:allows)
+      ordered_ids = Array(ordered_recording_ids)
+      recordings_by_id = RecordingStudio::Recording.where(id: ordered_ids).index_by { |recording| recording.id.to_s }
+      own_recording_ids = Array(recordings).map { |recording| recording.id.to_s }
+      own_recording_ids << recording_id_for_validation.to_s if recording_id_for_validation.present?
 
-      errors.add(:ordered_recording_ids, "must only include eligible direct child recordings")
+      ordered_ids.each do |recording_id|
+        child_recording = recordings_by_id[recording_id.to_s]
+        if child_recording.nil?
+          errors.add(:ordered_recording_ids, "must reference existing RecordingStudio::Recording rows")
+          next
+        end
+
+        if own_recording_ids.include?(child_recording.id.to_s)
+          errors.add(:ordered_recording_ids, "cannot include the RecordingOrder recording itself")
+        end
+
+        if child_recording.parent_recording_id != resolved_parent_recording.id
+          errors.add(:ordered_recording_ids, "must only include direct children of the same parent recording")
+        end
+
+        if child_recording.root_recording_id != resolved_parent_recording.root_recording_id
+          errors.add(:ordered_recording_ids, "must stay within the same root recording")
+        end
+
+        unless allowed_types.include?(child_recording.recordable_type)
+          errors.add(:ordered_recording_ids, "must only include allowed recordable types for the group")
+        end
+      end
     end
 
     def normalize_recording_id(recording_or_id)
       RecordingStudioOrderable::RecordingOrderManager.normalize_recording_id(recording_or_id)
     end
+
+    public
+
+    alias ordered_children ordered_child_recordings
+    alias include_recording! include_child!
+    alias remove_recording! remove_child!
+    alias reorder_recordings! reorder!
+    alias cleanup! cleanup_missing_children!
   end
 end

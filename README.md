@@ -2,7 +2,7 @@
 
 RecordingStudioOrderable adds opt-in ordered child collections to Recording Studio parent recordables.
 
-It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself.
+It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself and is identified by a `(parent_recording, group_key, owner_type, owner_id)` scope.
 
 ## What it provides
 
@@ -15,19 +15,22 @@ It keeps `RecordingStudio::Recording` lightweight by storing order state on an e
   end
   ```
 - Recording-level APIs:
-  - `recording_orders`
-  - `recording_order_for`
-  - `find_or_create_recording_order!`
+  - `recording_orders(owner: nil)`
+  - `recording_order_for(group_key, owner: nil)`
+  - `find_or_create_recording_order!(group_key, owner: nil)`
   - `children_for_order_group`
-  - `ordered_children_for`
+  - `ordered_children_for(group_key, owner: nil)`
 - `RecordingStudio::RecordingOrder` mutation helpers:
-  - `include_recording!`
-  - `remove_recording!`
-  - `reorder_recordings!`
-  - `move_recording_to!`
-  - `move_recording_higher!`
-  - `move_recording_lower!`
-  - `cleanup!`
+  - `ordered_child_recordings`
+  - `normalized_ordered_recording_ids`
+  - `include_child!`
+  - `remove_child!`
+  - `move_before!`
+  - `move_after!`
+  - `move_to_start!`
+  - `move_to_end!`
+  - `reorder!`
+  - `cleanup_missing_children!`
 
 ## Read behavior
 
@@ -41,7 +44,9 @@ That means you can persist partial order state without broad lifecycle observers
 
 ## Write behavior
 
-Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`.
+Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`. Event logging for these mutations stays opt-in and is disabled by default.
+
+`group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.
 
 Addon-specific semantic event logging is optional and quiet by default:
 
@@ -78,7 +83,7 @@ page_two = root_recording.record(Page, parent_recording: folder_recording) { |pa
 page_three = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Auto appended" }
 
 page_order = folder_recording.find_or_create_recording_order!(:pages)
-page_order.reorder_recordings!([page_two.id, page_one.id])
+page_order.reorder!(ordered_recording_ids: [page_two.id, page_one.id])
 
 folder_recording.ordered_children_for(:pages).map { |recording| recording.recordable.title }
 # => ["Checklist", "Mix notes", "Auto appended"]

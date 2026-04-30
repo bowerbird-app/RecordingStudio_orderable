@@ -97,7 +97,8 @@
 
         <% card.body do %>
           <div class="space-y-3 text-sm">
-            <p><strong>Order group:</strong> <code><%= @page_order&.order_group || "pages" %></code></p>
+            <p><strong>Group key:</strong> <code><%= @page_order&.group_key || "pages" %></code></p>
+            <p><strong>Owner scope:</strong> <code><%= @page_order&.owner_type || "shared/default" %></code></p>
             <p><strong>ordered_recording_ids:</strong></p>
             <ul class="space-y-2 rounded-lg bg-[var(--surface-subtle-background-color)] p-3 font-mono text-xs">
               <% @stored_page_order_ids.each do |recording_id| %>

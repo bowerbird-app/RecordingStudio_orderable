@@ -47,7 +47,7 @@ end
 
 page_order = folder_recording.find_or_create_recording_order!(:pages)
 desired_order = [ page_recordings[1].id, page_recordings[0].id ]
-page_order = page_order.reorder_recordings!(desired_order) if page_order.ordered_recording_ids != desired_order
+page_order = page_order.reorder!(ordered_recording_ids: desired_order) if page_order.ordered_recording_ids != desired_order
 
 puts "Seeded: admin@admin.com / Password"
 puts "Seeded: Workspace '#{workspace.name}' with root recording ##{root_recording.id}"

@@ -11,11 +11,11 @@ module RecordingStudioOrderable
 
     class_methods do
       def recording_studio_order_group(name, allows:)
-        group_name = name.to_s
+        group_key = name.to_s
         allowed_types = Array(allows).map { |recordable_type| recordable_type.is_a?(Class) ? recordable_type.name : recordable_type.to_s }.uniq
 
         self.recording_studio_order_group_definitions = recording_studio_order_group_definitions.merge(
-          group_name => {name: group_name, allows: allowed_types}
+          group_key => {group_key: group_key, allows: allowed_types}
         )
       end
 
@@ -40,30 +40,35 @@ module RecordingStudioOrderable
       end
     end
 
-    def recording_orders
-      current_recording&.recording_orders || []
+    def recording_orders(owner: nil)
+      current_recording&.recording_orders(owner: owner) || []
     end
 
-    def recording_order_for(group_name = nil)
-      current_recording&.recording_order_for(group_name)
+    def recording_order_for(group_key = nil, owner: nil)
+      current_recording&.recording_order_for(group_key, owner: owner)
     end
 
-    def find_or_create_recording_order!(group_name = nil, **options)
-      current_recording&.find_or_create_recording_order!(group_name, **options)
+    def find_or_create_recording_order!(group_key = nil, **options)
+      current_recording&.find_or_create_recording_order!(group_key, **options)
     end
 
-    def children_for_order_group(group_name = nil)
-      current_recording&.children_for_order_group(group_name) || []
+    def children_for_order_group(group_key = nil)
+      current_recording&.children_for_order_group(group_key) || []
     end
 
-    def ordered_children_for(group_name = nil)
-      current_recording&.ordered_children_for(group_name) || []
+    def ordered_children_for(group_key = nil, owner: nil)
+      current_recording&.ordered_children_for(group_key, owner: owner) || []
     end
 
     private
 
     def current_recording
-      Array(recordings).max_by { |recording| [recording.updated_at, recording.id.to_s] }
+      matching_recordings = Array(recordings).compact
+      return matching_recordings.first if matching_recordings.one?
+      return if matching_recordings.empty?
+
+      raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
+            "Multiple recordings exist for #{self.class.name}; use RecordingStudio::Recording-level order APIs instead"
     end
   end
 end

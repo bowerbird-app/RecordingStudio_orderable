@@ -34,4 +34,4 @@ Then open the app and sign in with:
 
 ## Why This App Exists
 
-Use this app to verify the generated addon experience before shipping. The seeded demo includes one eligible page that is intentionally omitted from `ordered_recording_ids` so the UI shows the addon’s resilient read behavior.
+Use this app to verify the generated addon experience before shipping. The seeded demo includes one eligible page that is intentionally omitted from `ordered_recording_ids` so the UI shows the addon’s resilient read behavior, while the underlying model also supports owner-scoped order snapshots in addition to the shared/default order used by the demo.

@@ -20,8 +20,10 @@ class HomeController < ApplicationController
 
   def update_page_order
     folder_recording = RecordingStudio::Recording.find(params[:id])
-    folder_recording.find_or_create_recording_order!(:pages).reorder_recordings!(
-      ordered_recording_ids_from_params
+    raise ActiveRecord::RecordNotFound unless folder_recording.recordable_type == "Folder"
+
+    folder_recording.find_or_create_recording_order!(:pages).reorder!(
+      ordered_recording_ids: ordered_recording_ids_from_params
     )
 
     redirect_to root_path, notice: "Saved page order."

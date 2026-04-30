@@ -6,7 +6,7 @@ class RecordingOrderManagerTest < Minitest::Test
   class FakeFolder
     def self.recording_studio_order_group_definition(name = nil)
       groups = {
-        "pages" => {name: "pages", allows: ["Page"]}
+        "pages" => {group_key: "pages", allows: ["Page"]}
       }
       groups.fetch(name.to_s.presence || "pages")
     end
@@ -14,13 +14,17 @@ class RecordingOrderManagerTest < Minitest::Test
 
   FakeRecording = Struct.new(:id, :recordable_type, :recordable, :created_at, :updated_at)
   FakeParentRecording = Struct.new(:id, :recordable, :child_recordings)
+  FakeOwner = Struct.new(:id)
 
   def setup
     @page_one = FakeRecording.new("page-1", "Page", Struct.new(:title).new("Page 1"), Time.utc(2024, 1, 1), Time.utc(2024, 1, 1))
     @page_two = FakeRecording.new("page-2", "Page", Struct.new(:title).new("Page 2"), Time.utc(2024, 1, 2), Time.utc(2024, 1, 2))
     @page_three = FakeRecording.new("page-3", "Page", Struct.new(:title).new("Page 3"), Time.utc(2024, 1, 3), Time.utc(2024, 1, 3))
-    @order = Struct.new(:order_group, :ordered_recording_ids).new("pages", ["page-2", "missing-id", "page-1"])
+    @order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil, ["page-2", "missing-id", "page-1"])
     @order_recording = FakeRecording.new("order-1", "RecordingStudio::RecordingOrder", @order, Time.utc(2024, 1, 4), Time.utc(2024, 1, 4))
+    @owner = FakeOwner.new("user-1")
+    @scoped_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", "RecordingOrderManagerTest::FakeOwner", "user-1", ["page-3"])
+    @scoped_order_recording = FakeRecording.new("order-2", "RecordingStudio::RecordingOrder", @scoped_order, Time.utc(2024, 1, 5), Time.utc(2024, 1, 5))
     @parent_recording = FakeParentRecording.new("folder-1", FakeFolder.new, [@page_one, @page_two, @page_three, @order_recording])
   end
 
@@ -44,5 +48,29 @@ class RecordingOrderManagerTest < Minitest::Test
     )
 
     assert_equal %w[page-3 page-1], normalized_ids
+  end
+
+  def test_recording_order_for_can_resolve_owner_scoped_orders
+    @parent_recording.child_recordings << @scoped_order_recording
+
+    order = RecordingStudioOrderable::RecordingOrderManager.recording_order_for(
+      @parent_recording,
+      :pages,
+      owner: @owner
+    )
+
+    assert_equal @scoped_order, order
+  end
+
+  def test_duplicate_matching_orders_raise_an_error
+    duplicate_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil, [])
+    duplicate_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", duplicate_order, Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
+    @parent_recording.child_recordings << duplicate_recording
+
+    error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::DuplicateOrderError) do
+      RecordingStudioOrderable::RecordingOrderManager.recording_order_for(@parent_recording, :pages)
+    end
+
+    assert_includes error.message, "Multiple RecordingOrder children exist"
   end
 end

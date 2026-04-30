@@ -44,6 +44,7 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     assert_includes view_source, "Folder page order"
     assert_includes view_source, "FlatPack::Table::Component"
+    assert_includes view_source, "Group key"
     assert_includes helper_source, "Auto-appended eligible page"
   end
 
