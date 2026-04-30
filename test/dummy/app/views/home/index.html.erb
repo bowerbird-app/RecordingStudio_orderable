@@ -1,45 +1,67 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
-    title: @workspace&.name || "Recording Studio addon template",
-    subtitle: "Use this dummy app to validate authentication, root recording setup, and addon UI wiring before you rename the engine.",
+    title: @folder&.name || "RecordingStudioOrderable dummy app",
+    subtitle: "Folder + Page ordering demo backed by RecordingStudio::RecordingOrder snapshots.",
     variant: :h1
   ) %>
 
-  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Template workflow",
-          subtitle: "The first things to change when you turn this into a real addon.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+  <% if flash[:notice].present? %>
+    <%= render FlatPack::Alert::Component.new(style: :success, title: flash[:notice]) %>
+  <% end %>
 
-      <% card.body do %>
-        <ol class="space-y-4 text-sm leading-6 text-[var(--surface-content-color)]">
-          <li>
-            Rename the gem with <code>bin/rename_gem your_addon_name</code> once the engine structure looks right.
-          </li>
-          <li>
-            Replace the sample migration with your addon's real tables and then run <code>rails generate gem_template:migrations</code> in the host app.
-          </li>
-          <li>
-            Register your recordable types in <code>test/dummy/config/initializers/recording_studio.rb</code> and add capabilities only where they are needed.
-          </li>
-          <li>
-            Use this dummy app to check layout, authentication, Tailwind sources, and root recording behavior before shipping the engine.
-          </li>
-        </ol>
+  <% if flash[:alert].present? %>
+    <%= render FlatPack::Alert::Component.new(style: :danger, title: flash[:alert]) %>
+  <% end %>
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+    <div class="flex flex-col gap-6">
+      <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+        <% card.header do %>
+          <%= render FlatPack::PageTitle::Component.new(
+            title: "Folder page order",
+            subtitle: "Drag rows, use move buttons, then save. Reads append eligible pages omitted from ordered_recording_ids.",
+            variant: :h3,
+            class: "mb-0 pb-0"
+          ) %>
+        <% end %>
+
+        <% card.body do %>
+          <% if @folder_recording.present? %>
+            <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync">
+              <%= render FlatPack::Table::Component.new(
+                data: @page_rows,
+                draggable_rows: true,
+                row_id: ->(row) { row.recording.id }
+              ) do |table| %>
+                <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
+                <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
+                <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
+                <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
+              <% end %>
+
+              <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch, class: "mt-4 flex items-center gap-3" do |form| %>
+                <%= form.hidden_field :ordered_recording_ids, value: "", data: { page_order_form_target: "input" } %>
+                <%= render FlatPack::Button::Component.new(text: "Save order", style: :primary, type: "submit") %>
+                <span class="text-sm text-[var(--surface-muted-content-color)]">Folder recording <code><%= @folder_recording.id %></code></span>
+              <% end %>
+            </div>
+          <% else %>
+            <%= render FlatPack::Alert::Component.new(
+              style: :warning,
+              title: "Demo data missing",
+              description: "Run bin/rails db:seed to create the Folder + Page ordering example."
+            ) %>
+          <% end %>
+        <% end %>
       <% end %>
-    <% end %>
+    </div>
 
     <div class="flex flex-col gap-6">
       <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
         <% card.header do %>
           <%= render FlatPack::PageTitle::Component.new(
             title: "Workspace state",
-            subtitle: "The seeded Recording Studio baseline for local development.",
+            subtitle: "The seeded recording tree for the demo.",
             variant: :h3,
             class: "mb-0 pb-0"
           ) %>
@@ -56,8 +78,8 @@
               <dd class="font-mono text-xs"><%= @root_recording&.id || "Missing" %></dd>
             </div>
             <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Signed in as</dt>
-              <dd class="font-medium"><%= current_user.email %></dd>
+              <dt class="text-[var(--surface-muted-content-color)]">Folder recording</dt>
+              <dd class="font-mono text-xs"><%= @folder_recording&.id || "Missing" %></dd>
             </div>
           </dl>
         <% end %>
@@ -66,8 +88,8 @@
       <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
         <% card.header do %>
           <%= render FlatPack::PageTitle::Component.new(
-            title: "Useful routes",
-            subtitle: "Quick links for checking the mounted engine and local app shell.",
+            title: "Stored order snapshot",
+            subtitle: "One eligible page is intentionally omitted from ordered_recording_ids.",
             variant: :h3,
             class: "mb-0 pb-0"
           ) %>
@@ -75,9 +97,13 @@
 
         <% card.body do %>
           <div class="space-y-3 text-sm">
-            <p><strong>App home:</strong> <code>/</code></p>
-            <p><strong>Recording Studio mount:</strong> <code>/recording_studio</code></p>
-            <p><strong>Health check:</strong> <code>/up</code></p>
+            <p><strong>Order group:</strong> <code><%= @page_order&.order_group || "pages" %></code></p>
+            <p><strong>ordered_recording_ids:</strong></p>
+            <ul class="space-y-2 rounded-lg bg-[var(--surface-subtle-background-color)] p-3 font-mono text-xs">
+              <% @stored_page_order_ids.each do |recording_id| %>
+                <li><%= recording_id %></li>
+              <% end %>
+            </ul>
           </div>
         <% end %>
       <% end %>

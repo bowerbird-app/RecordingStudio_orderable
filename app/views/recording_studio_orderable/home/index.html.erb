@@ -1,0 +1,55 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "RecordingStudioOrderable",
+    subtitle: "Array-backed child ordering for Recording Studio parent recordables.",
+    variant: :h1
+  ) %>
+
+  <div class="flex flex-wrap gap-2">
+    <%= render FlatPack::Badge::Component.new(text: "RecordingStudio::Recording stays lightweight", style: :success, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "UUID array-backed order snapshots", style: :info, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "FlatPack-ready demo included", style: :warning, size: :sm) %>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "What this addon adds",
+          subtitle: "Focused ordering APIs around explicit RecordingOrder child snapshots.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li>Parent opt-in DSL via <code>recording_studio_order_group</code>.</li>
+          <li>Scoped/default order lookup and creation on <code>RecordingStudio::Recording</code>.</li>
+          <li>Order mutation helpers on <code>RecordingStudio::RecordingOrder</code>.</li>
+          <li>Resilient reads that ignore stale ids and append unordered eligible children.</li>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Install flow",
+          subtitle: "Host app setup stays narrow and explicit.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ol class="space-y-3 text-sm leading-6 list-decimal pl-5">
+          <li>Add the gem and run <code>bundle install</code>.</li>
+          <li>Run <code>rails generate recording_studio_orderable:install</code>.</li>
+          <li>Run <code>rails generate recording_studio_orderable:migrations</code>.</li>
+          <li>Opt parent recordables into named order groups.</li>
+        </ol>
+      <% end %>
+    <% end %>
+  </div>
+</div>

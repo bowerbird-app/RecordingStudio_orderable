@@ -3,7 +3,7 @@
 require "test_helper"
 require "fileutils"
 require "tmpdir"
-require "generators/gem_template/install/install_generator"
+require "generators/recording_studio_orderable/install/install_generator"
 
 class InstallGeneratorTest < Minitest::Test
   def with_temp_app
@@ -14,7 +14,7 @@ class InstallGeneratorTest < Minitest::Test
   end
 
   def build_generator(destination_root, options = {})
-    GemTemplate::Generators::InstallGenerator.new(
+    RecordingStudioOrderable::Generators::InstallGenerator.new(
       [],
       options,
       destination_root: destination_root
@@ -29,7 +29,7 @@ class InstallGeneratorTest < Minitest::Test
       generator.mount_engine
     end
 
-    assert_equal ["mount GemTemplate::Engine, at: \"/addons/recording\""], routes
+    assert_equal ["mount RecordingStudioOrderable::Engine, at: \"/addons/recording\""], routes
   end
 
   def test_add_tailwind_source_injects_engine_and_flatpack_sources
@@ -55,8 +55,8 @@ class InstallGeneratorTest < Minitest::Test
       css_path = File.join(dir, "app/assets/tailwind/application.css")
       File.write(css_path, <<~CSS)
         @import "tailwindcss";
-        @source "../../vendor/bundle/**/gem_template/app/views/**/*.erb";
-        @source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/gem_template-*/app/views/**/*.erb";
+        @source "../../vendor/bundle/**/recording_studio_orderable/app/views/**/*.erb";
+        @source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";
         @source "../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";
         @source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
       CSS
@@ -91,8 +91,8 @@ class InstallGeneratorTest < Minitest::Test
 
   def tailwind_source_lines
     [
-      '@source "../../vendor/bundle/**/gem_template/app/views/**/*.erb";',
-      '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/gem_template-*/app/views/**/*.erb";',
+      '@source "../../vendor/bundle/**/recording_studio_orderable/app/views/**/*.erb";',
+      '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";',
       '@source "../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";',
       '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";'
     ]

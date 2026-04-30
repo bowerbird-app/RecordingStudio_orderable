@@ -26,5 +26,29 @@ RecordingStudio::Recording.unscoped.find_or_create_by!(
   recordable: access
 )
 
+folder = Folder.find_or_create_by!(name: "Launch Folder")
+folder_recording = RecordingStudio::Recording.unscoped.find_by(
+  recordable: folder,
+  parent_recording_id: root_recording.id
+)
+folder_recording ||= root_recording.record(folder, parent_recording: root_recording)
+
+page_titles = [
+  "Mix notes",
+  "Session checklist",
+  "Unlisted but eligible"
+]
+
+page_recordings = page_titles.map do |title|
+  page = Page.find_or_create_by!(title: title)
+  RecordingStudio::Recording.unscoped.find_by(recordable: page, parent_recording_id: folder_recording.id) ||
+    root_recording.record(page, parent_recording: folder_recording)
+end
+
+page_order = folder_recording.find_or_create_recording_order!(:pages)
+desired_order = [ page_recordings[1].id, page_recordings[0].id ]
+page_order = page_order.reorder_recordings!(desired_order) if page_order.ordered_recording_ids != desired_order
+
 puts "Seeded: admin@admin.com / Password"
 puts "Seeded: Workspace '#{workspace.name}' with root recording ##{root_recording.id}"
+puts "Seeded: Folder '#{folder.name}' with #{page_recordings.size} pages and an order snapshot listing #{desired_order.size} page ids"

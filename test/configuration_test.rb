@@ -4,22 +4,26 @@ require "test_helper"
 
 class ConfigurationTest < Minitest::Test
   def setup
-    @configuration = GemTemplate::Configuration.new
+    @configuration = RecordingStudioOrderable::Configuration.new
+  end
+
+  def test_defaults_are_quiet
+    assert_equal false, @configuration.log_order_events
+    assert_equal "recording_order", @configuration.event_action_prefix
   end
 
   def test_merge_updates_known_attributes
-    @configuration.merge!(api_key: "abc123", timeout: 9, enable_feature_x: true)
+    @configuration.merge!(log_order_events: true, event_action_prefix: "ordering")
 
-    assert_equal "abc123", @configuration.api_key
-    assert_equal 9, @configuration.timeout
-    assert_equal true, @configuration.enable_feature_x
+    assert_equal true, @configuration.log_order_events
+    assert_equal "ordering", @configuration.event_action_prefix
   end
 
   def test_merge_ignores_unknown_keys
-    @configuration.merge!(unknown_key: "ignored", timeout: 7)
+    @configuration.merge!(unknown_key: "ignored", log_order_events: true)
 
     refute_respond_to @configuration, :unknown_key
-    assert_equal 7, @configuration.timeout
+    assert_equal true, @configuration.log_order_events
   end
 
   def test_merge_with_non_enumerable_is_noop
@@ -27,26 +31,12 @@ class ConfigurationTest < Minitest::Test
 
     @configuration.merge!(nil)
 
-    assert_nil @configuration.api_key if original[:api_key].nil?
-    assert_equal original[:api_key], @configuration.api_key unless original[:api_key].nil?
-    assert_equal original[:timeout], @configuration.timeout
-    assert_equal original[:enable_feature_x], @configuration.enable_feature_x
-  end
-
-  def test_to_h_reports_registered_hook_counts
-    @configuration.hooks.before_initialize { nil }
-    @configuration.hooks.before_initialize { nil }
-    @configuration.hooks.after_service { nil }
-
-    result = @configuration.to_h
-
-    assert_equal 2, result.fetch(:hooks_registered).fetch(:before_initialize)
-    assert_equal 1, result.fetch(:hooks_registered).fetch(:after_service)
+    assert_equal original, @configuration.to_h
   end
 
   def test_configure_without_block_is_safe
-    GemTemplate.configure
+    RecordingStudioOrderable.configure
 
-    assert_kind_of GemTemplate::Configuration, GemTemplate.configuration
+    assert_kind_of RecordingStudioOrderable::Configuration, RecordingStudioOrderable.configuration
   end
 end

@@ -1,131 +1,110 @@
-# GemTemplate
+# RecordingStudioOrderable
 
-Internal template for building Rails engine addons on top of RecordingStudio.
+RecordingStudioOrderable adds opt-in ordered child collections to Recording Studio parent recordables.
 
-## What's Included
+It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself.
 
-- **RecordingStudio** gem installed and configured
-- **Devise** authentication with a pre-seeded admin user
-- **Workspace** root recording set up following RecordingStudio's Quick Start pattern
-- **FlatPack** UI component library for all views
-- **Dummy app** (`test/dummy/`) with a working login screen and FlatPack default sidebar layout for authenticated pages
+## What it provides
 
-## Quick Start
+- Parent opt-in DSL:
+  ```ruby
+  class Folder < ApplicationRecord
+    include RecordingStudioOrderable::OrderableRecordable
 
-### GitHub Codespaces (Recommended)
+    recording_studio_order_group :pages, allows: ["Page"]
+  end
+  ```
+- Recording-level APIs:
+  - `recording_orders`
+  - `recording_order_for`
+  - `find_or_create_recording_order!`
+  - `children_for_order_group`
+  - `ordered_children_for`
+- `RecordingStudio::RecordingOrder` mutation helpers:
+  - `include_recording!`
+  - `remove_recording!`
+  - `reorder_recordings!`
+  - `move_recording_to!`
+  - `move_recording_higher!`
+  - `move_recording_lower!`
+  - `cleanup!`
 
-1. Click **Code** → **Codespaces** → **Create codespace**
-2. Wait for setup to complete
-3. Run:
-   ```bash
-   cd test/dummy
-   bin/rails db:setup
-   bin/dev
-   ```
-4. Open port 3000 — you'll see the login screen
+## Read behavior
 
-The dummy app already includes FlatPack generator output (`flat_pack:install` and default sidebar layout scaffold) so authenticated pages render with the FlatPack sidebar shell by default.
+Reads are resilient by design:
 
-### Login Credentials
+- stale ids in `ordered_recording_ids` are ignored
+- unordered eligible children are appended automatically
+- fallback order is `created_at ASC, id ASC`
 
-| Field    | Value             |
-|----------|-------------------|
-| Email    | admin@admin.com   |
-| Password | Password          |
+That means you can persist partial order state without broad lifecycle observers on child changes.
 
-The login form is prefilled with these credentials for fast access.
+## Write behavior
 
-## Architecture
+Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`.
 
-### Root Recording Pattern
-
-This template follows RecordingStudio's root recording pattern:
-
-- **Workspace** is the top-level recordable
-- A root `RecordingStudio::Recording` wraps the Workspace
-- The admin user has root-level admin access via `RecordingStudio::Access`
-- `Current.actor` is set from `current_user` (Devise) in `ApplicationController`
-
-### Extending RecordingStudio
-
-To add new recordable types:
-
-1. Create your model (e.g., `Page`, `Comment`)
-2. Register it in `config/initializers/recording_studio.rb`:
-   ```ruby
-   RecordingStudio.configure do |config|
-     config.recordable_types = ["Workspace", "YourNewType"]
-   end
-   ```
-3. Leave optional behavior off by default, then opt into capabilities on the specific recordable models that need them:
-   ```ruby
-   class YourNewType < ApplicationRecord
-     include RecordingStudio::Capabilities::Movable.to("Workspace")
-     include RecordingStudio::Capabilities::Copyable.to("Workspace")
-   end
-   ```
-4. If you want per-device root persistence, wire it explicitly in your controller layer:
-   ```ruby
-   class ApplicationController < ActionController::Base
-     include RecordingStudio::Concerns::DeviceSessionConcern
-   end
-   ```
-5. Create recordings under the root:
-   ```ruby
-   root_recording.record(YourNewType) do |record|
-     record.title = "Example"
-   end
-   ```
-
-### Capabilities
-
-This template uses the current RecordingStudio approach: built-in capabilities are off by default and are enabled per recordable type by including the relevant module on the model.
-
-- `movable`
-- `copyable`
-
-Device session persistence is separate from capabilities. It is enabled only when you include `RecordingStudio::Concerns::DeviceSessionConcern` in your controller layer.
-
-Enable behavior intentionally where it belongs:
+Addon-specific semantic event logging is optional and quiet by default:
 
 ```ruby
-class RecordingStudioPage < ApplicationRecord
-  include RecordingStudio::Capabilities::Movable.to("Workspace")
-  include RecordingStudio::Capabilities::Copyable.to("Workspace")
-end
-
-class ApplicationController < ActionController::Base
-  include RecordingStudio::Concerns::DeviceSessionConcern
+RecordingStudioOrderable.configure do |config|
+  config.log_order_events = false
 end
 ```
 
-### FlatPack UI Components
+## Installation
 
-All views use FlatPack ViewComponents. Available components include:
+1. Add the gem and run `bundle install`.
+2. Install the initializer and mount route:
+   ```bash
+   rails generate recording_studio_orderable:install
+   ```
+3. Copy migrations:
+   ```bash
+   rails generate recording_studio_orderable:migrations
+   bin/rails db:migrate
+   ```
+4. Register host recordable types with Recording Studio as usual.
+5. Opt parent recordables into one or more order groups.
 
-- `FlatPack::Button::Component` — Buttons (`:primary`, `:secondary`, `:ghost`)
-- `FlatPack::Card::Component` — Cards (`:default`, `:elevated`, `:outlined`)
-- `FlatPack::Alert::Component` — Alerts (`:success`, `:error`, `:warning`, `:info`)
-- `FlatPack::Badge::Component` — Status badges
-- `FlatPack::Table::Component` — Data tables
-- `FlatPack::TextInput::Component`, `EmailInput`, `PasswordInput` — Form inputs
-- `FlatPack::Breadcrumb::Component` — Navigation breadcrumbs
-- `FlatPack::Navbar::Component` — Navigation sidebar
+## Example
 
-See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full documentation.
+```ruby
+folder_recording = root_recording.record(Folder, parent_recording: root_recording) do |folder|
+  folder.name = "Launch Folder"
+end
 
-## Tech Stack
+page_one = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Mix notes" }
+page_two = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Checklist" }
+page_three = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Auto appended" }
 
-| Component       | Version |
-|-----------------|---------|
-| Ruby            | 3.3+    |
-| Rails           | 8.1+    |
-| PostgreSQL      | 16      |
-| TailwindCSS     | 4       |
-| RecordingStudio | v0.1.0-alpha (pinned in `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.33 (pinned in `test/dummy/Gemfile`) |
-| Devise          | latest  |
+page_order = folder_recording.find_or_create_recording_order!(:pages)
+page_order.reorder_recordings!([page_two.id, page_one.id])
 
-## Documentation
+folder_recording.ordered_children_for(:pages).map { |recording| recording.recordable.title }
+# => ["Checklist", "Mix notes", "Auto appended"]
+```
 
-The original gem template documentation is preserved in `docs/gem_template/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.
+## Dummy app
+
+`test/dummy` includes a Folder + Page demo with:
+
+- Devise login
+- FlatPack sidebar shell
+- FlatPack table with drag/drop reorder
+- an eligible page intentionally omitted from `ordered_recording_ids`
+
+Quick start:
+
+```bash
+cd test/dummy
+bundle install
+bin/rails db:setup
+bin/dev
+```
+
+Login:
+
+| Field    | Value           |
+|----------|-----------------|
+| Email    | admin@admin.com |
+| Password | Password        |

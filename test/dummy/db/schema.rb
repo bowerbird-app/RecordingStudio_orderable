@@ -78,6 +78,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_233016) do
     t.index ["root_recording_id"], name: "index_rs_recordings_on_root_recording"
   end
 
+  create_table "recording_studio_recording_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "order_group", null: false
+    t.datetime "created_at", null: false
+    t.uuid "ordered_recording_ids", default: [], array: true, null: false
+    t.uuid "parent_recording_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_recording_id", "order_group"], name: "index_rs_recording_orders_on_parent_and_group"
+    t.index ["parent_recording_id"], name: "index_recording_studio_recording_orders_on_parent_recording_id"
+  end
+
+  create_table "folders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "pages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false

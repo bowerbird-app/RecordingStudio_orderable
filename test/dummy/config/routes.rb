@@ -17,5 +17,6 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
+  patch "demo/folders/:id/page_order", to: "home#update_page_order", as: :demo_folder_page_order
   root "home#index"
 end
