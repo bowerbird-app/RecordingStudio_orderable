@@ -6,8 +6,7 @@ module RecordingStudio
 
     UUID_FORMAT = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
 
-    attr_accessor :parent_recording_for_validation
-    attr_accessor :recording_id_for_validation
+    attr_accessor :parent_recording_for_validation, :recording_id_for_validation
 
     has_many :recordings, as: :recordable, class_name: "RecordingStudio::Recording", inverse_of: :recordable
 
@@ -81,9 +80,13 @@ module RecordingStudio
 
     def normalized_ordered_recording_ids
       parent_recording = resolved_parent_recording
-      return Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }.uniq unless parent_recording
+      return normalized_array_ids.uniq unless parent_recording
 
-      RecordingStudioOrderable::RecordingOrderManager.normalize_requested_ids(parent_recording, group_key, ordered_recording_ids)
+      RecordingStudioOrderable::RecordingOrderManager.normalize_requested_ids(
+        parent_recording,
+        group_key,
+        ordered_recording_ids
+      )
     end
 
     def resolved_parent_recording
@@ -146,7 +149,13 @@ module RecordingStudio
           name: name,
           ordered_recording_ids: normalized_ids
         )
-        maybe_log_event!(parent_recording, parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope), action, metadata, actor)
+        maybe_log_event!(
+          parent_recording,
+          parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope),
+          action,
+          metadata,
+          actor
+        )
         order_record
       end
     end
@@ -180,7 +189,7 @@ module RecordingStudio
     end
 
     def normalize_ordered_recording_ids
-      self.ordered_recording_ids = Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }
+      self.ordered_recording_ids = normalized_array_ids
     end
 
     def group_key_must_be_supported
@@ -207,7 +216,9 @@ module RecordingStudio
     def ordered_recording_ids_must_be_unique
       return unless ordered_recording_ids.is_a?(Array)
 
-      errors.add(:ordered_recording_ids, "must not contain duplicates") if ordered_recording_ids.uniq.length != ordered_recording_ids.length
+      return unless ordered_recording_ids.uniq.length != ordered_recording_ids.length
+
+      errors.add(:ordered_recording_ids, "must not contain duplicates")
     end
 
     def ordered_recording_ids_must_be_uuids
@@ -255,7 +266,9 @@ module RecordingStudio
       RecordingStudioOrderable::RecordingOrderManager.normalize_recording_id(recording_or_id)
     end
 
-    public
+    def normalized_array_ids
+      Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }
+    end
 
     alias ordered_children ordered_child_recordings
     alias include_recording! include_child!

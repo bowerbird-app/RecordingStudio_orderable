@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors     = ["Bowerbird"]
   spec.homepage    = "https://github.com/bowerbird-app/RecordingStudio_orderable"
   spec.summary     = "Recording Studio ordering addon for array-backed child ordering"
-  spec.description = "Recording Studio addon for opt-in ordered child recordings backed by "\
+  spec.description = "Recording Studio addon for opt-in ordered child recordings backed by " \
                      "RecordingStudio::RecordingOrder snapshots and UUID arrays."
   spec.license     = "MIT"
   spec.required_ruby_version = ">= 3.2.0"

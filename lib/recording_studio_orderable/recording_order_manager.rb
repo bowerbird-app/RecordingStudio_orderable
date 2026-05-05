@@ -54,19 +54,19 @@ module RecordingStudioOrderable
 
       def eligible_children_for(parent_recording, group_key = nil)
         allowed_types = resolve_group_definition!(parent_recording, group_key).fetch(:allows)
+        eligible_children = Array(parent_recording.child_recordings).select do |child_recording|
+          allowed_types.include?(child_recording.recordable_type) &&
+            child_recording.recordable_type != "RecordingStudio::RecordingOrder"
+        end
 
-        Array(parent_recording.child_recordings)
-          .select do |child_recording|
-            allowed_types.include?(child_recording.recordable_type) &&
-              child_recording.recordable_type != "RecordingStudio::RecordingOrder"
-          end
-          .sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
+        eligible_children.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
       end
 
       def ordered_children_for(parent_recording, group_key = nil, owner: nil)
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
         eligible_children = eligible_children_for(parent_recording, resolved_group_key)
-        ordered_ids = Array(recording_order_for(parent_recording, resolved_group_key, owner: owner)&.ordered_recording_ids)
+        ordered_recording = recording_order_for(parent_recording, resolved_group_key, owner: owner)
+        ordered_ids = Array(ordered_recording&.ordered_recording_ids)
         eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }
 
         explicitly_ordered_children = ordered_ids.filter_map { |recording_id| eligible_by_id.delete(recording_id.to_s) }
@@ -74,7 +74,7 @@ module RecordingStudioOrderable
       end
 
       def normalize_requested_ids(parent_recording, group_key, requested_ids)
-        eligible_ids = eligible_children_for(parent_recording, group_key).map { |child_recording| child_recording.id.to_s }
+        eligible_ids = eligible_children_for(parent_recording, group_key).map(&:id).map(&:to_s)
 
         Array(requested_ids)
           .filter_map { |recording_id| normalize_recording_id(recording_id) }
@@ -135,7 +135,8 @@ module RecordingStudioOrderable
       def raise_duplicate_order!(parent_recording, group_key, owner, matches)
         owner_type, owner_id = owner_attributes(owner)
         raise DuplicateOrderError,
-              "Multiple RecordingOrder children exist for parent=#{parent_recording.id}, group_key=#{group_key.inspect}, " \
+              "Multiple RecordingOrder children exist for parent=#{parent_recording.id}, " \
+              "group_key=#{group_key.inspect}, " \
               "owner_type=#{owner_type.inspect}, owner_id=#{owner_id.inspect} (#{matches.size} found)"
       end
     end

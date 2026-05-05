@@ -12,8 +12,12 @@ module RecordingStudioOrderable
 
       desc "Copy RecordingStudioOrderable migrations to your application"
 
-      class_option :skip_existing, type: :boolean, default: true,
-                                    desc: "Skip migrations that already exist (based on name, ignoring timestamp)"
+      class_option(
+        :skip_existing,
+        type: :boolean,
+        default: true,
+        desc: "Skip migrations that already exist (based on name, ignoring timestamp)"
+      )
 
       def copy_migrations
         migrations_dir = File.join(self.class.source_root, "db", "migrate")
