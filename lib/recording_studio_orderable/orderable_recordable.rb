@@ -70,9 +70,9 @@ module RecordingStudioOrderable
 
       matching_recordings.max_by do |recording|
         [
-          recording.updated_at || Time.at(0),
-          recording.created_at || Time.at(0),
-          recording.id.to_s
+          recording.respond_to?(:updated_at) ? recording.updated_at : Time.at(0),
+          recording.respond_to?(:created_at) ? recording.created_at : Time.at(0),
+          recording.respond_to?(:id) ? recording.id.to_s : ""
         ]
       end
     end
