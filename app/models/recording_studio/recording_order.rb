@@ -52,7 +52,7 @@ module RecordingStudio
     end
 
     def move_to_start!(moving:, actor: nil, metadata: {})
-      updated_ids = normalized_mutation_ids
+      updated_ids = resolved_mutation_ids
       moving_id = normalize_recording_id(moving)
       updated_ids.delete(moving_id)
       updated_ids.unshift(moving_id)
@@ -61,13 +61,27 @@ module RecordingStudio
     end
 
     def move_to_end!(moving:, actor: nil, metadata: {})
-      updated_ids = normalized_mutation_ids.tap do |ids|
+      updated_ids = resolved_mutation_ids.tap do |ids|
         moving_id = normalize_recording_id(moving)
         ids.delete(moving_id)
         ids << moving_id
       end
 
       persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "moved")
+    end
+
+    def move_to_position!(moving:, position:, actor: nil, metadata: {})
+      updated_ids = resolved_mutation_ids
+      moving_id = normalize_recording_id(moving)
+      return self if moving_id.blank?
+
+      insert_index = Integer(position)
+      updated_ids.delete(moving_id)
+      updated_ids.insert(insert_index.clamp(0, updated_ids.length), moving_id)
+
+      persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "moved")
+    rescue ArgumentError, TypeError
+      self
     end
 
     def reorder!(ordered_recording_ids:, actor: nil, metadata: {})
@@ -113,6 +127,15 @@ module RecordingStudio
 
     def normalized_mutation_ids
       normalized_ordered_recording_ids.dup
+    end
+
+    def resolved_mutation_ids
+      parent_recording = resolved_parent_recording
+      return normalized_mutation_ids unless parent_recording
+
+      Array(parent_recording.ordered_children_for(group_key, owner: raw_owner_scope)).filter_map do |recording|
+        normalize_recording_id(recording)
+      end
     end
 
     def persist_updated_ids!(recording_ids, actor:, metadata:, action:)
@@ -173,7 +196,7 @@ module RecordingStudio
     end
 
     def move_relative!(moving:, anchor:, placement:, actor:, metadata:)
-      ids = normalized_mutation_ids
+      ids = resolved_mutation_ids
       moving_id = normalize_recording_id(moving)
       anchor_id = normalize_recording_id(anchor)
       return self if moving_id.blank? || anchor_id.blank?

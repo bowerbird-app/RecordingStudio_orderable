@@ -131,13 +131,33 @@ class OrderableRecordableTest < Minitest::Test
     )
   end
 
-  def test_instance_methods_raise_when_multiple_recordings_exist
-    @instance.recordings = [Object.new, Object.new]
+  def test_instance_methods_use_the_latest_recording_when_multiple_exist
+    older_recording = build_recording_snapshot("older", Time.utc(2024, 1, 1))
+    newer_recording = build_recording_snapshot("newer", Time.utc(2024, 1, 2))
+    @instance.recordings = [older_recording, newer_recording]
 
-    error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::ConfigurationError) do
-      @instance.recording_orders
+    assert_equal ["newer"], @instance.recording_orders
+    assert_equal "newer", @instance.recording_order_for(:pages)
+    assert_equal "newer", @instance.find_or_create_recording_order!(:pages)
+    assert_equal ["newer"], @instance.children_for_order_group(:pages)
+    assert_equal ["newer"], @instance.ordered_children_for(:pages)
+  end
+
+  def test_instance_methods_return_empty_array_without_any_recordings
+    @instance.recordings = []
+
+    assert_equal [], @instance.recording_orders
+  end
+
+  private
+
+  def build_recording_snapshot(label, timestamp)
+    Struct.new(:id, :created_at, :updated_at).new(label, timestamp, timestamp).tap do |recording|
+      recording.define_singleton_method(:recording_orders) { |owner: nil| [id] }
+      recording.define_singleton_method(:recording_order_for) { |group_key = nil, owner: nil| id }
+      recording.define_singleton_method(:find_or_create_recording_order!) { |group_key = nil, **| id }
+      recording.define_singleton_method(:children_for_order_group) { |group_key = nil| [id] }
+      recording.define_singleton_method(:ordered_children_for) { |group_key = nil, owner: nil| [id] }
     end
-
-    assert_includes error.message, "Multiple recordings exist"
   end
 end

@@ -26,12 +26,14 @@ RecordingStudio::Recording.unscoped.find_or_create_by!(
   recordable: access
 )
 
-folder = Folder.find_or_create_by!(name: "Launch Folder")
 folder_recording = RecordingStudio::Recording.unscoped.find_by(
-  recordable: folder,
+  recordable_type: "Folder",
   parent_recording_id: root_recording.id
 )
-folder_recording ||= root_recording.record(folder, parent_recording: root_recording)
+folder_recording ||= root_recording.record(Folder, parent_recording: root_recording) do |folder|
+  folder.name = "Launch Folder"
+end
+folder = folder_recording.recordable
 
 page_titles = [
   "Mix notes",
@@ -40,9 +42,14 @@ page_titles = [
 ]
 
 page_recordings = page_titles.map do |title|
-  page = Page.find_or_create_by!(title: title)
-  RecordingStudio::Recording.unscoped.find_by(recordable: page, parent_recording_id: folder_recording.id) ||
-    root_recording.record(page, parent_recording: folder_recording)
+  RecordingStudio::Recording.unscoped.find_by(
+    recordable_type: "Page",
+    parent_recording_id: folder_recording.id,
+    recordable_id: Page.find_by(title: title)&.id
+  ) ||
+    root_recording.record(Page, parent_recording: folder_recording) do |page|
+      page.title = title
+    end
 end
 
 page_order = folder_recording.find_or_create_recording_order!(:pages)

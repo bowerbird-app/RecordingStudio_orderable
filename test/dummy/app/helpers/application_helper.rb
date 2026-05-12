@@ -21,7 +21,7 @@ module ApplicationHelper
           style: :ghost,
           size: :sm,
           type: "button",
-          data: { action: "click->flat-pack--table-sortable#moveUp click->page-order-form#sync" }
+          data: { action: "click->flat-pack--table-sortable#moveUp" }
         )
       ),
       render(
@@ -31,7 +31,7 @@ module ApplicationHelper
           size: :sm,
           type: "button",
           class: "ml-2",
-          data: { action: "click->flat-pack--table-sortable#moveDown click->page-order-form#sync" }
+          data: { action: "click->flat-pack--table-sortable#moveDown" }
         )
       )
     ])

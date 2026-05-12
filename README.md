@@ -46,6 +46,8 @@ That means you can persist partial order state without broad lifecycle observers
 
 Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`. Event logging for these mutations stays opt-in and is disabled by default.
 
+Interactive reorder UIs do not have to submit the full visible UUID list. The dummy app now sends a minimal move payload (`moving_recording_id` plus the target position), and `RecordingStudio::RecordingOrder` rebuilds the next explicit snapshot from the current resolved order. That means newly eligible children that were previously only auto-appended on read are folded into the next persisted revision whenever a user performs another explicit move.
+
 `group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.
 
 Addon-specific semantic event logging is optional and quiet by default:

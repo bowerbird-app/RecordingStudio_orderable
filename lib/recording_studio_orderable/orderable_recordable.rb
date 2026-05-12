@@ -66,11 +66,15 @@ module RecordingStudioOrderable
 
     def current_recording
       matching_recordings = Array(recordings).compact
-      return matching_recordings.first if matching_recordings.one?
       return if matching_recordings.empty?
 
-      raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
-            "Multiple recordings exist for #{self.class.name}; use RecordingStudio::Recording-level order APIs instead"
+      matching_recordings.max_by do |recording|
+        [
+          recording.updated_at || Time.at(0),
+          recording.created_at || Time.at(0),
+          recording.id.to_s
+        ]
+      end
     end
   end
 end

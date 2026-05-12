@@ -41,11 +41,21 @@ class RecordingStudioOrderableTest < Minitest::Test
     view_source = File.read(view_path)
     helper_path = File.expand_path("dummy/app/helpers/application_helper.rb", __dir__)
     helper_source = File.read(helper_path)
+    controller_path = File.expand_path("dummy/app/javascript/controllers/page_order_form_controller.js", __dir__)
+    controller_source = File.read(controller_path)
+    home_controller_path = File.expand_path("dummy/app/controllers/home_controller.rb", __dir__)
+    home_controller_source = File.read(home_controller_path)
 
     assert_includes view_source, "Folder page order"
     assert_includes view_source, "FlatPack::Table::Component"
     assert_includes view_source, "Group key"
+    assert_includes view_source, "moving_recording_id"
+    assert_includes view_source, "target_position"
+    assert_includes view_source, "Latest order snapshot recording"
     assert_includes helper_source, "Auto-appended eligible page"
+    assert_includes controller_source, "detectSingleMove"
+    assert_includes controller_source, "requestAnimationFrame"
+    assert_includes home_controller_source, "latest_page_order_recording"
   end
 
   def test_engine_home_page_uses_flatpack_components

@@ -4,11 +4,12 @@ class HomeController < ApplicationController
   before_action :load_workspace_context, only: :index
 
   def index
-    @page_order = @folder_recording&.recording_order_for(:pages)
+    @page_order_recording = latest_page_order_recording
+    @page_order = @page_order_recording&.recordable
     @stored_page_order_ids = Array(@page_order&.ordered_recording_ids)
     explicit_ids = @stored_page_order_ids.map(&:to_s)
 
-    @ordered_pages = Array(@folder_recording&.ordered_children_for(:pages))
+    @ordered_pages = latest_ordered_pages
     @page_rows = @ordered_pages.each_with_index.map do |recording, index|
       PageRow.new(
         recording: recording,
@@ -22,8 +23,9 @@ class HomeController < ApplicationController
     folder_recording = RecordingStudio::Recording.find(params[:id])
     raise ActiveRecord::RecordNotFound unless folder_recording.recordable_type == "Folder"
 
-    folder_recording.find_or_create_recording_order!(:pages).reorder!(
-      ordered_recording_ids: ordered_recording_ids_from_params
+    folder_recording.find_or_create_recording_order!(:pages).move_to_position!(
+      moving: moving_recording_id_from_params,
+      position: target_position_from_params
     )
 
     redirect_to root_path, notice: "Saved page order."
@@ -45,11 +47,29 @@ class HomeController < ApplicationController
     @folder = @folder_recording&.recordable
   end
 
-  def ordered_recording_ids_from_params
-    params.fetch(:ordered_recording_ids, "")
-          .to_s
-          .split(",")
-          .map(&:strip)
-          .reject(&:blank?)
+  def moving_recording_id_from_params
+    params.fetch(:moving_recording_id).to_s.strip.tap do |recording_id|
+      raise ArgumentError, "moving recording id is required" if recording_id.blank?
+    end
+  end
+
+  def target_position_from_params
+    Integer(params.fetch(:target_position))
+  end
+
+  def latest_page_order_recording
+    @folder_recording&.reload&.recording_order_recording_for(:pages)&.tap(&:reload)
+  end
+
+  def latest_ordered_pages
+    return [] unless @folder_recording
+
+    eligible_pages = Array(@folder_recording.reload.children_for_order_group(:pages))
+    eligible_by_id = eligible_pages.index_by { |recording| recording.id.to_s }
+    explicitly_ordered_pages = @stored_page_order_ids.filter_map do |recording_id|
+      eligible_by_id.delete(recording_id.to_s)
+    end
+
+    explicitly_ordered_pages + eligible_by_id.values
   end
 end

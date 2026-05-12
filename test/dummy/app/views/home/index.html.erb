@@ -39,10 +39,24 @@
                 <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
               <% end %>
 
-              <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch, class: "mt-4 flex items-center gap-3" do |form| %>
-                <%= form.hidden_field :ordered_recording_ids, value: "", data: { page_order_form_target: "input" } %>
-                <%= render FlatPack::Button::Component.new(text: "Save order", style: :primary, type: "submit") %>
-                <span class="text-sm text-[var(--surface-muted-content-color)]">Folder recording <code><%= @folder_recording.id %></code></span>
+              <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
+                            data: { page_order_form_target: "form" },
+                            class: "mt-4 flex items-center gap-3" do |form| %>
+                <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
+                <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
+                <%= render FlatPack::Badge::Component.new(
+                  text: "Changes save after each move",
+                  style: :info,
+                  size: :sm
+                ) %>
+                <span class="text-sm text-(--surface-muted-content-color)">Folder recording <code><%= @folder_recording.id %></code></span>
+              <% end %>
+
+              <% if @page_order_recording.present? %>
+                <p class="mt-2 text-xs text-(--surface-muted-content-color)">
+                  Latest order snapshot recording <code><%= @page_order_recording.id %></code>
+                  using recordable <code><%= @page_order.id %></code>
+                </p>
               <% end %>
             </div>
           <% else %>
@@ -70,15 +84,15 @@
         <% card.body do %>
           <dl class="space-y-3 text-sm">
             <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Workspace</dt>
+              <dt class="text-(--surface-muted-content-color)">Workspace</dt>
               <dd class="font-medium"><%= @workspace&.name || "Not seeded" %></dd>
             </div>
             <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Root recording</dt>
+              <dt class="text-(--surface-muted-content-color)">Root recording</dt>
               <dd class="font-mono text-xs"><%= @root_recording&.id || "Missing" %></dd>
             </div>
             <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Folder recording</dt>
+              <dt class="text-(--surface-muted-content-color)">Folder recording</dt>
               <dd class="font-mono text-xs"><%= @folder_recording&.id || "Missing" %></dd>
             </div>
           </dl>
@@ -100,7 +114,7 @@
             <p><strong>Group key:</strong> <code><%= @page_order&.group_key || "pages" %></code></p>
             <p><strong>Owner scope:</strong> <code><%= @page_order&.owner_type || "shared/default" %></code></p>
             <p><strong>ordered_recording_ids:</strong></p>
-            <ul class="space-y-2 rounded-lg bg-[var(--surface-subtle-background-color)] p-3 font-mono text-xs">
+            <ul class="space-y-2 rounded-lg bg-(--surface-subtle-background-color) p-3 font-mono text-xs">
               <% @stored_page_order_ids.each do |recording_id| %>
                 <li><%= recording_id %></li>
               <% end %>

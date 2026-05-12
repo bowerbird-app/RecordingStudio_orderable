@@ -46,6 +46,18 @@ class RecordingOrderManagerTest < Minitest::Test
     assert_equal [@page_two, @page_one, @page_three], ordered_children
   end
 
+  def test_ordered_children_append_newly_eligible_children_after_explicit_order
+    page_four = FakeRecording.new("page-4", "Page", Struct.new(:title).new("Page 4"), Time.utc(2024, 1, 4),
+                                  Time.utc(2024, 1, 4))
+    @order.ordered_recording_ids = %w[page-2 page-1 page-3]
+    @parent_recording.child_recordings << page_four
+
+    ordered_children = RecordingStudioOrderable::RecordingOrderManager.ordered_children_for(@parent_recording, :pages)
+
+    assert_equal [@page_two, @page_one, @page_three, page_four], ordered_children
+    assert_equal %w[page-2 page-1 page-3], @order.ordered_recording_ids
+  end
+
   def test_eligible_children_are_sorted_by_created_at_then_id
     eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(@parent_recording, :pages)
 
