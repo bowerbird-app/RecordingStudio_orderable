@@ -5,13 +5,23 @@ require "uri"
 module RecordingStudioOrderable
   class ApplicationController < ActionController::Base
     protect_from_forgery with: :exception
-    layout "application"
+    layout :recording_studio_orderable_layout
 
     before_action :authenticate_recording_studio_orderable_request!
 
     helper_method :current_recording_studio_orderable_owner
 
     private
+
+    def recording_studio_orderable_layout
+      return "flat_pack_sidebar" if host_sidebar_layout_available?
+
+      "application"
+    end
+
+    def host_sidebar_layout_available?
+      Dir.glob(Rails.root.join("app/views/layouts/flat_pack_sidebar.*")).any?
+    end
 
     def authenticate_recording_studio_orderable_request!
       hook = RecordingStudioOrderable.configuration.authenticate_controller

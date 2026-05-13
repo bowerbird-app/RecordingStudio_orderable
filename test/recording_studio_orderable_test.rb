@@ -68,4 +68,33 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "FlatPack::Card::Component"
     assert_includes view_source, "FlatPack::Badge::Component"
   end
+
+  def test_engine_application_controller_prefers_sidebar_layout_when_available
+    controller_path = File.expand_path("../app/controllers/recording_studio_orderable/application_controller.rb", __dir__)
+    controller_source = File.read(controller_path)
+
+    assert_includes controller_source, "layout :recording_studio_orderable_layout"
+    assert_includes controller_source, 'return "flat_pack_sidebar" if host_sidebar_layout_available?'
+    assert_includes controller_source, 'Dir.glob(Rails.root.join("app/views/layouts/flat_pack_sidebar.*")).any?'
+    assert_includes controller_source, '"application"'
+  end
+
+  def test_dummy_sidebar_uses_host_app_sign_out_route
+    sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
+    sidebar_source = File.read(sidebar_path)
+
+    assert_includes sidebar_source, "main_app.destroy_user_session_path"
+  end
+
+  def test_dummy_sidebar_uses_heroicon_style_icon_names
+    sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
+    sidebar_source = File.read(sidebar_path)
+
+    assert_includes sidebar_source, "icon: :beaker"
+    assert_includes sidebar_source, "icon: :wrench_screwdriver"
+    assert_includes sidebar_source, "icon: :cog_6_tooth"
+    assert_includes sidebar_source, "icon: :code_bracket"
+    assert_includes sidebar_source, "icon: :rectangle_stack"
+    assert_includes sidebar_source, "icon: :arrow_right_on_rectangle"
+  end
 end

@@ -1,0 +1,96 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: "javascript:window.history.back()",
+    show_home: true,
+    home_url: main_app.root_path,
+    class: "mb-2"
+  ) do |breadcrumb| %>
+    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Views") %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Views",
+    subtitle: "Mounted routes and UI pages exposed by the addon.",
+    variant: :h1
+  ) %>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Mounted routes",
+          subtitle: "The host app reaches these pages through the engine mount.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li><code>/recording_studio_orderable</code> for the addon home page.</li>
+          <li><code>/recording_studio_orderable/setup</code>, <code>/config</code>, <code>/methods</code>, and <code>/views</code> for documentation pages.</li>
+          <li><code>/recording_studio_orderable/recording_order_lists/new</code> for named-list creation.</li>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Current pages",
+          subtitle: "What the engine renders today.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li>Home page overview and documentation hub.</li>
+          <li>Setup, Config, Methods, and Views documentation pages.</li>
+          <li>Create ordered list form for owner-scoped named order snapshots.</li>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Mount example",
+          subtitle: "Host app routing that exposes the engine pages.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>Rails.application.routes.draw do
+  mount RecordingStudioOrderable::Engine, at: "/recording_studio_orderable"
+end</code></pre>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Sidebar integration",
+          subtitle: "The dummy app links into these pages from its FlatPack sidebar.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>&lt;%= render FlatPack::Sidebar::Item::Component.new(
+  label: "Setup",
+  href: recording_studio_orderable.setup_path,
+  icon: :wrench_screwdriver
+) %&gt;</code></pre>
+      <% end %>
+    <% end %>
+  </div>
+</div>

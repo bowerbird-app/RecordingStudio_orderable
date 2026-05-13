@@ -1,0 +1,85 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: "javascript:window.history.back()",
+    show_home: true,
+    home_url: main_app.root_path,
+    class: "mb-2"
+  ) do |breadcrumb| %>
+    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Config") %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Config",
+    subtitle: "Configuration hooks exposed by the addon and when to set them.",
+    variant: :h1
+  ) %>
+
+  <div class="flex flex-wrap gap-2">
+    <%= render FlatPack::Badge::Component.new(text: "Default event logging: off", style: :info, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Owner resolution: host-controlled", style: :warning, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Authentication: optional hook", style: :success, size: :sm) %>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Available options",
+          subtitle: "All supported configuration keys from the engine configuration object.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li><code>log_order_events</code> toggles semantic order-event logging. Default: <code>false</code>.</li>
+          <li><code>event_action_prefix</code> prefixes logged action names. Default: <code>"recording_order"</code>.</li>
+          <li><code>authenticate_controller</code> receives the current controller and can enforce host auth.</li>
+          <li><code>current_owner_resolver</code> receives the current controller and returns the owner for owner-scoped lists.</li>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "When to configure",
+          subtitle: "Recommended initializer responsibilities.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li>Set auth and owner hooks in the generated initializer so mounted UI requests stay inside host app rules.</li>
+          <li>Turn on event logging only if your Recording Studio event stream needs addon-specific audit entries.</li>
+          <li>Keep the prefix stable once downstream reporting depends on those action names.</li>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+    <% card.header do %>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Initializer example",
+        subtitle: "Typical host app configuration for mounted UI access and current-user ownership.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
+    <% end %>
+
+    <% card.body do %>
+      <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>RecordingStudioOrderable.configure do |config|
+  config.authenticate_controller = -&gt;(controller) { controller.authenticate_user! }
+  config.current_owner_resolver = -&gt;(controller) { controller.current_user }
+  config.log_order_events = false
+  config.event_action_prefix = "recording_order"
+end</code></pre>
+    <% end %>
+  <% end %>
+</div>

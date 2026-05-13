@@ -1,0 +1,106 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: "javascript:window.history.back()",
+    show_home: true,
+    home_url: main_app.root_path,
+    class: "mb-2"
+  ) do |breadcrumb| %>
+    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Setup") %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Setup",
+    subtitle: "What the host app needs before the addon can manage ordered child collections.",
+    variant: :h1
+  ) %>
+
+  <%= render FlatPack::Alert::Component.new(
+    style: :info,
+    title: "Prerequisite stack",
+    description: "Install this addon into a Rails app that already has Recording Studio mounted and its recordable types registered."
+  ) %>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Required before install",
+          subtitle: "Baseline host app expectations.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li>A Rails app with Recording Studio already mounted and working.</li>
+          <li>Recordable parent and child models registered the same way as the rest of your Recording Studio setup.</li>
+          <li>A parent recordable that will opt into at least one named order group.</li>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Install flow",
+          subtitle: "Keep setup narrow and explicit.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ol class="space-y-3 text-sm leading-6 list-decimal pl-5">
+          <li>Add the gem and run <code>bundle install</code>.</li>
+          <li>Run <code>rails generate recording_studio_orderable:install</code>.</li>
+          <li>Run <code>rails generate recording_studio_orderable:migrations</code>.</li>
+          <li>Run <code>bin/rails db:migrate</code>.</li>
+          <li>Opt parent recordables into one or more order groups.</li>
+        </ol>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Parent opt-in example",
+          subtitle: "Use the DSL on the parent recordable that owns the ordered children.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>class Folder &lt; ApplicationRecord
+  include RecordingStudioOrderable::OrderableRecordable
+
+  recording_studio_order_group :pages, allows: ["Page"]
+end</code></pre>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Demo app verification",
+          subtitle: "The included dummy app shows the expected mounted UI path.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li>Launch the dummy app and sign in as the seeded admin user.</li>
+          <li>Use the sidebar links to open this addon home page and the docs pages.</li>
+          <li>Use the folder demo to confirm owner-scoped named lists still work after installation.</li>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+</div>

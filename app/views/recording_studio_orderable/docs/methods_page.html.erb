@@ -1,0 +1,123 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: "javascript:window.history.back()",
+    show_home: true,
+    home_url: main_app.root_path,
+    class: "mb-2"
+  ) do |breadcrumb| %>
+    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Methods") %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Methods",
+    subtitle: "Public host-app methods grouped by where you call them.",
+    variant: :h1
+  ) %>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "OrderableRecordable",
+          subtitle: "Parent recordable opt-in and convenience helpers.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li><code>recording_studio_order_group</code></li>
+          <li><code>recording_orders</code></li>
+          <li><code>recording_order_for</code></li>
+          <li><code>find_or_create_recording_order!</code></li>
+          <li><code>ordered_children_for</code></li>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Recording extensions",
+          subtitle: "APIs added to RecordingStudio::Recording.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li><code>recording_orders</code></li>
+          <li><code>named_recording_orders</code></li>
+          <li><code>recording_order_for</code></li>
+          <li><code>named_recording_order_for</code></li>
+          <li><code>ordered_children_for</code></li>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "RecordingOrder mutations",
+          subtitle: "Explicit order snapshot helpers.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <ul class="space-y-3 text-sm leading-6">
+          <li><code>include_child!</code></li>
+          <li><code>remove_child!</code></li>
+          <li><code>move_before!</code> and <code>move_after!</code></li>
+          <li><code>move_to_start!</code> and <code>move_to_end!</code></li>
+          <li><code>move_to_position!</code>, <code>reorder!</code>, and <code>cleanup_missing_children!</code></li>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Lookup example",
+          subtitle: "Resolve the current order from a parent recording or recordable.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>folder_recording = folder.current_recording
+page_order = folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
+
+folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Mutation example",
+          subtitle: "Persist the next explicit order snapshot after a move.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>page_order.move_after!(
+  moving: page_two_recording,
+  after: page_one_recording,
+  actor: current_user,
+  metadata: { source: "drag_drop" }
+)</code></pre>
+      <% end %>
+    <% end %>
+  </div>
+</div>
