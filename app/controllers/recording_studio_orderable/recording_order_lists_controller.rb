@@ -38,6 +38,7 @@ module RecordingStudioOrderable
     def load_form_context
       @parent_recording = parent_recording_from_params
       @group_key = group_key_from_params(@parent_recording)
+      @parent_recording_label = parent_recording_label(@parent_recording)
       @redirect_to = safe_local_redirect_target(params[:redirect_to])
       @source_order_recording_id = source_order_recording_id_from_params
     rescue ActiveRecord::RecordNotFound, RecordingStudioOrderable::RecordingOrderManager::ConfigurationError => e
@@ -58,6 +59,14 @@ module RecordingStudioOrderable
 
     def list_params
       params.require(:recording_order_list).permit(:name)
+    end
+
+    def parent_recording_label(parent_recording)
+      recordable = parent_recording.recordable
+      friendly_name = recordable.try(:name).presence || recordable.try(:title).presence
+      return "#{parent_recording.recordable_type} #{friendly_name}" if friendly_name.present?
+
+      "#{parent_recording.recordable_type} #{parent_recording.id}"
     end
   end
 end
