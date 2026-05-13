@@ -45,6 +45,33 @@ class RecordingOrderTest < Minitest::Test
     assert_equal "moved", captured[:action]
   end
 
+  def test_move_to_position_uses_the_named_list_order_as_the_persistence_baseline
+    order = build_order(ordered_recording_ids: %w[page-3 page-1], name: "Johnny's list")
+    parent_recording = Object.new
+    captured = nil
+
+    order.define_singleton_method(:recordings) do
+      [Struct.new(:id, :created_at, :updated_at).new("named-recording", Time.utc(2024, 1, 2), Time.utc(2024, 1, 2))]
+    end
+    order.define_singleton_method(:persist_updated_ids!) do |ids, actor:, metadata:, action:|
+      captured = { ids: ids, actor: actor, metadata: metadata, action: action }
+    end
+
+    RecordingStudioOrderable::RecordingOrderManager.stub(
+      :eligible_children_for,
+      [FakeRecording.new("page-1"), FakeRecording.new("page-2"), FakeRecording.new("page-3")]
+    ) do
+      order.stub(:resolved_parent_recording, parent_recording) do
+        order.move_to_position!(moving: "page-2", position: 0, actor: :actor, metadata: { source: "test" })
+      end
+    end
+
+    assert_equal %w[page-2 page-3 page-1], captured[:ids]
+    assert_equal :actor, captured[:actor]
+    assert_equal({ source: "test" }, captured[:metadata])
+    assert_equal "moved", captured[:action]
+  end
+
   def test_persist_updated_ids_revises_the_current_order_recording
     order = build_order(ordered_recording_ids: %w[page-2 page-1 page-3], name: "Pages")
     current_recording = Struct.new(:id).new("recording-1")
@@ -88,6 +115,48 @@ class RecordingOrderTest < Minitest::Test
     assert_equal "pages", revised_recordable.group_key
     assert_equal "Pages", revised_recordable.name
     assert_equal %w[page-2 page-3 page-1 page-4], revised_recordable.ordered_recording_ids
+  end
+
+  def test_persist_updated_ids_revises_the_selected_named_order_recording
+    order = build_order(ordered_recording_ids: %w[page-2 page-1 page-3], name: "Johnny's list")
+    default_recording = Struct.new(:id).new("default-recording")
+    named_recording = Struct.new(:id, :created_at, :updated_at).new("named-recording", Time.utc(2024, 1, 2), Time.utc(2024, 1, 2))
+    revised_recordable = build_order(ordered_recording_ids: [], name: nil)
+    revised_recording = Struct.new(:recordable).new(revised_recordable)
+    parent_recording = Object.new
+    revise_call = nil
+
+    parent_recording.define_singleton_method(:id) { "folder-1" }
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, owner:|
+      default_recording
+    end
+    parent_recording.define_singleton_method(:revise) do |recording, actor:, metadata:, &block|
+      revise_call = { recording: recording, actor: actor, metadata: metadata }
+      block.call(revised_recordable)
+      revised_recording
+    end
+
+    order.define_singleton_method(:recordings) { [named_recording] }
+
+    RecordingStudioOrderable::RecordingOrderManager.stub(:normalize_requested_ids, ->(_parent, _group, ids) { ids }) do
+      result = order.stub(:resolved_parent_recording, parent_recording) do
+        order.send(
+          :persist_updated_ids!,
+          %w[page-2 page-3 page-1 page-4],
+          actor: :actor,
+          metadata: { source: "test" },
+          action: "moved"
+        )
+      end
+
+      assert_same revised_recordable, result
+    end
+
+    assert_equal named_recording, revise_call[:recording]
+    assert_equal :actor, revise_call[:actor]
+    assert_equal({ source: "test" }, revise_call[:metadata])
+    assert_equal "named-recording", revised_recordable.recording_id_for_validation
+    assert_equal "Johnny's list", revised_recordable.name
   end
 
   def test_include_child_appends_the_child_to_the_explicit_ids
@@ -314,6 +383,22 @@ class RecordingOrderTest < Minitest::Test
 
     assert_includes errors.entries, [:group_key, "unsupported group"]
     assert_includes errors.entries, [:base, "an order already exists for this parent, group, and owner scope"]
+  end
+
+  def test_named_orders_do_not_trigger_scope_uniqueness_errors
+    order = build_order(ordered_recording_ids: %w[page-2 page-1], name: "Johnny's list")
+    errors = FakeErrorCollector.new
+    matching_recording = Struct.new(:id).new("existing-recording")
+
+    order.define_singleton_method(:errors) { errors }
+
+    order.stub(:resolved_parent_recording, Object.new) do
+      RecordingStudioOrderable::RecordingOrderManager.stub(:matching_order_recordings, [matching_recording]) do
+        order.send(:order_scope_must_be_unique)
+      end
+    end
+
+    refute_includes errors.entries, [:base, "an order already exists for this parent, group, and owner scope"]
   end
 
   def test_uuid_and_duplicate_validations_add_errors

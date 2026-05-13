@@ -1,0 +1,44 @@
+<div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Create Named List",
+    subtitle: "Save a user-owned order snapshot for this parent recording.",
+    variant: :h1
+  ) %>
+
+  <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+    <% card.header do %>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "New list",
+        subtitle: "The owner is resolved from the authenticated host app session.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
+    <% end %>
+
+    <% card.body do %>
+      <%= form_with url: recording_order_lists_path, scope: :recording_order_list, class: "flex flex-col gap-4" do |form| %>
+        <%= hidden_field_tag :parent_recording_id, @parent_recording.id %>
+        <%= hidden_field_tag :group_key, @group_key %>
+        <%= hidden_field_tag :redirect_to, @redirect_to if @redirect_to.present? %>
+        <%= hidden_field_tag :source_order_recording_id, @source_order_recording_id if @source_order_recording_id.present? %>
+
+        <div class="flex flex-col gap-2">
+          <%= form.label :name, "List name", class: "text-sm font-medium" %>
+          <%= form.text_field :name, required: true, class: "w-full rounded-md border border-(--surface-border-color) bg-(--surface-background-color) px-3 py-2 text-sm" %>
+          <p class="text-xs text-(--surface-muted-content-color)">
+            Parent recording <code><%= @parent_recording.id %></code>, group <code><%= @group_key %></code>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="submit" class="inline-flex items-center rounded-md bg-(--brand-background-color) px-4 py-2 text-sm font-medium text-(--brand-content-color)">
+            Create list
+          </button>
+          <% if @redirect_to.present? %>
+            <a href="<%= @redirect_to %>" class="text-sm text-(--surface-link-color)">Cancel</a>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

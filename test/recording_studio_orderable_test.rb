@@ -47,15 +47,17 @@ class RecordingStudioOrderableTest < Minitest::Test
     home_controller_source = File.read(home_controller_path)
 
     assert_includes view_source, "Folder page order"
+    assert_includes view_source, "Your named lists"
     assert_includes view_source, "FlatPack::Table::Component"
-    assert_includes view_source, "Group key"
+    assert_includes view_source, "Create new list"
     assert_includes view_source, "moving_recording_id"
     assert_includes view_source, "target_position"
-    assert_includes view_source, "Latest order snapshot recording"
+    assert_includes view_source, "selected_order_recording_id"
     assert_includes helper_source, "Auto-appended eligible page"
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
-    assert_includes home_controller_source, "latest_page_order_recording"
+    assert_includes home_controller_source, "named_page_order_recordings"
+    assert_includes home_controller_source, "selected_page_order_recording"
   end
 
   def test_engine_home_page_uses_flatpack_components

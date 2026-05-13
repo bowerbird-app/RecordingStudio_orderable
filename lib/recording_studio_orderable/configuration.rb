@@ -2,17 +2,21 @@
 
 module RecordingStudioOrderable
   class Configuration
-    attr_accessor :log_order_events, :event_action_prefix
+    attr_accessor :log_order_events, :event_action_prefix, :authenticate_controller, :current_owner_resolver
 
     def initialize
       @log_order_events = false
       @event_action_prefix = "recording_order"
+      @authenticate_controller = nil
+      @current_owner_resolver = nil
     end
 
     def to_h
       {
         log_order_events: log_order_events,
-        event_action_prefix: event_action_prefix
+        event_action_prefix: event_action_prefix,
+        authenticate_controller: authenticate_controller,
+        current_owner_resolver: current_owner_resolver
       }
     end
 

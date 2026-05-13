@@ -13,7 +13,10 @@ class EngineTest < Minitest::Test
   end
 
   def test_load_config_merges_x_configuration
-    xcfg = Struct.new(:recording_studio_orderable).new({ log_order_events: true })
+    current_owner_resolver = ->(_controller) { :owner }
+    xcfg = Struct.new(:recording_studio_orderable).new(
+      { log_order_events: true, current_owner_resolver: current_owner_resolver }
+    )
     app_config = Struct.new(:x).new(xcfg)
     app = Struct.new(:config, :config_for_result) do
       def config_for(_name)
@@ -24,6 +27,7 @@ class EngineTest < Minitest::Test
     find_initializer("recording_studio_orderable.load_config").block.call(app)
 
     assert_equal true, RecordingStudioOrderable.configuration.log_order_events
+    assert_same current_owner_resolver, RecordingStudioOrderable.configuration.current_owner_resolver
   end
 
   def test_load_config_reads_yaml_when_available

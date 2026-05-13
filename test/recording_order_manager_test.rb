@@ -86,6 +86,130 @@ class RecordingOrderManagerTest < Minitest::Test
     assert_equal @scoped_order, order
   end
 
+  def test_recording_order_for_prefers_the_unnamed_default_order_when_named_orders_exist
+    named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-1"],
+      "Johnny's list"
+    )
+    named_order_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
+                                              Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
+    @parent_recording.child_recordings << @scoped_order_recording
+    @parent_recording.child_recordings << named_order_recording
+
+    order = RecordingStudioOrderable::RecordingOrderManager.recording_order_for(
+      @parent_recording,
+      :pages,
+      owner: @owner
+    )
+
+    assert_equal @scoped_order, order
+  end
+
+  def test_named_recording_orders_return_only_named_orders_for_scope
+    second_named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-1", "page-2"],
+      "Another list"
+    )
+    named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-3"],
+      "Johnny's list"
+    )
+    @parent_recording.child_recordings << @scoped_order_recording
+    @parent_recording.child_recordings << FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
+                                                            Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
+    @parent_recording.child_recordings << FakeRecording.new("order-4", "RecordingStudio::RecordingOrder", second_named_order,
+                                                            Time.utc(2024, 1, 7), Time.utc(2024, 1, 7))
+
+    orders = RecordingStudioOrderable::RecordingOrderManager.named_recording_orders(
+      @parent_recording,
+      :pages,
+      owner: @owner
+    )
+
+    assert_equal [named_order, second_named_order], orders
+  end
+
+  def test_named_recording_order_recording_for_returns_only_owned_named_order_recordings
+    named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-3"],
+      "Johnny's list"
+    )
+    named_order_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
+                                              Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
+    @parent_recording.child_recordings << named_order_recording
+
+    match = RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
+      @parent_recording,
+      "order-3",
+      :pages,
+      owner: @owner
+    )
+
+    assert_equal named_order_recording, match
+  end
+
+  def test_create_named_recording_order_builds_a_named_order_without_collapsing_to_the_default_scope
+    parent_recording = FakeParentRecording.new("folder-2", FakeFolder.new, [@page_one, @page_two, @page_three])
+    source_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      %w[page-3 page-1],
+      "Source list"
+    )
+    source_order_recording = FakeRecording.new("order-source", "RecordingStudio::RecordingOrder", source_order,
+                                               Time.utc(2024, 1, 5), Time.utc(2024, 1, 5))
+    parent_recording.child_recordings << source_order_recording
+    recorded_arguments = nil
+
+    parent_recording.define_singleton_method(:record) do |order_record, actor:, metadata:, parent_recording:|
+      recorded_arguments = {
+        order_record: order_record,
+        actor: actor,
+        metadata: metadata,
+        parent_recording: parent_recording
+      }
+      Struct.new(:recordable).new(order_record)
+    end
+
+    with_temporary_recording_order_class do
+      created_order = RecordingStudioOrderable::RecordingOrderManager.create_named_recording_order!(
+        parent_recording,
+        :pages,
+        owner: @owner,
+        actor: :actor,
+        metadata: { source: "test" },
+        name: "Johnny's list",
+        source_order_recording_id: "order-source"
+      )
+
+      assert_equal parent_recording.id, created_order.parent_recording_id
+      assert_equal "pages", created_order.group_key
+      assert_equal "Johnny's list", created_order.name
+      assert_equal "RecordingOrderManagerTest::FakeOwner", created_order.owner_type
+      assert_equal "user-1", created_order.owner_id
+      assert_equal %w[page-3 page-1], created_order.ordered_recording_ids
+      assert_same parent_recording, created_order.parent_recording_for_validation
+      assert_nil created_order.recording_id_for_validation
+      assert_equal({ source: "test" }, recorded_arguments[:metadata])
+      assert_equal :actor, recorded_arguments[:actor]
+      assert_same parent_recording, recorded_arguments[:parent_recording]
+      assert_same created_order, recorded_arguments[:order_record]
+    end
+  end
+
   def test_duplicate_matching_orders_raise_an_error
     duplicate_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil, [])
     duplicate_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", duplicate_order,

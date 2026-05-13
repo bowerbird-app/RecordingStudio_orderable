@@ -18,6 +18,8 @@ It keeps `RecordingStudio::Recording` lightweight by storing order state on an e
   - `recording_orders(owner: nil)`
   - `recording_order_for(group_key, owner: nil)`
   - `find_or_create_recording_order!(group_key, owner: nil)`
+  - `named_recording_orders(group_key, owner: nil)`
+  - `named_recording_order_recording_for(order_recording_id, group_key, owner: nil)`
   - `children_for_order_group`
   - `ordered_children_for(group_key, owner: nil)`
 - `RecordingStudio::RecordingOrder` mutation helpers:
@@ -49,6 +51,17 @@ Order mutations prefer Recording Studio’s revise-style behavior. Updating an o
 Interactive reorder UIs do not have to submit the full visible UUID list. The dummy app now sends a minimal move payload (`moving_recording_id` plus the target position), and `RecordingStudio::RecordingOrder` rebuilds the next explicit snapshot from the current resolved order. That means newly eligible children that were previously only auto-appended on read are folded into the next persisted revision whenever a user performs another explicit move.
 
 `group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.
+
+Named lists build on top of that owner scope. The unnamed/default order remains singleton per `(parent_recording, group_key, owner_type, owner_id)`, while additional named lists can coexist for the same owner and group. Duplicate names are allowed, so host apps should select named lists by their `RecordingStudio::Recording` id rather than by `name`.
+
+The mountable engine also exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Owner resolution is intentionally host-controlled:
+
+```ruby
+RecordingStudioOrderable.configure do |config|
+  config.authenticate_controller = ->(controller) { controller.authenticate_user! }
+  config.current_owner_resolver = ->(controller) { controller.current_user }
+end
+```
 
 Addon-specific semantic event logging is optional and quiet by default:
 
@@ -98,6 +111,7 @@ folder_recording.ordered_children_for(:pages).map { |recording| recording.record
 - Devise login
 - FlatPack sidebar shell
 - FlatPack table with drag/drop reorder
+- current-user-owned named page-order lists created through the mounted engine page
 - an eligible page intentionally omitted from `ordered_recording_ids`
 
 Quick start:

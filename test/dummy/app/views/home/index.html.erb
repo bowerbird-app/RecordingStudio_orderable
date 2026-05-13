@@ -15,11 +15,11 @@
 
   <div class="">
     <div class="flex flex-col gap-6">
-      <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+      <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
         <% card.header do %>
           <%= render FlatPack::PageTitle::Component.new(
-            title: "Folder page order",
-            subtitle: "Drag rows, use move buttons, then save. Reads append eligible pages omitted from ordered_recording_ids.",
+            title: "Your named lists",
+            subtitle: "Each list is owner-scoped to the signed-in user and points at the same folder pages.",
             variant: :h3,
             class: "mb-0 pb-0"
           ) %>
@@ -27,6 +27,78 @@
 
         <% card.body do %>
           <% if @folder_recording.present? %>
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-3">
+                <%= render FlatPack::Button::Component.new(
+                  text: "Create new list",
+                  style: :primary,
+                  size: :md,
+                  href: recording_studio_orderable.new_recording_order_list_path(
+                    parent_recording_id: @folder_recording.id,
+                    group_key: :pages,
+                    source_order_recording_id: @page_order_recording&.id,
+                    redirect_to: root_path
+                  )
+                ) %>
+                <%= render FlatPack::Badge::Component.new(text: current_user.email, style: :info, size: :sm) %>
+              </div>
+
+              <% if @list_rows.present? %>
+                <div class="grid gap-4 lg:grid-cols-2">
+                  <% @list_rows.each do |list_row| %>
+                    <div class="rounded-lg border border-(--surface-border-color) p-4 <%= list_row.selected ? 'bg-(--surface-muted-background-color)' : 'bg-(--surface-background-color)' %>">
+                      <div class="flex items-start justify-between gap-3">
+                        <div>
+                          <p class="text-sm font-semibold"><%= list_row.order.name.presence || "Untitled list" %></p>
+                          <p class="text-xs text-(--surface-muted-content-color)">
+                            Recording <code><%= list_row.recording.id %></code>
+                          </p>
+                        </div>
+                        <% if list_row.selected %>
+                          <%= render FlatPack::Badge::Component.new(text: "Selected", style: :success, size: :sm) %>
+                        <% else %>
+                          <%= link_to root_path(selected_order_recording_id: list_row.recording.id) do %>
+                            <%= render FlatPack::Button::Component.new(
+                              text: "Open",
+                              style: :secondary,
+                              size: :sm
+                            ) %>
+                          <% end %>
+                        <% end %>
+                      </div>
+
+                      <ol class="mt-3 list-decimal pl-5 text-sm leading-6">
+                        <% list_row.ordered_pages.each do |page_recording| %>
+                          <li><%= page_recording.recordable.title %></li>
+                        <% end %>
+                      </ol>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <%= render FlatPack::Alert::Component.new(
+                  style: :info,
+                  title: "No named lists yet",
+                  description: "Create a named list to save your own page order for this folder."
+                ) %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+
+      <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+        <% card.header do %>
+          <%= render FlatPack::PageTitle::Component.new(
+            title: "Folder page order",
+            subtitle: "Drag rows, use move buttons, then save. The selected named list updates without changing other users' lists.",
+            variant: :h3,
+            class: "mb-0 pb-0"
+          ) %>
+        <% end %>
+
+        <% card.body do %>
+          <% if @folder_recording.present? && @page_order_recording.present? %>
             <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync">
               <%= render FlatPack::Table::Component.new(
                 data: @page_rows,
@@ -35,7 +107,6 @@
               ) do |table| %>
                 <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
                 <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
-                <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
               <% end %>
 
               <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
@@ -43,26 +114,27 @@
                             class: "mt-4 flex items-center gap-3" do |form| %>
                 <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
                 <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
+                <%= form.hidden_field :selected_order_recording_id, value: @page_order_recording.id %>
                 <%= render FlatPack::Badge::Component.new(
                   text: "Changes save after each move",
                   style: :info,
                   size: :sm
                 ) %>
-                <span class="text-sm text-(--surface-muted-content-color)">Folder recording <code><%= @folder_recording.id %></code></span>
+                <span class="text-sm text-(--surface-muted-content-color)">
+                  List <code><%= @page_order_recording.id %></code> for <code><%= current_user.email %></code>
+                </span>
               <% end %>
 
-              <% if @page_order_recording.present? %>
-                <p class="mt-2 text-xs text-(--surface-muted-content-color)">
-                  Latest order snapshot recording <code><%= @page_order_recording.id %></code>
-                  using recordable <code><%= @page_order.id %></code>
-                </p>
-              <% end %>
+              <p class="mt-2 text-xs text-(--surface-muted-content-color)">
+                Selected list <code><%= @page_order.name.presence || "Untitled list" %></code>
+                using recordable <code><%= @page_order.id %></code>
+              </p>
             </div>
           <% else %>
             <%= render FlatPack::Alert::Component.new(
               style: :warning,
-              title: "Demo data missing",
-              description: "Run bin/rails db:seed to create the Folder + Page ordering example."
+              title: @folder_recording.present? ? "Select or create a named list" : "Demo data missing",
+              description: @folder_recording.present? ? "Create a named list to begin ordering pages for your account." : "Run bin/rails db:seed to create the Folder + Page ordering example."
             ) %>
           <% end %>
         <% end %>

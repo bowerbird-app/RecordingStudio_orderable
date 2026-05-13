@@ -7,16 +7,33 @@ module RecordingStudioOrderable
 
     class << self
       def recording_order_recordings(parent_recording, group_key = nil, owner: nil)
-        matching_order_recordings(parent_recording, group_key: group_key, owner: owner)
+        default_order_recordings(parent_recording, group_key: group_key, owner: owner)
       end
 
       def recording_orders(parent_recording, owner: nil)
         matching_order_recordings(parent_recording, owner: owner).filter_map(&:recordable)
       end
 
+      def named_recording_order_recordings(parent_recording, group_key = nil, owner: nil)
+        named_order_recordings(parent_recording, group_key: group_key, owner: owner)
+      end
+
+      def named_recording_orders(parent_recording, group_key = nil, owner: nil)
+        named_recording_order_recordings(parent_recording, group_key, owner: owner).filter_map(&:recordable)
+      end
+
+      def named_recording_order_recording_for(parent_recording, order_recording_id, group_key = nil, owner: nil)
+        named_recording_order_recordings(parent_recording, group_key, owner: owner)
+          .find { |recording| recording.id.to_s == order_recording_id.to_s }
+      end
+
+      def named_recording_order_for(parent_recording, order_recording_id, group_key = nil, owner: nil)
+        named_recording_order_recording_for(parent_recording, order_recording_id, group_key, owner: owner)&.recordable
+      end
+
       def recording_order_recording_for(parent_recording, group_key = nil, owner: nil)
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
-        matches = matching_order_recordings(parent_recording, group_key: resolved_group_key, owner: owner)
+        matches = default_order_recordings(parent_recording, group_key: resolved_group_key, owner: owner)
         raise_duplicate_order!(parent_recording, resolved_group_key, owner, matches) if matches.many?
 
         matches.first
@@ -40,6 +57,36 @@ module RecordingStudioOrderable
           owner_type: owner_type,
           owner_id: owner_id,
           ordered_recording_ids: normalize_requested_ids(parent_recording, resolved_group_key, ordered_recording_ids)
+        )
+        order_record.parent_recording_for_validation = parent_recording
+        order_record.recording_id_for_validation = nil
+
+        parent_recording.record(
+          order_record,
+          actor: actor,
+          metadata: metadata,
+          parent_recording: parent_recording
+        ).recordable
+      end
+
+      def create_named_recording_order!(parent_recording, group_key = nil, owner: nil, actor: nil, metadata: {},
+                                        name:, source_order_recording_id: nil, ordered_recording_ids: nil)
+        resolved_group_key = resolve_group_key!(parent_recording, group_key)
+        owner_type, owner_id = owner_attributes(owner)
+        requested_ids = if ordered_recording_ids.nil?
+                          source_order_ids_for(parent_recording, resolved_group_key, owner, source_order_recording_id) ||
+                            eligible_children_for(parent_recording, resolved_group_key).reverse.map { |recording| recording.id.to_s }
+                        else
+                          ordered_recording_ids
+                        end
+
+        order_record = RecordingStudio::RecordingOrder.new(
+          parent_recording_id: parent_recording.id,
+          group_key: resolved_group_key,
+          name: name,
+          owner_type: owner_type,
+          owner_id: owner_id,
+          ordered_recording_ids: normalize_requested_ids(parent_recording, resolved_group_key, requested_ids)
         )
         order_record.parent_recording_for_validation = parent_recording
         order_record.recording_id_for_validation = nil
@@ -98,6 +145,18 @@ module RecordingStudioOrderable
           end
       end
 
+      def default_order_recordings(parent_recording, group_key: nil, owner: nil)
+        matching_order_recordings(parent_recording, group_key: group_key, owner: owner).select do |child_recording|
+          order_name(child_recording.recordable).blank?
+        end
+      end
+
+      def named_order_recordings(parent_recording, group_key: nil, owner: nil)
+        matching_order_recordings(parent_recording, group_key: group_key, owner: owner).select do |child_recording|
+          order_name(child_recording.recordable).present?
+        end.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
+      end
+
       def resolve_group_key!(parent_recording, group_key = nil)
         resolve_group_definition!(parent_recording, group_key).fetch(:group_key)
       end
@@ -128,6 +187,21 @@ module RecordingStudioOrderable
         return [nil, nil] if owner.nil?
 
         [owner.class.name, normalize_recording_id(owner)]
+      end
+
+      def source_order_ids_for(parent_recording, group_key, owner, source_order_recording_id)
+        return if source_order_recording_id.blank?
+
+        matching_order_recordings(parent_recording, group_key: group_key, owner: owner)
+          .find { |recording| recording.id.to_s == source_order_recording_id.to_s }
+          &.recordable
+          &.ordered_recording_ids
+      end
+
+      def order_name(order_record)
+        return unless order_record.respond_to?(:name)
+
+        order_record.name.to_s.strip.presence
       end
 
       private

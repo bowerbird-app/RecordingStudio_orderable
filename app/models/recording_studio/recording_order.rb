@@ -26,7 +26,14 @@ module RecordingStudio
     end
 
     def ordered_child_recordings(owner: resolved_owner)
-      resolved_parent_recording&.ordered_children_for(group_key, owner: owner) || []
+      parent_recording = resolved_parent_recording
+      return [] unless parent_recording
+
+      if current_attached_order_recording(self)
+        ordered_children_for_current_order(parent_recording)
+      else
+        parent_recording.ordered_children_for(group_key, owner: owner) || []
+      end
     end
 
     def include_child!(child_recording, actor: nil, metadata: {})
@@ -133,6 +140,12 @@ module RecordingStudio
       parent_recording = resolved_parent_recording
       return normalized_mutation_ids unless parent_recording
 
+      if current_attached_order_recording(self)
+        return ordered_children_for_current_order(parent_recording).filter_map do |recording|
+          normalize_recording_id(recording)
+        end
+      end
+
       Array(parent_recording.ordered_children_for(group_key, owner: raw_owner_scope)).filter_map do |recording|
         normalize_recording_id(recording)
       end
@@ -142,7 +155,7 @@ module RecordingStudio
       parent_recording = resolved_parent_recording
       raise ArgumentError, "parent recording is required" unless parent_recording
 
-      current_recording = parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope)
+      current_recording = current_order_recording_for_persistence(parent_recording)
       normalized_ids = RecordingStudioOrderable::RecordingOrderManager.normalize_requested_ids(
         parent_recording,
         group_key,
@@ -174,7 +187,7 @@ module RecordingStudio
         )
         maybe_log_event!(
           parent_recording,
-          parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope),
+          current_order_recording_for_persistence(parent_recording, fallback_order: order_record),
           action,
           metadata,
           actor
@@ -193,6 +206,37 @@ module RecordingStudio
         actor: actor,
         metadata: metadata.merge(group_key: group_key)
       )
+    end
+
+    def current_order_recording_for_persistence(parent_recording, fallback_order: self)
+      current_recording = current_attached_order_recording(fallback_order)
+      return current_recording if current_recording
+
+      parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope)
+    end
+
+    def current_attached_order_recording(fallback_order)
+      recordings = Array(fallback_order.recordings)
+
+      recordings.compact.max_by do |recording|
+        [
+          recording.respond_to?(:updated_at) ? recording.updated_at : Time.at(0),
+          recording.respond_to?(:created_at) ? recording.created_at : Time.at(0),
+          recording.respond_to?(:id) ? recording.id.to_s : ""
+        ]
+      end
+    rescue NameError
+      nil
+    end
+
+    def ordered_children_for_current_order(parent_recording)
+      eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(parent_recording, group_key)
+      eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }
+      ordered_children = normalized_ordered_recording_ids.filter_map do |recording_id|
+        eligible_by_id.delete(recording_id.to_s)
+      end
+
+      ordered_children + eligible_by_id.values
     end
 
     def move_relative!(moving:, anchor:, placement:, actor:, metadata:)
@@ -225,6 +269,7 @@ module RecordingStudio
 
     def order_scope_must_be_unique
       return if resolved_parent_recording.blank? || group_key.blank?
+      return if name.present?
 
       matches = RecordingStudioOrderable::RecordingOrderManager.matching_order_recordings(
         resolved_parent_recording,
