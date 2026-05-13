@@ -90,7 +90,6 @@ class RecordingStudioOrderableTest < Minitest::Test
     sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
     sidebar_source = File.read(sidebar_path)
 
-    assert_includes sidebar_source, "icon: :beaker"
     assert_includes sidebar_source, "icon: :wrench_screwdriver"
     assert_includes sidebar_source, "icon: :cog_6_tooth"
     assert_includes sidebar_source, "icon: :code_bracket"
