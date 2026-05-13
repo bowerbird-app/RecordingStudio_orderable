@@ -69,13 +69,18 @@ module RecordingStudioOrderable
         ).recordable
       end
 
-      def create_named_recording_order!(parent_recording, group_key = nil, owner: nil, actor: nil, metadata: {},
-                                        name:, source_order_recording_id: nil, ordered_recording_ids: nil)
+      def create_named_recording_order!(parent_recording, group_key = nil, name:, owner: nil, actor: nil,
+                                        metadata: {}, source_order_recording_id: nil,
+                                        ordered_recording_ids: nil)
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
         owner_type, owner_id = owner_attributes(owner)
         requested_ids = if ordered_recording_ids.nil?
-                          source_order_ids_for(parent_recording, resolved_group_key, owner, source_order_recording_id) ||
-                            eligible_children_for(parent_recording, resolved_group_key).reverse.map { |recording| recording.id.to_s }
+                          source_order_ids_for(
+                            parent_recording,
+                            resolved_group_key,
+                            owner,
+                            source_order_recording_id
+                          ) || default_named_order_ids(parent_recording, resolved_group_key)
                         else
                           ordered_recording_ids
                         end
@@ -152,9 +157,15 @@ module RecordingStudioOrderable
       end
 
       def named_order_recordings(parent_recording, group_key: nil, owner: nil)
-        matching_order_recordings(parent_recording, group_key: group_key, owner: owner).select do |child_recording|
+        named_recordings = matching_order_recordings(
+          parent_recording,
+          group_key: group_key,
+          owner: owner
+        ).select do |child_recording|
           order_name(child_recording.recordable).present?
-        end.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
+        end
+
+        named_recordings.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
       end
 
       def resolve_group_key!(parent_recording, group_key = nil)
@@ -179,6 +190,12 @@ module RecordingStudioOrderable
                 end
 
         value.to_s.presence
+      end
+
+      def default_named_order_ids(parent_recording, resolved_group_key)
+        eligible_children_for(parent_recording, resolved_group_key)
+          .reverse
+          .map { |recording| recording.id.to_s }
       end
 
       def owner_attributes(owner)

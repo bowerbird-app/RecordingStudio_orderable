@@ -230,7 +230,10 @@ module RecordingStudio
     end
 
     def ordered_children_for_current_order(parent_recording)
-      eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(parent_recording, group_key)
+      eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(
+        parent_recording,
+        group_key
+      )
       eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }
       ordered_children = normalized_ordered_recording_ids.filter_map do |recording_id|
         eligible_by_id.delete(recording_id.to_s)

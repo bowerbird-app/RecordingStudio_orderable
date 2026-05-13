@@ -7,13 +7,17 @@ require_relative "../app/models/recording_studio/recording_order"
 class RecordingOrderTest < Minitest::Test
   FakeRecording = Struct.new(:id)
   TemporaryOwner = Struct.new(:id) unless const_defined?(:TemporaryOwner)
-  FakeErrorCollector = Struct.new(:entries) do
+  FakeErrorCollector = Struct.new(:messages) do
     def initialize
       super([])
     end
 
     def add(attribute, message)
-      entries << [attribute, message]
+      messages << [attribute, message]
+    end
+
+    def entries
+      messages
     end
   end
 
@@ -22,7 +26,7 @@ class RecordingOrderTest < Minitest::Test
     parent_recording = Object.new
     captured = nil
 
-    parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, owner:|
+    parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, _owner:|
       [
         FakeRecording.new("page-2"),
         FakeRecording.new("page-1"),
@@ -51,7 +55,13 @@ class RecordingOrderTest < Minitest::Test
     captured = nil
 
     order.define_singleton_method(:recordings) do
-      [Struct.new(:id, :created_at, :updated_at).new("named-recording", Time.utc(2024, 1, 2), Time.utc(2024, 1, 2))]
+      [
+        Struct.new(:id, :created_at, :updated_at).new(
+          "named-recording",
+          Time.utc(2024, 1, 2),
+          Time.utc(2024, 1, 2)
+        )
+      ]
     end
     order.define_singleton_method(:persist_updated_ids!) do |ids, actor:, metadata:, action:|
       captured = { ids: ids, actor: actor, metadata: metadata, action: action }
@@ -82,7 +92,7 @@ class RecordingOrderTest < Minitest::Test
 
     parent_recording.define_singleton_method(:id) { "folder-1" }
 
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, owner:|
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, _owner:|
       current_recording
     end
 
@@ -120,14 +130,18 @@ class RecordingOrderTest < Minitest::Test
   def test_persist_updated_ids_revises_the_selected_named_order_recording
     order = build_order(ordered_recording_ids: %w[page-2 page-1 page-3], name: "Johnny's list")
     default_recording = Struct.new(:id).new("default-recording")
-    named_recording = Struct.new(:id, :created_at, :updated_at).new("named-recording", Time.utc(2024, 1, 2), Time.utc(2024, 1, 2))
+    named_recording = Struct.new(:id, :created_at, :updated_at).new(
+      "named-recording",
+      Time.utc(2024, 1, 2),
+      Time.utc(2024, 1, 2)
+    )
     revised_recordable = build_order(ordered_recording_ids: [], name: nil)
     revised_recording = Struct.new(:recordable).new(revised_recordable)
     parent_recording = Object.new
     revise_call = nil
 
     parent_recording.define_singleton_method(:id) { "folder-1" }
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, owner:|
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, _owner:|
       default_recording
     end
     parent_recording.define_singleton_method(:revise) do |recording, actor:, metadata:, &block|
@@ -255,7 +269,7 @@ class RecordingOrderTest < Minitest::Test
 
     normalized_ids = RecordingStudioOrderable::RecordingOrderManager.stub(
       :normalize_requested_ids,
-      ->(parent, group_key, ids) do
+      lambda do |parent, group_key, ids|
         assert_same parent_recording, parent
         assert_equal "pages", group_key
         assert_equal [FakeRecording.new("page-2"), "page-2", "page-1"].map(&:to_s), ids.map(&:to_s)
@@ -285,25 +299,31 @@ class RecordingOrderTest < Minitest::Test
     parent_recording = Object.new
     create_call = nil
 
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, owner:|
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, _owner:|
       nil
     end
 
-    parent_recording.define_singleton_method(:find_or_create_recording_order!) do |group_key, owner:, actor:, metadata:, name:, ordered_recording_ids:|
+    parent_recording.define_singleton_method(:find_or_create_recording_order!) do |group_key, **options|
       create_call = {
         group_key: group_key,
-        owner: owner,
-        actor: actor,
-        metadata: metadata,
-        name: name,
-        ordered_recording_ids: ordered_recording_ids
+        owner: options[:owner],
+        actor: options[:actor],
+        metadata: options[:metadata],
+        name: options[:name],
+        ordered_recording_ids: options[:ordered_recording_ids]
       }
       :created_order
     end
 
     RecordingStudioOrderable::RecordingOrderManager.stub(:normalize_requested_ids, ->(_parent, _group, ids) { ids }) do
       result = order.stub(:resolved_parent_recording, parent_recording) do
-        order.send(:persist_updated_ids!, %w[page-2 page-3 page-1], actor: :actor, metadata: { source: "test" }, action: "moved")
+        order.send(
+          :persist_updated_ids!,
+          %w[page-2 page-3 page-1],
+          actor: :actor,
+          metadata: { source: "test" },
+          action: "moved"
+        )
       end
 
       assert_equal :created_order, result
@@ -318,7 +338,12 @@ class RecordingOrderTest < Minitest::Test
   end
 
   def test_resolved_owner_and_maybe_log_event_follow_configuration
-    order = build_order(ordered_recording_ids: %w[page-2 page-1], name: nil, owner_type: "RecordingOrderTest::TemporaryOwner", owner_id: "owner-1")
+    order = build_order(
+      ordered_recording_ids: %w[page-2 page-1],
+      name: nil,
+      owner_type: "RecordingOrderTest::TemporaryOwner",
+      owner_id: "owner-1"
+    )
     owner = TemporaryOwner.new("owner-1")
     parent_recording = Object.new
     log_call = nil
@@ -326,7 +351,7 @@ class RecordingOrderTest < Minitest::Test
     RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
     RecordingStudioOrderable.configuration.log_order_events = true
 
-    TemporaryOwner.define_singleton_method(:find_by) { |id:| owner if id == "owner-1" }
+    TemporaryOwner.define_singleton_method(:find_by) { |_id:| owner }
     assert_same owner, order.send(:resolved_owner)
 
     parent_recording.define_singleton_method(:log_event) do |order_recording, action:, actor:, metadata:|
@@ -355,7 +380,7 @@ class RecordingOrderTest < Minitest::Test
     order = build_order(ordered_recording_ids: %w[page-2 page-1], name: nil)
 
     parent_recording = with_temporary_recording_class do |recording_class|
-      recording_class.define_singleton_method(:find_by) { |id:| raise "boom" }
+      recording_class.define_singleton_method(:find_by) { |_id:| raise "boom" }
       order.resolved_parent_recording
     end
 
@@ -371,7 +396,9 @@ class RecordingOrderTest < Minitest::Test
     order.stub(:resolved_parent_recording, Object.new) do
       RecordingStudioOrderable::RecordingOrderManager.stub(
         :resolve_group_definition!,
-        ->(_parent, _group) { raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError, "unsupported group" }
+        lambda do |_parent, _group|
+          raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError, "unsupported group"
+        end
       ) do
         order.send(:group_key_must_be_supported)
       end
@@ -410,7 +437,9 @@ class RecordingOrderTest < Minitest::Test
     order.send(:ordered_recording_ids_must_be_uuids)
 
     assert_includes errors.entries, [:ordered_recording_ids, "must not contain duplicates"]
-    assert_equal 2, errors.entries.count { |entry| entry == [:ordered_recording_ids, "must contain UUID values"] }
+    assert_equal 2, (errors.entries.count do |entry|
+      entry == [:ordered_recording_ids, "must contain UUID values"]
+    end)
   end
 
   def test_eligible_child_validation_rejects_missing_self_and_cross_scope_recordings
@@ -448,7 +477,7 @@ class RecordingOrderTest < Minitest::Test
       { group_key: "pages", allows: ["Page"] }
     ) do
       with_temporary_recording_class do |recording_class|
-        recording_class.define_singleton_method(:where) do |id:|
+        recording_class.define_singleton_method(:where) do |_id:|
           [self_recording, wrong_parent, wrong_root, wrong_type]
         end
 
@@ -460,7 +489,10 @@ class RecordingOrderTest < Minitest::Test
 
     assert_includes errors.entries, [:ordered_recording_ids, "must reference existing RecordingStudio::Recording rows"]
     assert_includes errors.entries, [:ordered_recording_ids, "cannot include the RecordingOrder recording itself"]
-    assert_includes errors.entries, [:ordered_recording_ids, "must only include direct children of the same parent recording"]
+    assert_includes(
+      errors.entries,
+      [:ordered_recording_ids, "must only include direct children of the same parent recording"]
+    )
     assert_includes errors.entries, [:ordered_recording_ids, "must stay within the same root recording"]
     assert_includes errors.entries, [:ordered_recording_ids, "must only include allowed recordable types for the group"]
   end
@@ -489,7 +521,7 @@ class RecordingOrderTest < Minitest::Test
 
   def build_parent_recording_with_children(ids)
     Object.new.tap do |parent_recording|
-      parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, owner:|
+      parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, _owner:|
         ids.map { |id| FakeRecording.new(id) }
       end
     end

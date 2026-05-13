@@ -153,11 +153,11 @@ class OrderableRecordableTest < Minitest::Test
 
   def build_recording_snapshot(label, timestamp)
     Struct.new(:id, :created_at, :updated_at).new(label, timestamp, timestamp).tap do |recording|
-      recording.define_singleton_method(:recording_orders) { |owner: nil| [id] }
-      recording.define_singleton_method(:recording_order_for) { |group_key = nil, owner: nil| id }
-      recording.define_singleton_method(:find_or_create_recording_order!) { |group_key = nil, **| id }
-      recording.define_singleton_method(:children_for_order_group) { |group_key = nil| [id] }
-      recording.define_singleton_method(:ordered_children_for) { |group_key = nil, owner: nil| [id] }
+      recording.define_singleton_method(:recording_orders) { |**| [id] }
+      recording.define_singleton_method(:recording_order_for) { |*, **| id }
+      recording.define_singleton_method(:find_or_create_recording_order!) { |*, **| id }
+      recording.define_singleton_method(:children_for_order_group) { |*| [id] }
+      recording.define_singleton_method(:ordered_children_for) { |*, **| [id] }
     end
   end
 end

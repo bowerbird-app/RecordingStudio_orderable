@@ -70,7 +70,10 @@ class RecordingStudioOrderableTest < Minitest::Test
   end
 
   def test_engine_application_controller_prefers_sidebar_layout_when_available
-    controller_path = File.expand_path("../app/controllers/recording_studio_orderable/application_controller.rb", __dir__)
+    controller_path = File.expand_path(
+      "../app/controllers/recording_studio_orderable/application_controller.rb",
+      __dir__
+    )
     controller_source = File.read(controller_path)
 
     assert_includes controller_source, "layout :recording_studio_orderable_layout"

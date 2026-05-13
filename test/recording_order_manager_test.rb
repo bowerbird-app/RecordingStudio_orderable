@@ -113,7 +113,7 @@ class RecordingOrderManagerTest < Minitest::Test
       "pages",
       "RecordingOrderManagerTest::FakeOwner",
       "user-1",
-      ["page-1", "page-2"],
+      %w[page-1 page-2],
       "Another list"
     )
     named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
@@ -126,8 +126,13 @@ class RecordingOrderManagerTest < Minitest::Test
     @parent_recording.child_recordings << @scoped_order_recording
     @parent_recording.child_recordings << FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
                                                             Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
-    @parent_recording.child_recordings << FakeRecording.new("order-4", "RecordingStudio::RecordingOrder", second_named_order,
-                                                            Time.utc(2024, 1, 7), Time.utc(2024, 1, 7))
+    @parent_recording.child_recordings << FakeRecording.new(
+      "order-4",
+      "RecordingStudio::RecordingOrder",
+      second_named_order,
+      Time.utc(2024, 1, 7),
+      Time.utc(2024, 1, 7)
+    )
 
     orders = RecordingStudioOrderable::RecordingOrderManager.named_recording_orders(
       @parent_recording,
