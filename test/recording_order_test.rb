@@ -26,7 +26,7 @@ class RecordingOrderTest < Minitest::Test
     parent_recording = Object.new
     captured = nil
 
-    parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, _owner:|
+    parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, **|
       [
         FakeRecording.new("page-2"),
         FakeRecording.new("page-1"),
@@ -92,7 +92,7 @@ class RecordingOrderTest < Minitest::Test
 
     parent_recording.define_singleton_method(:id) { "folder-1" }
 
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, _owner:|
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, **|
       current_recording
     end
 
@@ -141,7 +141,7 @@ class RecordingOrderTest < Minitest::Test
     revise_call = nil
 
     parent_recording.define_singleton_method(:id) { "folder-1" }
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, _owner:|
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, **|
       default_recording
     end
     parent_recording.define_singleton_method(:revise) do |recording, actor:, metadata:, &block|
@@ -299,7 +299,7 @@ class RecordingOrderTest < Minitest::Test
     parent_recording = Object.new
     create_call = nil
 
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, _owner:|
+    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, **|
       nil
     end
 
@@ -351,7 +351,7 @@ class RecordingOrderTest < Minitest::Test
     RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
     RecordingStudioOrderable.configuration.log_order_events = true
 
-    TemporaryOwner.define_singleton_method(:find_by) { |_id:| owner }
+    TemporaryOwner.define_singleton_method(:find_by) { |id:| owner if id == "owner-1" }
     assert_same owner, order.send(:resolved_owner)
 
     parent_recording.define_singleton_method(:log_event) do |order_recording, action:, actor:, metadata:|
@@ -380,7 +380,7 @@ class RecordingOrderTest < Minitest::Test
     order = build_order(ordered_recording_ids: %w[page-2 page-1], name: nil)
 
     parent_recording = with_temporary_recording_class do |recording_class|
-      recording_class.define_singleton_method(:find_by) { |_id:| raise "boom" }
+      recording_class.define_singleton_method(:find_by) { |**| raise "boom" }
       order.resolved_parent_recording
     end
 
@@ -477,7 +477,7 @@ class RecordingOrderTest < Minitest::Test
       { group_key: "pages", allows: ["Page"] }
     ) do
       with_temporary_recording_class do |recording_class|
-        recording_class.define_singleton_method(:where) do |_id:|
+        recording_class.define_singleton_method(:where) do |**|
           [self_recording, wrong_parent, wrong_root, wrong_type]
         end
 
@@ -521,7 +521,7 @@ class RecordingOrderTest < Minitest::Test
 
   def build_parent_recording_with_children(ids)
     Object.new.tap do |parent_recording|
-      parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, _owner:|
+      parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, **|
         ids.map { |id| FakeRecording.new(id) }
       end
     end
