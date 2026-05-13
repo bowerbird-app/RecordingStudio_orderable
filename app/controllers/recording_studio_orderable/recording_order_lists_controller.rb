@@ -41,18 +41,19 @@ module RecordingStudioOrderable
     end
 
     def create_named_recording_order
-      parent_recording = parent_recording_from_params
-      group_key = group_key_from_params(parent_recording)
-
       RecordingStudioOrderable::RecordingOrderManager.create_named_recording_order!(
-        parent_recording,
-        group_key,
+        *named_order_context,
         name: list_params.fetch(:name),
         owner: current_recording_studio_orderable_owner,
         actor: current_recording_studio_orderable_owner,
         metadata: { source: "recording_studio_orderable.recording_order_lists#create" },
         source_order_recording_id: source_order_recording_id_from_params
       )
+    end
+
+    def named_order_context
+      parent_recording = parent_recording_from_params
+      [parent_recording, group_key_from_params(parent_recording)]
     end
 
     def create_redirect_target(order)
