@@ -81,7 +81,7 @@ end</code></pre>
     <div>
       <%= render FlatPack::PageTitle::Component.new(
         title: "Demo app verification",
-        subtitle: "The included dummy app shows the expected host-owned docs flow.",
+        subtitle: "The included dummy app shows the expected host-owned docs flow, including drag-save notifications.",
         variant: :h3,
         class: "mb-0 pb-0"
       ) %>
@@ -90,7 +90,15 @@ end</code></pre>
         <ul class="space-y-3 text-sm leading-6">
           <li>Launch the dummy app and sign in as the seeded admin user.</li>
           <li>Use the sidebar links to open the local docs pages and the mounted addon home page.</li>
-          <li>Use the folder demo to confirm owner-scoped named lists still work after installation.</li>
+          <li>Use the folder demo to confirm owner-scoped named lists and drag-to-reorder work after installation.</li>
+          <li>
+            <strong>Notification integration:</strong> The drag-save UI supports two notification modes:
+            <ul class="list-disc ml-5">
+              <li>By default, a FlatPack alert is rendered after each successful drag-save.</li>
+              <li>To opt into host-owned notifications, set <code>send_custom_event: true</code> on the drag-save form. This will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like <code>{ message, status, selected_order_recording_id, moving_recording_id, target_position }</code>.</li>
+              <li>See the dummy app for a working example that logs the event payload to <code>console.log</code>.</li>
+            </ul>
+          </li>
         </ul>
       </div>
     </div>

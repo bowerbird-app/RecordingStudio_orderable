@@ -1,5 +1,7 @@
 class HomeController < ApplicationController
   PageRow = Struct.new(:recording, :position, :explicitly_ordered, keyword_init: true)
+  CUSTOM_EVENT_NAME = "recordingstudio:order:updated"
+  SUCCESS_MESSAGE = "Saved page order."
 
   before_action :load_workspace_context, only: :index
 
@@ -44,9 +46,28 @@ class HomeController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to root_path(selected_order_recording_id: updated_recording&.id || selected_order_recording.id), notice: "Saved page order."
+        redirect_to root_path(selected_order_recording_id: updated_recording&.id || selected_order_recording.id), notice: SUCCESS_MESSAGE
       end
-      format.json { head :no_content }
+      format.json do
+        if send_custom_event_param?
+          render json: {
+            event_name: CUSTOM_EVENT_NAME,
+            event_detail: success_event_detail(
+              selected_order_recording_id: selected_order_recording.id,
+              moving_recording_id: moving_recording_id_from_params,
+              target_position: target_position_from_params,
+              updated_recording_id: updated_recording&.id
+            )
+          }
+        else
+          render json: {
+            notice_html: render_to_string(
+              partial: "home/page_order_notification",
+              locals: { message: SUCCESS_MESSAGE }
+            )
+          }
+        end
+      end
     end
   rescue ActiveRecord::RecordNotFound
     respond_to do |format|
@@ -80,6 +101,21 @@ class HomeController < ApplicationController
 
   def target_position_from_params
     Integer(params.fetch(:target_position))
+  end
+
+  def send_custom_event_param?
+    ActiveModel::Type::Boolean.new.cast(params[:send_custom_event])
+  end
+
+  def success_event_detail(selected_order_recording_id:, moving_recording_id:, target_position:, updated_recording_id:)
+    {
+      message: SUCCESS_MESSAGE,
+      status: "success",
+      selected_order_recording_id: selected_order_recording_id,
+      moving_recording_id: moving_recording_id,
+      target_position: target_position,
+      updated_recording_id: updated_recording_id
+    }
   end
 
   def named_page_order_recordings

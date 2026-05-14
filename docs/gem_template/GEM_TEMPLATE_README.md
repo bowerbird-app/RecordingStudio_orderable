@@ -58,8 +58,8 @@ A template for building **Rails mountable engine gems** with PostgreSQL UUID pri
 | Guide | Description |
 |-------|-------------|
 | [Renaming](RENAMING.md) | Instructions for renaming this template gem to your own name. |
-| [Installation](INSTALLING.md) | Step-by-step guide for installing this engine in a host Rails application. |
-| [Configuration](CONFIGURATION.md) | Details on configuring the gem via initializers and environment variables. |
+| [Installation](INSTALLING.md) | Step-by-step guide for installing this engine in a host Rails application, including drag-save notification/event integration. |
+| [Configuration](CONFIGURATION.md) | Details on configuring the gem via initializers and environment variables, including notification/event split for drag-save. |
 | [Private Gems](PRIVATE_GEMS.md) | How to authenticate and access private gem dependencies in Codespaces, local, and production environments. |
 | [Database Migrations](MIGRATIONS.md) | How to generate and manage database migrations for the engine. |
 | [Service Objects](SERVICES.md) | Explanation of the Service Object pattern and Result monad used for business logic. |

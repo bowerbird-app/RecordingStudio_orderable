@@ -1,3 +1,7 @@
+# 0.13.3 (Unreleased)
+
+- Added: Drag-save notification/event contract for orderable UIs. Host apps can now opt into custom event notifications (`recordingstudio:order:updated`) instead of default FlatPack alerts.
+- Updated: Documentation in README, INSTALLING.md, CONFIGURATION.md, and dummy app docs to explain notification/event split and JS integration pattern.
 # Changelog
 
 All notable changes to this project will be documented in this file.

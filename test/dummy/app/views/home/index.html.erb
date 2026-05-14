@@ -80,7 +80,7 @@
         <div>
           <div>
             <% if @folder_recording.present? && @page_order_recording.present? %>
-              <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
+              <div data-controller="order-update-alert page-order-form" data-page-order-form-send-custom-event-value="true" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
                 <%= render FlatPack::Table::Component.new(
                   data: @page_rows,
                   draggable_rows: true,

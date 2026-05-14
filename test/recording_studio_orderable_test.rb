@@ -56,6 +56,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, 'data: { turbo_frame: "page_order_demo" }'
     assert_includes view_source, 'controller: "auto-submit"'
     assert_includes view_source, 'action: "change->auto-submit#submit"'
+    assert_includes view_source, 'data-controller="order-update-alert page-order-form"'
+    assert_includes view_source, 'data-page-order-form-send-custom-event-value="true"'
     refute_includes view_source, 'select_tag :selected_order_recording_id'
     refute_includes view_source, 'onchange: "this.form.requestSubmit()"'
     refute_includes view_source, "grid gap-4 lg:grid-cols-2"
@@ -75,15 +77,25 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
     assert_includes controller_source, "fetch(this.formTarget.action"
+    assert_includes controller_source, "sendCustomEventValue"
+    assert_includes controller_source, "recordingstudio:order:updated"
+    assert_includes controller_source, "dispatchUpdateEvent"
     assert_includes controller_source, "restoreRowOrder"
     assert_includes controller_source, "updateDisplayedPositions"
+    order_update_alert_controller_path = File.expand_path("dummy/app/javascript/controllers/order_update_alert_controller.js", __dir__)
+    order_update_alert_controller_source = File.read(order_update_alert_controller_path)
+    assert_includes order_update_alert_controller_source, "recordingstudio:order:updated"
+    assert_includes order_update_alert_controller_source, "console.log(message)"
     assert_includes auto_submit_controller_source, "requestSubmit"
     assert_includes auto_submit_controller_source, "event.target.form"
     assert_includes home_controller_source, "named_page_order_recordings"
     assert_includes home_controller_source, "selected_page_order_recording"
     refute_includes home_controller_source, "ListRow"
     refute_includes home_controller_source, "@list_rows"
-    assert_includes home_controller_source, "format.json { head :no_content }"
+    assert_includes home_controller_source, 'CUSTOM_EVENT_NAME = "recordingstudio:order:updated"'
+    assert_includes home_controller_source, "send_custom_event_param?"
+    assert_includes home_controller_source, "render_to_string("
+    assert_includes home_controller_source, "notice_html:"
     assert_includes home_controller_source, "render json: { error:"
   end
 

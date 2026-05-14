@@ -48,6 +48,23 @@ That means you can persist partial order state without broad lifecycle observers
 
 Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingStudioOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`. Event logging for these mutations stays opt-in and is disabled by default.
 
+
+## Drag-save notification and event contract
+
+The drag-to-reorder UI supports two notification modes:
+
+- **Default:** After a successful drag-save, a FlatPack alert is rendered in the UI.
+- **Custom event:** If you set <code>send_custom_event: true</code> on the drag-save form, the engine will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like:
+
+  ```js
+  document.addEventListener("recordingstudio:order:updated", (event) => {
+    // event.detail = { message, status, selected_order_recording_id, moving_recording_id, target_position }
+    console.log(event.detail.message)
+  })
+  ```
+
+This allows host apps to integrate their own notification system (toast, snackbar, etc.) or handle order updates however they wish.
+
 Interactive reorder UIs do not have to submit the full visible UUID list. The dummy app now sends a minimal move payload (`moving_recording_id` plus the target position), and `RecordingStudio::RecordingStudioOrder` rebuilds the next explicit snapshot from the current resolved order. That means newly eligible children that were previously only auto-appended on read are folded into the next persisted revision whenever a user performs another explicit move.
 
 `group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.

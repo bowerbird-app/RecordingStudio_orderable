@@ -1,7 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["form", "movingInput", "positionInput", "status"]
+  static targets = ["form", "movingInput", "positionInput", "notification", "status"]
+  static values = { sendCustomEvent: Boolean }
+
+  static customEventName = "recordingstudio:order:updated"
 
   connect() {
     this.previousRowIds = this.rowIds()
@@ -23,6 +26,7 @@ export default class extends Controller {
       this.movingInputTarget.value = move.movingId
       this.positionInputTarget.value = String(move.targetPosition)
       this.updateDisplayedPositions(currentRowIds)
+      this.hideNotification()
       this.hideStatus()
       this.saveMove(previousRowIds)
     })
@@ -38,12 +42,20 @@ export default class extends Controller {
           Accept: "application/json",
           "X-CSRF-Token": this.csrfToken()
         },
-        body: new FormData(this.formTarget),
+        body: this.requestBody(),
         credentials: "same-origin"
       })
 
       if (!response.ok) {
         throw new Error(await this.errorMessage(response))
+      }
+
+      const payload = await response.json()
+
+      if (this.sendCustomEventValue) {
+        this.dispatchUpdateEvent(payload)
+      } else {
+        this.showNotification(payload.notice_html)
       }
     } catch (error) {
       this.restoreRowOrder(previousRowIds)
@@ -117,6 +129,25 @@ export default class extends Controller {
     return document.querySelector("meta[name='csrf-token']")?.content || ""
   }
 
+  requestBody() {
+    const body = new FormData(this.formTarget)
+
+    if (this.sendCustomEventValue) {
+      body.set("send_custom_event", "true")
+    }
+
+    return body
+  }
+
+  dispatchUpdateEvent(payload) {
+    document.dispatchEvent(
+      new CustomEvent(payload.event_name || this.constructor.customEventName, {
+        detail: payload.event_detail,
+        bubbles: true
+      })
+    )
+  }
+
   async errorMessage(response) {
     const contentType = response.headers.get("content-type") || ""
 
@@ -147,5 +178,19 @@ export default class extends Controller {
 
     this.statusTarget.textContent = ""
     this.statusTarget.classList.add("hidden")
+  }
+
+  showNotification(html) {
+    if (!this.hasNotificationTarget) return
+
+    this.notificationTarget.innerHTML = html
+    this.notificationTarget.classList.remove("hidden")
+  }
+
+  hideNotification() {
+    if (!this.hasNotificationTarget) return
+
+    this.notificationTarget.innerHTML = ""
+    this.notificationTarget.classList.add("hidden")
   }
 }

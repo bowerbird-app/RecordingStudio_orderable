@@ -1,3 +1,7 @@
+
+## 0.13.3: Drag-Save Notification/Event Contract
+
+No migration required. Host apps may opt into the new notification/event split for drag-to-reorder UIs by setting `send_custom_event: true`.
 # Migration Notes - Private Gems to Public Gems
 
 ## Changes Made
