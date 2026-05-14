@@ -108,6 +108,61 @@
           <% end %>
         </div>
       </div>
+
+      <div>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Folder page order",
+          subtitle: "Drag rows or use move buttons to update the selected named list. Eligible pages omitted from ordered_recording_ids still append automatically.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+
+        <div class="mt-4">
+          <% if @folder_recording.present? && @page_order_recording.present? %>
+            <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
+              <%= render FlatPack::Table::Component.new(
+                data: @page_rows,
+                draggable_rows: true,
+                row_id: ->(row) { row.recording.id }
+              ) do |table| %>
+                <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
+                <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
+                <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
+                <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
+              <% end %>
+
+              <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
+                            data: { page_order_form_target: "form" },
+                            class: "flex flex-wrap items-center gap-3" do |form| %>
+                <%= form.hidden_field :selected_order_recording_id, value: @page_order_recording.id %>
+                <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
+                <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
+                <%= render FlatPack::Badge::Component.new(
+                  text: "Changes save after each move",
+                  style: :info,
+                  size: :sm
+                ) %>
+                <span class="text-sm text-(--surface-muted-content-color)">
+                  Editing list <strong><%= @page_order.name.presence || "Untitled list" %></strong>
+                  on recording <code><%= @page_order_recording.id %></code>
+                </span>
+              <% end %>
+            </div>
+          <% elsif @folder_recording.present? %>
+            <%= render FlatPack::Alert::Component.new(
+              style: :info,
+              title: "Choose or create a named list",
+              description: "The draggable table appears when a saved page-order list is selected."
+            ) %>
+          <% else %>
+            <%= render FlatPack::Alert::Component.new(
+              style: :warning,
+              title: "Demo data missing",
+              description: "Run bin/rails db:seed to create the Folder + Page ordering example."
+            ) %>
+          <% end %>
+        </div>
+      </div>
     </div>
 
     

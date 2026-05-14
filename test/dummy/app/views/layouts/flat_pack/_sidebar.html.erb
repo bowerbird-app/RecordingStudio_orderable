@@ -17,25 +17,25 @@
 
       <%= render FlatPack::Sidebar::Item::Component.new(
         label: "Setup",
-        href: docs_setup_path,
+        href: main_app.docs_setup_path,
         icon: :wrench_screwdriver
       ) %>
 
       <%= render FlatPack::Sidebar::Item::Component.new(
         label: "Config",
-        href: docs_config_path,
+        href: main_app.docs_config_path,
         icon: :cog_6_tooth
       ) %>
 
       <%= render FlatPack::Sidebar::Item::Component.new(
         label: "Methods",
-        href: docs_methods_path,
+        href: main_app.docs_methods_path,
         icon: :code_bracket
       ) %>
 
       <%= render FlatPack::Sidebar::Item::Component.new(
         label: "Views",
-        href: docs_views_path,
+        href: main_app.docs_views_path,
         icon: :rectangle_stack
       ) %>
 

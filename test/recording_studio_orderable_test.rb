@@ -47,14 +47,18 @@ class RecordingStudioOrderableTest < Minitest::Test
     home_controller_source = File.read(home_controller_path)
 
     assert_includes view_source, "Your named lists"
+    assert_includes view_source, "Folder page order"
     assert_includes view_source, "Ordered List"
     assert_includes view_source, "Add new"
     assert_includes view_source, "FlatPack::Select::Component"
+    assert_includes view_source, "FlatPack::Table::Component"
     assert_includes view_source, "No ordered list yet"
     assert_includes view_source, "an ordered list now."
-    refute_includes view_source, "Folder page order"
-    refute_includes view_source, "Drag rows, use move buttons, then save."
+    assert_includes view_source, "Changes save after each move"
+    assert_includes view_source, "selected_order_recording_id"
     assert_includes helper_source, "Auto-appended eligible page"
+    assert_includes helper_source, "flat-pack--table-sortable#moveUp"
+    assert_includes helper_source, "flat-pack--table-sortable#moveDown"
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
     assert_includes home_controller_source, "named_page_order_recordings"
@@ -68,7 +72,9 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "FlatPack::PageTitle::Component"
     assert_includes view_source, "FlatPack::Badge::Component"
     assert_includes view_source, "Documentation and demo hub"
+    assert_includes view_source, "mounted pages link directly between the home page"
     refute_includes view_source, "FlatPack::Card::Component"
+    refute_includes view_source, "dummy app sidebar"
   end
 
   def test_engine_application_controller_prefers_sidebar_layout_when_available
@@ -79,9 +85,22 @@ class RecordingStudioOrderableTest < Minitest::Test
     controller_source = File.read(controller_path)
 
     assert_includes controller_source, "layout :recording_studio_orderable_layout"
-    assert_includes controller_source, 'return "flat_pack_sidebar" if host_sidebar_layout_available?'
-    assert_includes controller_source, 'Dir.glob(Rails.root.join("app/views/layouts/flat_pack_sidebar.*")).any?'
     assert_includes controller_source, '"application"'
+    refute_includes controller_source, 'flat_pack_sidebar'
+  end
+
+  def test_engine_new_order_list_page_uses_back_only_breadcrumb
+    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_order_lists/new.html.erb", __dir__)
+    view_source = File.read(view_path)
+
+    assert_includes view_source, "FlatPack::Breadcrumb::Component"
+    assert_includes view_source, 'show_back: true'
+    assert_includes view_source, 'back_href: "javascript:window.history.back()"'
+    assert_includes view_source, "@parent_recording_label"
+    refute_includes view_source, "show_home: true"
+    refute_includes view_source, "home_url: main_app.root_path"
+    refute_includes view_source, 'breadcrumb.item(text: "Create ordered list")'
+    refute_includes view_source, "Save a new order list for this recording."
   end
 
   def test_dummy_sidebar_uses_host_app_sign_out_route

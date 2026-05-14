@@ -12,4 +12,28 @@ module ApplicationHelper
       )
     ])
   end
+
+  def page_order_move_buttons
+    safe_join([
+      render(
+        FlatPack::Button::Component.new(
+          text: "Up",
+          style: :ghost,
+          size: :sm,
+          type: "button",
+          data: { action: "click->flat-pack--table-sortable#moveUp" }
+        )
+      ),
+      render(
+        FlatPack::Button::Component.new(
+          text: "Down",
+          style: :ghost,
+          size: :sm,
+          type: "button",
+          class: "ml-2",
+          data: { action: "click->flat-pack--table-sortable#moveDown" }
+        )
+      )
+    ])
+  end
 end

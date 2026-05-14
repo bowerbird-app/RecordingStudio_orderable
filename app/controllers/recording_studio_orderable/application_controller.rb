@@ -14,13 +14,7 @@ module RecordingStudioOrderable
     private
 
     def recording_studio_orderable_layout
-      return "flat_pack_sidebar" if host_sidebar_layout_available?
-
       "application"
-    end
-
-    def host_sidebar_layout_available?
-      Dir.glob(Rails.root.join("app/views/layouts/flat_pack_sidebar.*")).any?
     end
 
     def authenticate_recording_studio_orderable_request!
