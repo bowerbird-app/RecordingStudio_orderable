@@ -16,6 +16,18 @@
       ) %>
 
       <%= render FlatPack::Sidebar::Item::Component.new(
+        label: "Drag & Drop: Custom Event",
+        href: main_app.root_path(demo: "custom_event"),
+        icon: :arrows_up_down
+      ) %>
+
+      <%= render FlatPack::Sidebar::Item::Component.new(
+        label: "Drag & Drop: Flash Message",
+        href: main_app.root_path(demo: "flash_message"),
+        icon: :bell_alert
+      ) %>
+
+      <%= render FlatPack::Sidebar::Item::Component.new(
         label: "Setup",
         href: main_app.docs_setup_path,
         icon: :wrench_screwdriver

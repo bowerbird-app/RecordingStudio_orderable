@@ -8,9 +8,15 @@
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Order Demo",
-    subtitle: "Recording Studio custom ordering demo powered by RecordingStudio::RecordingStudioOrder snapshots.",
+    title: "Order Demo Examples",
+    subtitle: "Compare background drag-save with a custom event against the flash-and-refresh fallback.",
     variant: :h1
+  ) %>
+
+  <%= render FlatPack::Alert::Component.new(
+    style: custom_event_demo?(@demo_variant) ? :info : :success,
+    title: page_order_demo_title(@demo_variant),
+    description: page_order_demo_description(@demo_variant)
   ) %>
 
 
@@ -26,6 +32,7 @@
                     <%= form_with url: root_path, method: :get,
                                   data: { turbo_frame: "page_order_demo" },
                                   class: "flex flex-1 items-end gap-3" do %>
+                      <%= hidden_field_tag :demo, @demo_variant %>
                       <%= render FlatPack::Select::Component.new(
                         name: "selected_order_recording_id",
                         options: @page_order_recordings.map { |recording|
@@ -53,7 +60,7 @@
                       parent_recording_id: @folder_recording.id,
                       group_key: :pages,
                       source_order_recording_id: @page_order_recording&.id,
-                      redirect_to: root_path
+                      redirect_to: root_path(demo: @demo_variant)
                     )
                   ) %>
                 </div>
@@ -67,7 +74,7 @@
                         parent_recording_id: @folder_recording.id,
                         group_key: :pages,
                         source_order_recording_id: @page_order_recording&.id,
-                        redirect_to: root_path
+                        redirect_to: root_path(demo: @demo_variant)
                       ), class: "font-medium underline" %> an ordered list now.
                     <% end
                   ) %>
@@ -80,36 +87,7 @@
         <div>
           <div>
             <% if @folder_recording.present? && @page_order_recording.present? %>
-              <div data-controller="order-update-alert page-order-form" data-page-order-form-send-custom-event-value="true" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
-                <%= render FlatPack::Table::Component.new(
-                  data: @page_rows,
-                  draggable_rows: true,
-                  row_id: ->(row) { row.recording.id }
-                ) do |table| %>
-                  <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
-                  <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
-                  <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
-                  <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
-                <% end %>
-
-                <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
-                              data: { page_order_form_target: "form" },
-                              class: "flex flex-wrap items-center gap-3" do |form| %>
-                  <%= form.hidden_field :selected_order_recording_id, value: @page_order_recording.id %>
-                  <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
-                  <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
-                  <%= render FlatPack::Badge::Component.new(
-                    text: "Changes save after each move",
-                    style: :info,
-                    size: :sm
-                  ) %>
-                  <span data-page-order-form-target="status" class="hidden text-sm text-(--surface-muted-content-color)"></span>
-                  <span class="text-sm text-(--surface-muted-content-color)">
-                    Editing list <strong><%= @page_order.name.presence || "Untitled list" %></strong>
-                    on recording <code><%= @page_order_recording.id %></code>
-                  </span>
-                <% end %>
-              </div>
+              <%= render "page_order_demo", demo_variant: @demo_variant %>
             <% elsif @folder_recording.present? %>
               <%= render FlatPack::Alert::Component.new(
                 style: :info,

@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["form", "movingInput", "positionInput", "notification", "status"]
+  static targets = ["form", "movingInput", "positionInput", "status"]
   static values = { sendCustomEvent: Boolean }
 
   static customEventName = "recordingstudio:order:updated"
@@ -26,7 +26,6 @@ export default class extends Controller {
       this.movingInputTarget.value = move.movingId
       this.positionInputTarget.value = String(move.targetPosition)
       this.updateDisplayedPositions(currentRowIds)
-      this.hideNotification()
       this.hideStatus()
       this.saveMove(previousRowIds)
     })
@@ -55,7 +54,7 @@ export default class extends Controller {
       if (this.sendCustomEventValue) {
         this.dispatchUpdateEvent(payload)
       } else {
-        this.showNotification(payload.notice_html)
+        this.visitRedirect(payload.redirect_url)
       }
     } catch (error) {
       this.restoreRowOrder(previousRowIds)
@@ -180,17 +179,17 @@ export default class extends Controller {
     this.statusTarget.classList.add("hidden")
   }
 
-  showNotification(html) {
-    if (!this.hasNotificationTarget) return
+  visitRedirect(url) {
+    if (!url) {
+      this.showStatus("Couldn't refresh the page after saving.")
+      return
+    }
 
-    this.notificationTarget.innerHTML = html
-    this.notificationTarget.classList.remove("hidden")
-  }
+    if (window.Turbo?.visit) {
+      window.Turbo.visit(url)
+      return
+    }
 
-  hideNotification() {
-    if (!this.hasNotificationTarget) return
-
-    this.notificationTarget.innerHTML = ""
-    this.notificationTarget.classList.add("hidden")
+    window.location.assign(url)
   }
 }

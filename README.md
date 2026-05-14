@@ -53,7 +53,7 @@ Order mutations prefer Recording Studio’s revise-style behavior. Updating an o
 
 The drag-to-reorder UI supports two notification modes:
 
-- **Default:** After a successful drag-save, a FlatPack alert is rendered in the UI.
+- **Default:** After a successful drag-save, the client revisits the page so the standard Rails flash notice can render.
 - **Custom event:** If you set <code>send_custom_event: true</code> on the drag-save form, the engine will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like:
 
   ```js

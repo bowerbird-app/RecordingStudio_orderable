@@ -1,9 +1,11 @@
 class HomeController < ApplicationController
   PageRow = Struct.new(:recording, :position, :explicitly_ordered, keyword_init: true)
   CUSTOM_EVENT_NAME = "recordingstudio:order:updated"
+  DEFAULT_DEMO_VARIANT = "custom_event"
   SUCCESS_MESSAGE = "Saved page order."
 
   before_action :load_workspace_context, only: :index
+  before_action :load_demo_variant, only: %i[index update_page_order]
 
   def index
     @page_order_recordings = named_page_order_recordings
@@ -46,7 +48,7 @@ class HomeController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to root_path(selected_order_recording_id: updated_recording&.id || selected_order_recording.id), notice: SUCCESS_MESSAGE
+        redirect_to page_order_demo_path(updated_recording&.id || selected_order_recording.id), notice: SUCCESS_MESSAGE
       end
       format.json do
         if send_custom_event_param?
@@ -61,10 +63,7 @@ class HomeController < ApplicationController
           }
         else
           render json: {
-            notice_html: render_to_string(
-              partial: "home/page_order_notification",
-              locals: { message: SUCCESS_MESSAGE }
-            )
+            redirect_url: page_order_demo_path(updated_recording&.id || selected_order_recording.id)
           }
         end
       end
@@ -93,6 +92,10 @@ class HomeController < ApplicationController
     @folder = @folder_recording&.recordable
   end
 
+  def load_demo_variant
+    @demo_variant = demo_variant_param
+  end
+
   def moving_recording_id_from_params
     params.fetch(:moving_recording_id).to_s.strip.tap do |recording_id|
       raise ArgumentError, "moving recording id is required" if recording_id.blank?
@@ -105,6 +108,16 @@ class HomeController < ApplicationController
 
   def send_custom_event_param?
     ActiveModel::Type::Boolean.new.cast(params[:send_custom_event])
+  end
+
+  def demo_variant_param
+    return "flash_message" if params[:demo].to_s == "flash_message"
+
+    DEFAULT_DEMO_VARIANT
+  end
+
+  def page_order_demo_path(selected_order_recording_id)
+    root_path(selected_order_recording_id: selected_order_recording_id, demo: demo_variant_param)
   end
 
   def success_event_detail(selected_order_recording_id:, moving_recording_id:, target_position:, updated_recording_id:)

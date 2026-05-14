@@ -1,0 +1,44 @@
+<% send_custom_event = custom_event_demo?(demo_variant) %>
+
+<div
+  data-controller="<%= [("order-update-alert" if send_custom_event), "page-order-form"].compact.join(" ") %>"
+  data-page-order-form-send-custom-event-value="<%= send_custom_event %>"
+  data-action="table:reordered->page-order-form#sync"
+  class="flex flex-col gap-4"
+>
+  <%= render FlatPack::Table::Component.new(
+    data: @page_rows,
+    draggable_rows: true,
+    row_id: ->(row) { row.recording.id }
+  ) do |table| %>
+    <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
+    <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
+    <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
+    <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
+  <% end %>
+
+  <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
+                data: { page_order_form_target: "form" },
+                class: "flex flex-wrap items-center gap-3" do |form| %>
+    <%= form.hidden_field :selected_order_recording_id, value: @page_order_recording.id %>
+    <%= form.hidden_field :demo, value: demo_variant %>
+    <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
+    <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
+    <%= render FlatPack::Badge::Component.new(
+      text: page_order_demo_badge_text(demo_variant),
+      style: send_custom_event ? :info : :success,
+      size: :sm
+    ) %>
+    <span data-page-order-form-target="status" class="hidden text-sm text-(--surface-muted-content-color)"></span>
+    <span class="text-sm text-(--surface-muted-content-color)">
+      <%= page_order_demo_status_copy(demo_variant, @page_order, @page_order_recording) %>
+    </span>
+  <% end %>
+</div>
+
+<div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+  <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+  <div class="p-4">
+    <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"><%= page_order_demo_code_sample(demo_variant) %></code></pre>
+  </div>
+</div>

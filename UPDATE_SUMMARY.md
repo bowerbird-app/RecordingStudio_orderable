@@ -1,9 +1,9 @@
 
 ## Drag-Save Notification/Event Contract
 
-The drag-to-reorder UI now supports both default FlatPack alerts and host-owned notification integration via a custom event (`recordingstudio:order:updated`).
+The drag-to-reorder UI now supports both revisit-based flash notices and host-owned notification integration via a custom event (`recordingstudio:order:updated`).
 
-- Set `send_custom_event: true` to enable event dispatch instead of UI alert.
+- Set `send_custom_event: true` to enable event dispatch instead of the revisit-based flash flow.
 - See updated docs in README, INSTALLING.md, CONFIGURATION.md, and dummy app for usage and integration examples.
 # RecordingStudio Gem Update Summary
 

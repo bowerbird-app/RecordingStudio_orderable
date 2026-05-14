@@ -94,7 +94,7 @@ end</code></pre>
           <li>
             <strong>Notification integration:</strong> The drag-save UI supports two notification modes:
             <ul class="list-disc ml-5">
-              <li>By default, a FlatPack alert is rendered after each successful drag-save.</li>
+              <li>By default, the client revisits the page after each successful drag-save so the standard Rails flash notice can render.</li>
               <li>To opt into host-owned notifications, set <code>send_custom_event: true</code> on the drag-save form. This will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like <code>{ message, status, selected_order_recording_id, moving_recording_id, target_position }</code>.</li>
               <li>See the dummy app for a working example that logs the event payload to <code>console.log</code>.</li>
             </ul>

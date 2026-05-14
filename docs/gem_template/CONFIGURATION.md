@@ -35,7 +35,7 @@ This will:
 | `api_key`               | String  | `ENV["GEM_TEMPLATE_API_KEY"]`    | API key for external service integration.  |
 | `enable_feature_x`      | Boolean | `false`                          | Toggle optional feature X.                 |
 | `timeout`               | Integer | `5`                              | Timeout (seconds) for external calls.      |
-| `send_custom_event`     | Boolean | `false`                          | If true, drag-save will dispatch a custom event instead of showing a FlatPack alert. |
+| `send_custom_event`     | Boolean | `false`                          | If true, drag-save will dispatch a custom event instead of revisiting the page for a flash notice. |
 
 ---
 
@@ -56,7 +56,7 @@ end
 
 ### Drag-Save Notification/Event Split
 
-To control notification behavior for drag-to-reorder UIs, set <code>send_custom_event: true</code> in your configuration or on the relevant form. When enabled, the engine will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> after a successful save, allowing you to handle notifications in your own JavaScript. Otherwise, a FlatPack alert is rendered by default.
+To control notification behavior for drag-to-reorder UIs, set <code>send_custom_event: true</code> in your configuration or on the relevant form. When enabled, the engine will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> after a successful save, allowing you to handle notifications in your own JavaScript. Otherwise, the client revisits the page so the standard Rails flash notice can render.
 
 Example JS integration:
 
