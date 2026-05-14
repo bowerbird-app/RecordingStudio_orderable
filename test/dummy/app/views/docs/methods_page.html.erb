@@ -16,97 +16,116 @@
     variant: :h1
   ) %>
 
-  <div class="grid gap-6 lg:grid-cols-3">
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "OrderableRecordable",
-        subtitle: "Parent recordable opt-in and convenience helpers.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li><code>recording_studio_order_group</code></li>
-          <li><code>recording_orders</code></li>
-          <li><code>recording_order_for</code></li>
-          <li><code>find_or_create_recording_order!</code></li>
-          <li><code>ordered_children_for</code></li>
-        </ul>
-      </div>
-    </div>
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "OrderableRecordable",
+      subtitle: "Parent recordable opt-in and convenience helpers.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
     <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Recording extensions",
-        subtitle: "APIs added to RecordingStudio::Recording.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li><code>recording_orders</code></li>
-          <li><code>named_recording_orders</code></li>
-          <li><code>recording_order_for</code></li>
-          <li><code>named_recording_order_for</code></li>
-          <li><code>ordered_children_for</code></li>
-        </ul>
-      </div>
-    </div>
-
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "RecordingOrder mutations",
-        subtitle: "Explicit order snapshot helpers.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li><code>include_child!</code></li>
-          <li><code>remove_child!</code></li>
-          <li><code>move_before!</code> and <code>move_after!</code></li>
-          <li><code>move_to_start!</code> and <code>move_to_end!</code></li>
-          <li><code>move_to_position!</code>, <code>reorder!</code>, and <code>cleanup_missing_children!</code></li>
-        </ul>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">recording_studio_order_group
+recording_orders
+recording_order_for
+find_or_create_recording_order!
+ordered_children_for</code></pre>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Lookup example",
-        subtitle: "Resolve the current order from a parent recording or recordable.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Recording extensions",
+      subtitle: "APIs added to RecordingStudio::Recording.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
-      <div>
-        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>folder_recording = folder.current_recording
+    <div>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">recording_orders
+named_recording_orders
+recording_order_for
+named_recording_order_for
+ordered_children_for</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "RecordingOrder mutations",
+      subtitle: "Explicit order snapshot helpers.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
+
+    <div>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">include_child!
+remove_child!
+move_before!
+move_after!
+move_to_start!
+move_to_end!
+move_to_position!
+reorder!
+cleanup_missing_children!</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Lookup example",
+      subtitle: "Resolve the current order from a parent recording or recordable.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
+
+    <div>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording = folder.current_recording
 page_order = folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
 
 folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Mutation example",
+      subtitle: "Persist the next explicit order snapshot after a move.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
     <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Mutation example",
-        subtitle: "Persist the next explicit order snapshot after a move.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>page_order.move_after!(
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.move_after!(
   moving: page_two_recording,
   after: page_one_recording,
   actor: current_user,
   metadata: { source: "drag_drop" }
 )</code></pre>
+        </div>
       </div>
     </div>
   </div>

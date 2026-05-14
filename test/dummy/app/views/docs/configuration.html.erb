@@ -22,40 +22,41 @@
     <%= render FlatPack::Badge::Component.new(text: "Authentication: optional hook", style: :success, size: :sm) %>
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Available options",
-        subtitle: "All supported configuration keys from the engine configuration object.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Available options",
+      subtitle: "All supported configuration keys from the engine configuration object.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li><code>log_order_events</code> toggles semantic order-event logging. Default: <code>false</code>.</li>
-          <li><code>event_action_prefix</code> prefixes logged action names. Default: <code>"recording_order"</code>.</li>
-          <li><code>authenticate_controller</code> receives the current controller and can enforce host auth.</li>
-          <li><code>current_owner_resolver</code> receives the current controller and returns the owner for owner-scoped lists.</li>
-        </ul>
+    <div>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">log_order_events        # semantic order-event logging, default: false
+event_action_prefix    # action name prefix, default: "recording_order"
+authenticate_controller
+current_owner_resolver</code></pre>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "When to configure",
+      subtitle: "Recommended initializer responsibilities.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
     <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "When to configure",
-        subtitle: "Recommended initializer responsibilities.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Set auth and owner hooks in the generated initializer so mounted UI requests stay inside host app rules.</li>
-          <li>Turn on event logging only if your Recording Studio event stream needs addon-specific audit entries.</li>
-          <li>Keep the prefix stable once downstream reporting depends on those action names.</li>
-        </ul>
-      </div>
+      <ul class="space-y-3 text-sm leading-6">
+        <li>Set auth and owner hooks in the generated initializer so mounted UI requests stay inside host app rules.</li>
+        <li>Turn on event logging only if your Recording Studio event stream needs addon-specific audit entries.</li>
+        <li>Keep the prefix stable once downstream reporting depends on those action names.</li>
+      </ul>
     </div>
   </div>
 
@@ -68,12 +69,17 @@
     ) %>
 
     <div>
-      <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>RecordingStudioOrderable.configure do |config|
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
   config.authenticate_controller = -&gt;(controller) { controller.authenticate_user! }
   config.current_owner_resolver = -&gt;(controller) { controller.current_user }
   config.log_order_events = false
   config.event_action_prefix = "recording_order"
 end</code></pre>
+        </div>
+      </div>
     </div>
   </div>
 </div>

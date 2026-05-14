@@ -22,85 +22,89 @@
     description: "Install this addon into a Rails app that already has Recording Studio mounted and its recordable types registered."
   ) %>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Required before install",
-        subtitle: "Baseline host app expectations.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>A Rails app with Recording Studio already mounted and working.</li>
-          <li>Recordable parent and child models registered the same way as the rest of your Recording Studio setup.</li>
-          <li>A parent recordable that will opt into at least one named order group.</li>
-        </ul>
-      </div>
-    </div>
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Required before install",
+      subtitle: "Baseline host app expectations.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
     <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Install flow",
-        subtitle: "Keep setup narrow and explicit.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ol class="space-y-3 text-sm leading-6 list-decimal pl-5">
-          <li>Add the gem and run <code>bundle install</code>.</li>
-          <li>Run <code>rails generate recording_studio_orderable:install</code>.</li>
-          <li>Run <code>rails generate recording_studio_orderable:migrations</code>.</li>
-          <li>Run <code>bin/rails db:migrate</code>.</li>
-          <li>Opt parent recordables into one or more order groups.</li>
-        </ol>
-      </div>
+      <ul class="space-y-3 text-sm leading-6">
+        <li>A Rails app with Recording Studio already mounted and working.</li>
+        <li>Recordable parent and child models registered the same way as the rest of your Recording Studio setup.</li>
+        <li>A parent recordable that will opt into at least one named order group.</li>
+      </ul>
     </div>
   </div>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Parent opt-in example",
-        subtitle: "Use the DSL on the parent recordable that owns the ordered children.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Install flow",
+      subtitle: "Keep setup narrow and explicit.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
-      <div>
-        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>class Folder &lt; ApplicationRecord
+    <div>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">bundle install
+rails generate recording_studio_orderable:install
+rails generate recording_studio_orderable:migrations
+bin/rails db:migrate</code></pre>
+        </div>
+      </div>
+      <p class="mt-3 text-sm leading-6">Opt parent recordables into one or more order groups after installation.</p>
+    </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Parent opt-in example",
+      subtitle: "Use the DSL on the parent recordable that owns the ordered children.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
+
+    <div>
+      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
+        <div class="p-4">
+          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">class Folder &lt; ApplicationRecord
   include RecordingStudioOrderable::OrderableRecordable
 
   recording_studio_order_group :pages, allows: ["Page"]
 end</code></pre>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Demo app verification",
+      subtitle: "The included dummy app shows the expected host-owned docs flow, including drag-save notifications.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
 
     <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Demo app verification",
-        subtitle: "The included dummy app shows the expected host-owned docs flow, including drag-save notifications.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Launch the dummy app and sign in as the seeded admin user.</li>
-          <li>Use the sidebar links to open the local docs pages and the mounted addon home page.</li>
-          <li>Use the folder demo to confirm owner-scoped named lists and drag-to-reorder work after installation.</li>
-          <li>
-            <strong>Notification integration:</strong> The drag-save UI supports two notification modes:
-            <ul class="list-disc ml-5">
-              <li>By default, the client revisits the page after each successful drag-save so the standard Rails flash notice can render.</li>
-              <li>To opt into host-owned notifications, set <code>send_custom_event: true</code> on the drag-save form. This will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like <code>{ message, status, selected_order_recording_id, moving_recording_id, target_position }</code>.</li>
-              <li>See the dummy app for a working example that logs the event payload to <code>console.log</code>.</li>
-            </ul>
-          </li>
-        </ul>
-      </div>
+      <ul class="space-y-3 text-sm leading-6">
+        <li>Launch the dummy app and sign in as the seeded admin user.</li>
+        <li>Use the sidebar links to open the local docs pages and the mounted addon home page.</li>
+        <li>Use the folder demo to confirm owner-scoped named lists and drag-to-reorder work after installation.</li>
+        <li>
+          <strong>Notification integration:</strong> The drag-save UI supports two notification modes:
+          <ul class="list-disc ml-5">
+            <li>By default, the client revisits the page after each successful drag-save so the standard Rails flash notice can render.</li>
+            <li>To opt into host-owned notifications, set <code>send_custom_event: true</code> on the drag-save form. This will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like <code>{ message, status, selected_order_recording_id, moving_recording_id, target_position }</code>.</li>
+            <li>See the dummy app for a working example that logs the event payload to <code>console.log</code>.</li>
+          </ul>
+        </li>
+      </ul>
     </div>
   </div>
 </div>
