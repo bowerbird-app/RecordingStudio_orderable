@@ -110,14 +110,7 @@
       </div>
 
       <div>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Folder page order",
-          subtitle: "Drag rows or use move buttons to update the selected named list. Eligible pages omitted from ordered_recording_ids still append automatically.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-
-        <div class="mt-4">
+        <div>
           <% if @folder_recording.present? && @page_order_recording.present? %>
             <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
               <%= render FlatPack::Table::Component.new(
