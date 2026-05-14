@@ -25,7 +25,7 @@ class RecordingOrderManagerTest < Minitest::Test
                                     Time.utc(2024, 1, 3))
     @order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil,
                                                                                         %w[page-2 missing-id page-1])
-    @order_recording = FakeRecording.new("order-1", "RecordingStudio::RecordingOrder", @order, Time.utc(2024, 1, 4),
+    @order_recording = FakeRecording.new("order-1", "RecordingStudio::RecordingStudioOrder", @order, Time.utc(2024, 1, 4),
                                          Time.utc(2024, 1, 4))
     @owner = FakeOwner.new("user-1")
     @scoped_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new(
@@ -34,7 +34,7 @@ class RecordingOrderManagerTest < Minitest::Test
       "user-1",
       ["page-3"]
     )
-    @scoped_order_recording = FakeRecording.new("order-2", "RecordingStudio::RecordingOrder", @scoped_order,
+    @scoped_order_recording = FakeRecording.new("order-2", "RecordingStudio::RecordingStudioOrder", @scoped_order,
                                                 Time.utc(2024, 1, 5), Time.utc(2024, 1, 5))
     @parent_recording = FakeParentRecording.new("folder-1", FakeFolder.new,
                                                 [@page_one, @page_two, @page_three, @order_recording])
@@ -94,7 +94,7 @@ class RecordingOrderManagerTest < Minitest::Test
       ["page-1"],
       "Johnny's list"
     )
-    named_order_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
+    named_order_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingStudioOrder", named_order,
                                               Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
     @parent_recording.child_recordings << @scoped_order_recording
     @parent_recording.child_recordings << named_order_recording
@@ -124,11 +124,11 @@ class RecordingOrderManagerTest < Minitest::Test
       "Johnny's list"
     )
     @parent_recording.child_recordings << @scoped_order_recording
-    @parent_recording.child_recordings << FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
+    @parent_recording.child_recordings << FakeRecording.new("order-3", "RecordingStudio::RecordingStudioOrder", named_order,
                                                             Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
     @parent_recording.child_recordings << FakeRecording.new(
       "order-4",
-      "RecordingStudio::RecordingOrder",
+      "RecordingStudio::RecordingStudioOrder",
       second_named_order,
       Time.utc(2024, 1, 7),
       Time.utc(2024, 1, 7)
@@ -151,7 +151,7 @@ class RecordingOrderManagerTest < Minitest::Test
       ["page-3"],
       "Johnny's list"
     )
-    named_order_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", named_order,
+    named_order_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingStudioOrder", named_order,
                                               Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
     @parent_recording.child_recordings << named_order_recording
 
@@ -174,7 +174,7 @@ class RecordingOrderManagerTest < Minitest::Test
       %w[page-3 page-1],
       "Source list"
     )
-    source_order_recording = FakeRecording.new("order-source", "RecordingStudio::RecordingOrder", source_order,
+    source_order_recording = FakeRecording.new("order-source", "RecordingStudio::RecordingStudioOrder", source_order,
                                                Time.utc(2024, 1, 5), Time.utc(2024, 1, 5))
     parent_recording.child_recordings << source_order_recording
     recorded_arguments = nil
@@ -217,7 +217,7 @@ class RecordingOrderManagerTest < Minitest::Test
 
   def test_duplicate_matching_orders_raise_an_error
     duplicate_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil, [])
-    duplicate_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingOrder", duplicate_order,
+    duplicate_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingStudioOrder", duplicate_order,
                                             Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
     @parent_recording.child_recordings << duplicate_recording
 
@@ -225,7 +225,7 @@ class RecordingOrderManagerTest < Minitest::Test
       RecordingStudioOrderable::RecordingOrderManager.recording_order_for(@parent_recording, :pages)
     end
 
-    assert_includes error.message, "Multiple RecordingOrder children exist"
+    assert_includes error.message, "Multiple RecordingStudioOrder children exist"
   end
 
   def test_recording_order_recordings_filters_by_scope
@@ -311,8 +311,8 @@ class RecordingOrderManagerTest < Minitest::Test
   private
 
   def with_temporary_recording_order_class
-    had_constant = RecordingStudio.const_defined?(:RecordingOrder, false)
-    original_constant = RecordingStudio.const_get(:RecordingOrder) if had_constant
+    had_constant = RecordingStudio.const_defined?(:RecordingStudioOrder, false)
+    original_constant = RecordingStudio.const_get(:RecordingStudioOrder) if had_constant
     temporary_class = Class.new do
       attr_accessor :parent_recording_id,
                     :group_key,
@@ -330,11 +330,11 @@ class RecordingOrderManagerTest < Minitest::Test
       end
     end
 
-    RecordingStudio.send(:remove_const, :RecordingOrder) if had_constant
-    RecordingStudio.const_set(:RecordingOrder, temporary_class)
+    RecordingStudio.send(:remove_const, :RecordingStudioOrder) if had_constant
+    RecordingStudio.const_set(:RecordingStudioOrder, temporary_class)
     yield
   ensure
-    RecordingStudio.send(:remove_const, :RecordingOrder) if RecordingStudio.const_defined?(:RecordingOrder, false)
-    RecordingStudio.const_set(:RecordingOrder, original_constant) if had_constant
+    RecordingStudio.send(:remove_const, :RecordingStudioOrder) if RecordingStudio.const_defined?(:RecordingStudioOrder, false)
+    RecordingStudio.const_set(:RecordingStudioOrder, original_constant) if had_constant
   end
 end

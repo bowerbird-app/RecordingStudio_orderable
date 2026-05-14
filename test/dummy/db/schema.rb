@@ -78,7 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_233016) do
     t.index ["root_recording_id"], name: "index_rs_recordings_on_root_recording"
   end
 
-  create_table "recording_studio_recording_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "recording_studio_recording_studio_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "group_key", null: false
     t.string "name"
@@ -89,7 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_233016) do
     t.datetime "updated_at", null: false
     t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_scope_lookup"
     t.index ["parent_recording_id", "group_key"], name: "index_rs_recording_orders_on_parent_and_group"
-    t.index ["parent_recording_id"], name: "index_recording_studio_recording_orders_on_parent_recording_id"
+    t.index ["parent_recording_id"], name: "index_recording_studio_recording_studio_orders_on_parent_recording_id"
   end
 
   create_table "folders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

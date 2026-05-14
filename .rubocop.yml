@@ -21,14 +21,14 @@ Metrics/ClassLength:
   Exclude:
     - 'test/**/*'
     - 'lib/gem_template/hooks.rb'
-    - 'app/models/recording_studio/recording_order.rb'
+    - 'app/models/recording_studio/recording_studio_order.rb'
     - 'lib/recording_studio_orderable/recording_order_manager.rb'
 
 Metrics/MethodLength:
   Exclude:
     - 'test/**/*'
     - 'lib/generators/**/*'
-    - 'app/models/recording_studio/recording_order.rb'
+    - 'app/models/recording_studio/recording_studio_order.rb'
     - 'db/migrate/**/*'
     - 'lib/recording_studio_orderable/recording_order_manager.rb'
 
@@ -36,17 +36,17 @@ Metrics/AbcSize:
   Exclude:
     - 'test/**/*'
     - 'lib/generators/**/*'
-    - 'app/models/recording_studio/recording_order.rb'
+    - 'app/models/recording_studio/recording_studio_order.rb'
     - 'lib/recording_studio_orderable/recording_order_manager.rb'
 
 Metrics/CyclomaticComplexity:
   Exclude:
-    - 'app/models/recording_studio/recording_order.rb'
+    - 'app/models/recording_studio/recording_studio_order.rb'
     - 'lib/recording_studio_orderable/recording_order_manager.rb'
 
 Metrics/PerceivedComplexity:
   Exclude:
-    - 'app/models/recording_studio/recording_order.rb'
+    - 'app/models/recording_studio/recording_studio_order.rb'
 
 Metrics/ParameterLists:
   Exclude:

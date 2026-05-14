@@ -2,7 +2,7 @@
 
 require "test_helper"
 require "active_record"
-require_relative "../app/models/recording_studio/recording_order"
+require_relative "../app/models/recording_studio/recording_studio_order"
 
 class RecordingOrderTest < Minitest::Test
   FakeRecording = Struct.new(:id)
@@ -488,7 +488,7 @@ class RecordingOrderTest < Minitest::Test
     end
 
     assert_includes errors.entries, [:ordered_recording_ids, "must reference existing RecordingStudio::Recording rows"]
-    assert_includes errors.entries, [:ordered_recording_ids, "cannot include the RecordingOrder recording itself"]
+    assert_includes errors.entries, [:ordered_recording_ids, "cannot include the RecordingStudioOrder recording itself"]
     assert_includes(
       errors.entries,
       [:ordered_recording_ids, "must only include direct children of the same parent recording"]
@@ -511,7 +511,7 @@ class RecordingOrderTest < Minitest::Test
       recording_id_for_validation: recording_id_for_validation
     }
 
-    RecordingStudio::RecordingOrder.allocate.tap do |order|
+    RecordingStudio::RecordingStudioOrder.allocate.tap do |order|
       state.each_key do |attribute|
         order.define_singleton_method(attribute) { state[attribute] }
         order.define_singleton_method("#{attribute}=") { |value| state[attribute] = value }

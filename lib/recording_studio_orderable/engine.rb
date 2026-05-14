@@ -20,7 +20,7 @@ module RecordingStudioOrderable
       config.to_prepare do
         next unless defined?(RecordingStudio)
 
-        RecordingStudio.register_recordable_type("RecordingStudio::RecordingOrder")
+        RecordingStudio.register_recordable_type("RecordingStudio::RecordingStudioOrder")
 
         next unless defined?(RecordingStudio::Recording)
 

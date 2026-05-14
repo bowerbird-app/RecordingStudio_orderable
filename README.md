@@ -2,7 +2,7 @@
 
 RecordingStudioOrderable adds opt-in ordered child collections to Recording Studio parent recordables.
 
-It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself and is identified by a `(parent_recording, group_key, owner_type, owner_id)` scope.
+It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingStudioOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself and is identified by a `(parent_recording, group_key, owner_type, owner_id)` scope.
 
 ## What it provides
 
@@ -22,7 +22,7 @@ It keeps `RecordingStudio::Recording` lightweight by storing order state on an e
   - `named_recording_order_recording_for(order_recording_id, group_key, owner: nil)`
   - `children_for_order_group`
   - `ordered_children_for(group_key, owner: nil)`
-- `RecordingStudio::RecordingOrder` mutation helpers:
+- `RecordingStudio::RecordingStudioOrder` mutation helpers:
   - `ordered_child_recordings`
   - `normalized_ordered_recording_ids`
   - `include_child!`
@@ -46,9 +46,9 @@ That means you can persist partial order state without broad lifecycle observers
 
 ## Write behavior
 
-Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`. Event logging for these mutations stays opt-in and is disabled by default.
+Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingStudioOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`. Event logging for these mutations stays opt-in and is disabled by default.
 
-Interactive reorder UIs do not have to submit the full visible UUID list. The dummy app now sends a minimal move payload (`moving_recording_id` plus the target position), and `RecordingStudio::RecordingOrder` rebuilds the next explicit snapshot from the current resolved order. That means newly eligible children that were previously only auto-appended on read are folded into the next persisted revision whenever a user performs another explicit move.
+Interactive reorder UIs do not have to submit the full visible UUID list. The dummy app now sends a minimal move payload (`moving_recording_id` plus the target position), and `RecordingStudio::RecordingStudioOrder` rebuilds the next explicit snapshot from the current resolved order. That means newly eligible children that were previously only auto-appended on read are folded into the next persisted revision whenever a user performs another explicit move.
 
 `group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.
 

@@ -50,7 +50,7 @@ module RecordingStudioOrderable
 
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
         owner_type, owner_id = owner_attributes(owner)
-        order_record = RecordingStudio::RecordingOrder.new(
+        order_record = RecordingStudio::RecordingStudioOrder.new(
           parent_recording_id: parent_recording.id,
           group_key: resolved_group_key,
           name: name,
@@ -85,7 +85,7 @@ module RecordingStudioOrderable
                           ordered_recording_ids
                         end
 
-        order_record = RecordingStudio::RecordingOrder.new(
+        order_record = RecordingStudio::RecordingStudioOrder.new(
           parent_recording_id: parent_recording.id,
           group_key: resolved_group_key,
           name: name,
@@ -108,7 +108,7 @@ module RecordingStudioOrderable
         allowed_types = resolve_group_definition!(parent_recording, group_key).fetch(:allows)
         eligible_children = Array(parent_recording.child_recordings).select do |child_recording|
           allowed_types.include?(child_recording.recordable_type) &&
-            child_recording.recordable_type != "RecordingStudio::RecordingOrder"
+            child_recording.recordable_type != "RecordingStudio::RecordingStudioOrder"
         end
 
         eligible_children.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
@@ -139,7 +139,7 @@ module RecordingStudioOrderable
         owner_type, owner_id = owner_attributes(owner)
 
         Array(parent_recording.child_recordings)
-          .select { |child_recording| child_recording.recordable_type == "RecordingStudio::RecordingOrder" }
+          .select { |child_recording| child_recording.recordable_type == "RecordingStudio::RecordingStudioOrder" }
           .select do |child_recording|
             order_record = child_recording.recordable
             next false unless order_record
@@ -226,7 +226,7 @@ module RecordingStudioOrderable
       def raise_duplicate_order!(parent_recording, group_key, owner, matches)
         owner_type, owner_id = owner_attributes(owner)
         raise DuplicateOrderError,
-              "Multiple RecordingOrder children exist for parent=#{parent_recording.id}, " \
+              "Multiple RecordingStudioOrder children exist for parent=#{parent_recording.id}, " \
               "group_key=#{group_key.inspect}, " \
               "owner_type=#{owner_type.inspect}, owner_id=#{owner_id.inspect} (#{matches.size} found)"
       end

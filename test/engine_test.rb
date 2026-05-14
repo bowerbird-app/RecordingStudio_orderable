@@ -93,7 +93,7 @@ class EngineTest < Minitest::Test
       end
     end
 
-    assert_equal ["RecordingStudio::RecordingOrder"], register_calls
+    assert_equal ["RecordingStudio::RecordingStudioOrder"], register_calls
     assert_equal [RecordingStudioOrderable::RecordingExtensions], include_calls
   end
 

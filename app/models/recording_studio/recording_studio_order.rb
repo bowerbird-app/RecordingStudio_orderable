@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 module RecordingStudio
-  class RecordingOrder < ActiveRecord::Base
-    self.table_name = "recording_studio_recording_orders"
-
+  class RecordingStudioOrder < ActiveRecord::Base
     UUID_FORMAT = /\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i
 
     attr_accessor :parent_recording_for_validation, :recording_id_for_validation
@@ -316,7 +314,7 @@ module RecordingStudio
         end
 
         if own_recording_ids.include?(child_recording.id.to_s)
-          errors.add(:ordered_recording_ids, "cannot include the RecordingOrder recording itself")
+          errors.add(:ordered_recording_ids, "cannot include the RecordingStudioOrder recording itself")
         end
 
         if child_recording.parent_recording_id != resolved_parent_recording.id
@@ -347,4 +345,5 @@ module RecordingStudio
     alias reorder_recordings! reorder!
     alias cleanup! cleanup_missing_children!
   end
+
 end
