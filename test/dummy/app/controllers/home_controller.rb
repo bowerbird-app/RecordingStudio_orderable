@@ -42,11 +42,22 @@ class HomeController < ApplicationController
       [recording.updated_at, recording.created_at, recording.id.to_s]
     end
 
-    redirect_to root_path(selected_order_recording_id: updated_recording&.id || selected_order_recording.id), notice: "Saved page order."
+    respond_to do |format|
+      format.html do
+        redirect_to root_path(selected_order_recording_id: updated_recording&.id || selected_order_recording.id), notice: "Saved page order."
+      end
+      format.json { head :no_content }
+    end
   rescue ActiveRecord::RecordNotFound
-    redirect_to root_path, alert: "Named list not found."
+    respond_to do |format|
+      format.html { redirect_to root_path, alert: "Named list not found." }
+      format.json { render json: { error: "Named list not found." }, status: :not_found }
+    end
   rescue RecordingStudioOrderable::RecordingOrderManager::ConfigurationError, ArgumentError => e
-    redirect_to root_path, alert: e.message
+    respond_to do |format|
+      format.html { redirect_to root_path, alert: e.message }
+      format.json { render json: { error: e.message }, status: :unprocessable_entity }
+    end
   end
 
   private

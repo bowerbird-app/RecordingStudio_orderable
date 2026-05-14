@@ -103,6 +103,7 @@
                     style: :info,
                     size: :sm
                   ) %>
+                  <span data-page-order-form-target="status" class="hidden text-sm text-(--surface-muted-content-color)"></span>
                   <span class="text-sm text-(--surface-muted-content-color)">
                     Editing list <strong><%= @page_order.name.presence || "Untitled list" %></strong>
                     on recording <code><%= @page_order_recording.id %></code>

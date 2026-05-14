@@ -1,16 +1,20 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["form", "movingInput", "positionInput"]
+  static targets = ["form", "movingInput", "positionInput", "status"]
 
   connect() {
     this.previousRowIds = this.rowIds()
+    this.saving = false
   }
 
   sync() {
     requestAnimationFrame(() => {
+      if (this.saving) return
+
+      const previousRowIds = [...this.previousRowIds]
       const currentRowIds = this.rowIds()
-      const move = this.detectSingleMove(this.previousRowIds, currentRowIds)
+      const move = this.detectSingleMove(previousRowIds, currentRowIds)
 
       this.previousRowIds = currentRowIds
 
@@ -18,8 +22,36 @@ export default class extends Controller {
 
       this.movingInputTarget.value = move.movingId
       this.positionInputTarget.value = String(move.targetPosition)
-      this.formTarget.requestSubmit()
+      this.updateDisplayedPositions(currentRowIds)
+      this.hideStatus()
+      this.saveMove(previousRowIds)
     })
+  }
+
+  async saveMove(previousRowIds) {
+    this.setSaving(true)
+
+    try {
+      const response = await fetch(this.formTarget.action, {
+        method: (this.formTarget.method || "post").toUpperCase(),
+        headers: {
+          Accept: "application/json",
+          "X-CSRF-Token": this.csrfToken()
+        },
+        body: new FormData(this.formTarget),
+        credentials: "same-origin"
+      })
+
+      if (!response.ok) {
+        throw new Error(await this.errorMessage(response))
+      }
+    } catch (error) {
+      this.restoreRowOrder(previousRowIds)
+      this.previousRowIds = previousRowIds
+      this.showStatus(error.message)
+    } finally {
+      this.setSaving(false)
+    }
   }
 
   rowIds() {
@@ -48,5 +80,72 @@ export default class extends Controller {
 
   sameOrder(left, right) {
     return left.length === right.length && left.every((value, index) => value === right[index])
+  }
+
+  restoreRowOrder(rowIds) {
+    const tbody = this.element.querySelector("tbody")
+    if (!tbody) return
+
+    const rowsById = new Map(
+      Array.from(tbody.querySelectorAll("tr[data-id]"))
+        .map((row) => [row.dataset.id, row])
+    )
+
+    rowIds.forEach((rowId) => {
+      const row = rowsById.get(rowId)
+      if (row) tbody.appendChild(row)
+    })
+
+    this.updateDisplayedPositions(rowIds)
+  }
+
+  updateDisplayedPositions(rowIds) {
+    const tbody = this.element.querySelector("tbody")
+    if (!tbody) return
+
+    rowIds.forEach((rowId, index) => {
+      const row = tbody.querySelector(`tr[data-id="${rowId}"]`)
+      const firstCell = row?.querySelector("td")
+
+      if (firstCell) {
+        firstCell.textContent = String(index + 1)
+      }
+    })
+  }
+
+  csrfToken() {
+    return document.querySelector("meta[name='csrf-token']")?.content || ""
+  }
+
+  async errorMessage(response) {
+    const contentType = response.headers.get("content-type") || ""
+
+    if (contentType.includes("application/json")) {
+      const payload = await response.json()
+      return payload.error || "Couldn't save page order."
+    }
+
+    return "Couldn't save page order."
+  }
+
+  setSaving(saving) {
+    this.saving = saving
+    this.element.classList.toggle("pointer-events-none", saving)
+    this.element.classList.toggle("opacity-75", saving)
+    this.element.setAttribute("aria-busy", saving ? "true" : "false")
+  }
+
+  showStatus(message) {
+    if (!this.hasStatusTarget) return
+
+    this.statusTarget.textContent = message
+    this.statusTarget.classList.remove("hidden")
+  }
+
+  hideStatus() {
+    if (!this.hasStatusTarget) return
+
+    this.statusTarget.textContent = ""
+    this.statusTarget.classList.add("hidden")
   }
 }

@@ -63,6 +63,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "No ordered list yet"
     assert_includes view_source, "an ordered list now."
     assert_includes view_source, "Changes save after each move"
+    assert_includes view_source, 'data-page-order-form-target="status"'
     assert_includes view_source, "selected_order_recording_id"
     refute_includes view_source, "Your named lists"
     refute_includes view_source, "Each list is owner-scoped to the signed-in user"
@@ -73,12 +74,17 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes helper_source, "flat-pack--table-sortable#moveDown"
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
+    assert_includes controller_source, "fetch(this.formTarget.action"
+    assert_includes controller_source, "restoreRowOrder"
+    assert_includes controller_source, "updateDisplayedPositions"
     assert_includes auto_submit_controller_source, "requestSubmit"
     assert_includes auto_submit_controller_source, "event.target.form"
     assert_includes home_controller_source, "named_page_order_recordings"
     assert_includes home_controller_source, "selected_page_order_recording"
     refute_includes home_controller_source, "ListRow"
     refute_includes home_controller_source, "@list_rows"
+    assert_includes home_controller_source, "format.json { head :no_content }"
+    assert_includes home_controller_source, "render json: { error:"
   end
 
   def test_engine_home_page_uses_flatpack_components
