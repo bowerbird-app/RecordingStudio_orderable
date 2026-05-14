@@ -46,13 +46,14 @@ class RecordingStudioOrderableTest < Minitest::Test
     home_controller_path = File.expand_path("dummy/app/controllers/home_controller.rb", __dir__)
     home_controller_source = File.read(home_controller_path)
 
-    assert_includes view_source, "Folder page order"
     assert_includes view_source, "Your named lists"
-    assert_includes view_source, "FlatPack::Table::Component"
-    assert_includes view_source, "Create new list"
-    assert_includes view_source, "moving_recording_id"
-    assert_includes view_source, "target_position"
-    assert_includes view_source, "selected_order_recording_id"
+    assert_includes view_source, "Ordered List"
+    assert_includes view_source, "Add new"
+    assert_includes view_source, "FlatPack::Select::Component"
+    assert_includes view_source, "No ordered list yet"
+    assert_includes view_source, "an ordered list now."
+    refute_includes view_source, "Folder page order"
+    refute_includes view_source, "Drag rows, use move buttons, then save."
     assert_includes helper_source, "Auto-appended eligible page"
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
