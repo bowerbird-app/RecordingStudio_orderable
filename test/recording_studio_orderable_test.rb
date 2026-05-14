@@ -65,8 +65,9 @@ class RecordingStudioOrderableTest < Minitest::Test
     view_source = File.read(view_path)
 
     assert_includes view_source, "FlatPack::PageTitle::Component"
-    assert_includes view_source, "FlatPack::Card::Component"
     assert_includes view_source, "FlatPack::Badge::Component"
+    assert_includes view_source, "Documentation and demo hub"
+    refute_includes view_source, "FlatPack::Card::Component"
   end
 
   def test_engine_application_controller_prefers_sidebar_layout_when_available

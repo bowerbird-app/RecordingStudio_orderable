@@ -23,36 +23,32 @@
   ) %>
 
   <div class="grid gap-6 lg:grid-cols-2">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Required before install",
-          subtitle: "Baseline host app expectations.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Required before install",
+        subtitle: "Baseline host app expectations.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li>A Rails app with Recording Studio already mounted and working.</li>
           <li>Recordable parent and child models registered the same way as the rest of your Recording Studio setup.</li>
           <li>A parent recordable that will opt into at least one named order group.</li>
         </ul>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Install flow",
-          subtitle: "Keep setup narrow and explicit.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Install flow",
+        subtitle: "Keep setup narrow and explicit.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ol class="space-y-3 text-sm leading-6 list-decimal pl-5">
           <li>Add the gem and run <code>bundle install</code>.</li>
           <li>Run <code>rails generate recording_studio_orderable:install</code>.</li>
@@ -60,47 +56,43 @@
           <li>Run <code>bin/rails db:migrate</code>.</li>
           <li>Opt parent recordables into one or more order groups.</li>
         </ol>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
   </div>
 
   <div class="grid gap-6 lg:grid-cols-2">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Parent opt-in example",
-          subtitle: "Use the DSL on the parent recordable that owns the ordered children.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Parent opt-in example",
+        subtitle: "Use the DSL on the parent recordable that owns the ordered children.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>class Folder &lt; ApplicationRecord
   include RecordingStudioOrderable::OrderableRecordable
 
   recording_studio_order_group :pages, allows: ["Page"]
 end</code></pre>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Demo app verification",
-          subtitle: "The included dummy app shows the expected host-owned docs flow.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Demo app verification",
+        subtitle: "The included dummy app shows the expected host-owned docs flow.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li>Launch the dummy app and sign in as the seeded admin user.</li>
           <li>Use the sidebar links to open the local docs pages and the mounted addon home page.</li>
           <li>Use the folder demo to confirm owner-scoped named lists still work after installation.</li>
         </ul>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
   </div>
 </div>

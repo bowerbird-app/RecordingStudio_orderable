@@ -16,17 +16,15 @@
 
   <div class="">
     <div class="flex flex-col gap-6">
-      <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-        <% card.header do %>
-          <%= render FlatPack::PageTitle::Component.new(
-            title: "Your named lists",
-            subtitle: "Each list is owner-scoped to the signed-in user and points at the same folder pages.",
-            variant: :h3,
-            class: "mb-0 pb-0"
-          ) %>
-        <% end %>
+      <div>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Your named lists",
+          subtitle: "Each list is owner-scoped to the signed-in user and points at the same folder pages.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
 
-        <% card.body do %>
+        <div>
           <% if @folder_recording.present? %>
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-3">
@@ -85,20 +83,18 @@
               <% end %>
             </div>
           <% end %>
-        <% end %>
-      <% end %>
+        </div>
+      </div>
 
-      <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-        <% card.header do %>
-          <%= render FlatPack::PageTitle::Component.new(
-            title: "Folder page order",
-            subtitle: "Drag rows, use move buttons, then save. The selected named list updates without changing other users' lists.",
-            variant: :h3,
-            class: "mb-0 pb-0"
-          ) %>
-        <% end %>
+      <div>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Folder page order",
+          subtitle: "Drag rows, use move buttons, then save. The selected named list updates without changing other users' lists.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
 
-        <% card.body do %>
+        <div>
           <% if @folder_recording.present? && @page_order_recording.present? %>
             <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync">
               <%= render FlatPack::Table::Component.new(
@@ -138,8 +134,8 @@
               description: @folder_recording.present? ? "Create a named list to begin ordering pages for your account." : "Run bin/rails db:seed to create the Folder + Page ordering example."
             ) %>
           <% end %>
-        <% end %>
-      <% end %>
+        </div>
+      </div>
     </div>
 
     

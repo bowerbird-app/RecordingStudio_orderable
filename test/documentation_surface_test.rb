@@ -13,13 +13,14 @@ class DocumentationSurfaceTest < Minitest::Test
     refute_includes routes_source, 'get "views", to: "docs#views_page", as: :views'
   end
 
-  def test_engine_home_view_uses_flatpack_headers_and_cards
+  def test_engine_home_view_uses_flatpack_headers_without_cards
     view_path = File.expand_path("../app/views/recording_studio_orderable/home/index.html.erb", __dir__)
     view_source = File.read(view_path)
 
     assert_includes view_source, "FlatPack::Breadcrumb::Component"
     assert_includes view_source, "FlatPack::PageTitle::Component"
-    assert_includes view_source, "FlatPack::Card::Component"
+    assert_includes view_source, "Documentation and demo hub"
+    refute_includes view_source, "FlatPack::Card::Component"
   end
 
   def test_dummy_routes_define_local_documentation_pages
@@ -46,20 +47,21 @@ class DocumentationSurfaceTest < Minitest::Test
     assert_includes sidebar_source, "docs_views_path"
   end
 
-  def test_dummy_docs_views_use_flatpack_headers_and_cards
-    view_paths = [
-      File.expand_path("dummy/app/views/docs/setup.html.erb", __dir__),
-      File.expand_path("dummy/app/views/docs/configuration.html.erb", __dir__),
-      File.expand_path("dummy/app/views/docs/methods_page.html.erb", __dir__),
-      File.expand_path("dummy/app/views/docs/views_page.html.erb", __dir__)
-    ]
+  def test_dummy_docs_views_use_flatpack_headers_without_cards
+    view_expectations = {
+      File.expand_path("dummy/app/views/docs/setup.html.erb", __dir__) => "Install flow",
+      File.expand_path("dummy/app/views/docs/configuration.html.erb", __dir__) => "Initializer example",
+      File.expand_path("dummy/app/views/docs/methods_page.html.erb", __dir__) => "RecordingOrder mutations",
+      File.expand_path("dummy/app/views/docs/views_page.html.erb", __dir__) => "Mounted addon pages"
+    }
 
-    view_paths.each do |view_path|
+    view_expectations.each do |view_path, expected_content|
       view_source = File.read(view_path)
 
       assert_includes view_source, "FlatPack::Breadcrumb::Component"
       assert_includes view_source, "FlatPack::PageTitle::Component"
-      assert_includes view_source, "FlatPack::Card::Component"
+      assert_includes view_source, expected_content
+      refute_includes view_source, "FlatPack::Card::Component"
     end
   end
 end

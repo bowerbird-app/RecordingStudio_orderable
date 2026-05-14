@@ -17,80 +17,72 @@
   ) %>
 
   <div class="grid gap-6 lg:grid-cols-2">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Mounted addon pages",
-          subtitle: "Routes that still come from the engine mount.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Mounted addon pages",
+        subtitle: "Routes that still come from the engine mount.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li><code>/recording_studio_orderable</code> for the addon home page.</li>
           <li><code>/recording_studio_orderable/recording_order_lists/new</code> for named-list creation.</li>
         </ul>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Dummy-owned docs pages",
-          subtitle: "Documentation routes that now belong to the host app.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Dummy-owned docs pages",
+        subtitle: "Documentation routes that now belong to the host app.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li><code>/docs/setup</code> for installation and prerequisite guidance.</li>
           <li><code>/docs/config</code> for configuration guidance.</li>
           <li><code>/docs/methods</code> for public API summaries.</li>
           <li><code>/docs/views</code> for route ownership and UI notes.</li>
         </ul>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
   </div>
 
   <div class="grid gap-6 lg:grid-cols-2">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Dummy routes example",
-          subtitle: "Host app routing that serves the local docs pages.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Dummy routes example",
+        subtitle: "Host app routing that serves the local docs pages.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>get "docs/config", to: "docs#configuration", as: :docs_config
 get "docs/methods", to: "docs#methods_page", as: :docs_methods
 get "docs/views", to: "docs#views_page", as: :docs_views</code></pre>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Sidebar integration",
-          subtitle: "The dummy sidebar now links to local docs routes while keeping Setup mounted.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Sidebar integration",
+        subtitle: "The dummy sidebar now links to local docs routes while keeping Setup mounted.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>&lt;%= render FlatPack::Sidebar::Item::Component.new(
   label: "Config",
   href: docs_config_path,
   icon: :cog_6_tooth
 ) %&gt;</code></pre>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
   </div>
 </div>

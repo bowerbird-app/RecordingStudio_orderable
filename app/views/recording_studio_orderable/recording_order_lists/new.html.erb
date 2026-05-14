@@ -15,7 +15,7 @@
     variant: :h1
   ) %>
 
-  <section class="flex flex-col gap-4">
+  <div>
     <%= form_with url: recording_order_lists_path, scope: :recording_order_list, class: "flex flex-col gap-4" do |form| %>
       <%= hidden_field_tag :parent_recording_id, @parent_recording.id %>
       <%= hidden_field_tag :group_key, @group_key %>
@@ -48,5 +48,5 @@
         ) %>
       </div>
     <% end %>
-  </section>
+  </div>
 </div>

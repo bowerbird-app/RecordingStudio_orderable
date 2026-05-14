@@ -28,17 +28,15 @@
   ) %>
 
   <div class="grid gap-6 lg:grid-cols-2">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Setup",
-          subtitle: "Install prerequisites, generators, migrations, and demo validation.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Setup",
+        subtitle: "Install prerequisites, generators, migrations, and demo validation.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li>Confirm Recording Studio is already installed in the host app.</li>
           <li>Run the install and migrations generators, then migrate.</li>
@@ -48,20 +46,18 @@
         <p class="mt-4 text-sm leading-6">
           <%= link_to "Open setup guide", main_app.docs_setup_path, class: "font-medium underline" %>
         </p>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Config",
-          subtitle: "Authentication, owner resolution, and event logging hooks.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Config",
+        subtitle: "Authentication, owner resolution, and event logging hooks.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li><code>authenticate_controller</code> protects mounted UI access.</li>
           <li><code>current_owner_resolver</code> scopes named lists by owner.</li>
@@ -71,20 +67,18 @@
         <p class="mt-4 text-sm leading-6">
           <%= link_to "Review configuration", main_app.docs_config_path, class: "font-medium underline" %>
         </p>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Methods",
-          subtitle: "Public APIs for parent recordables, recordings, and order snapshots.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Methods",
+        subtitle: "Public APIs for parent recordables, recordings, and order snapshots.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li>Opt in with <code>recording_studio_order_group</code>.</li>
           <li>Resolve shared or owner-scoped orders from <code>RecordingStudio::Recording</code>.</li>
@@ -94,20 +88,18 @@
         <p class="mt-4 text-sm leading-6">
           <%= link_to "Browse methods", main_app.docs_methods_path, class: "font-medium underline" %>
         </p>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
 
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Views",
-          subtitle: "Mounted routes, home/docs pages, and the named-list creation flow.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <div>
+      <%= render FlatPack::PageTitle::Component.new(
+        title: "Views",
+        subtitle: "Mounted routes, home/docs pages, and the named-list creation flow.",
+        variant: :h3,
+        class: "mb-0 pb-0"
+      ) %>
 
-      <% card.body do %>
+      <div>
         <ul class="space-y-3 text-sm leading-6">
           <li>The addon mounts under <code>/recording_studio_orderable</code>.</li>
           <li>The engine exposes documentation pages plus the list-creation screen.</li>
@@ -117,7 +109,7 @@
         <p class="mt-4 text-sm leading-6">
           <%= link_to "Inspect routes and views", main_app.docs_views_path, class: "font-medium underline" %>
         </p>
-      <% end %>
-    <% end %>
+      </div>
+    </div>
   </div>
 </div>
