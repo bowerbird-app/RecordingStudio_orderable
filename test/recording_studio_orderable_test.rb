@@ -43,6 +43,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     helper_source = File.read(helper_path)
     controller_path = File.expand_path("dummy/app/javascript/controllers/page_order_form_controller.js", __dir__)
     controller_source = File.read(controller_path)
+    auto_submit_controller_path = File.expand_path("dummy/app/javascript/controllers/auto_submit_controller.js", __dir__)
+    auto_submit_controller_source = File.read(auto_submit_controller_path)
     home_controller_path = File.expand_path("dummy/app/controllers/home_controller.rb", __dir__)
     home_controller_source = File.read(home_controller_path)
 
@@ -50,6 +52,12 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "Add new"
     assert_includes view_source, "FlatPack::Select::Component"
     assert_includes view_source, "FlatPack::Table::Component"
+    assert_includes view_source, 'turbo_frame_tag "page_order_demo"'
+    assert_includes view_source, 'data: { turbo_frame: "page_order_demo" }'
+    assert_includes view_source, 'controller: "auto-submit"'
+    assert_includes view_source, 'action: "change->auto-submit#submit"'
+    refute_includes view_source, 'select_tag :selected_order_recording_id'
+    refute_includes view_source, 'onchange: "this.form.requestSubmit()"'
     assert_includes view_source, "No ordered list yet"
     assert_includes view_source, "an ordered list now."
     assert_includes view_source, "Changes save after each move"
@@ -63,6 +71,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes helper_source, "flat-pack--table-sortable#moveDown"
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
+    assert_includes auto_submit_controller_source, "requestSubmit"
+    assert_includes auto_submit_controller_source, "event.target.form"
     assert_includes home_controller_source, "named_page_order_recordings"
     assert_includes home_controller_source, "selected_page_order_recording"
   end

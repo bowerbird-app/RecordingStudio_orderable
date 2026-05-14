@@ -16,139 +16,146 @@
 
   <div class="">
     <div class="flex flex-col gap-6">
-      <div>
+      <%= turbo_frame_tag "page_order_demo", class: "flex flex-col gap-6" do %>
         <div>
-          <% if @folder_recording.present? %>
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-wrap items-end gap-3">
-                <%= form_with url: root_path, method: :get, local: true, class: "flex flex-1 items-end gap-3" do %>
-                  <%= render FlatPack::Select::Component.new(
-                    name: "selected_order_recording_id",
-                    options: @page_order_recordings.map { |recording|
-                      {
-                        label: recording.recordable.name.presence || "Untitled list",
-                        value: recording.id
+          <div>
+            <% if @folder_recording.present? %>
+              <div class="flex flex-col gap-4">
+                <div class="flex flex-wrap items-end gap-3">
+                  <%= form_with url: root_path, method: :get,
+                                data: { turbo_frame: "page_order_demo" },
+                                class: "flex flex-1 items-end gap-3" do %>
+                    <%= render FlatPack::Select::Component.new(
+                      name: "selected_order_recording_id",
+                      options: @page_order_recordings.map { |recording|
+                        {
+                          label: recording.recordable.name.presence || "Untitled list",
+                          value: recording.id
+                        }
+                      },
+                      value: @page_order_recording&.id,
+                      label: "Ordered List",
+                      class: "min-w-72 flex-1",
+                      data: {
+                        controller: "auto-submit",
+                        action: "change->auto-submit#submit"
                       }
-                    },
-                    value: @page_order_recording&.id,
-                    label: "Ordered List",
-                    placeholder: "Choose a saved list",
-                    class: "min-w-72",
-                    onchange: "this.form.submit()"
-                  ) %>
-                <% end %>
-
-                <%= render FlatPack::Button::Component.new(
-                  text: "Add new",
-                  style: :primary,
-                  size: :md,
-                  url: recording_studio_orderable.new_recording_order_list_path(
-                    parent_recording_id: @folder_recording.id,
-                    group_key: :pages,
-                    source_order_recording_id: @page_order_recording&.id,
-                    redirect_to: root_path
-                  )
-                ) %>
-              </div>
-
-              <% if @list_rows.present? %>
-                <div class="grid gap-4 lg:grid-cols-2">
-                  <% @list_rows.each do |list_row| %>
-                    <div class="rounded-lg border border-(--surface-border-color) p-4 <%= list_row.selected ? 'bg-(--surface-muted-background-color)' : 'bg-(--surface-background-color)' %>">
-                      <div class="flex items-start justify-between gap-3">
-                        <div>
-                          <p class="text-sm font-semibold"><%= list_row.order.name.presence || "Untitled list" %></p>
-                          <p class="text-xs text-(--surface-muted-content-color)">
-                            Recording <code><%= list_row.recording.id %></code>
-                          </p>
-                        </div>
-                        <% if list_row.selected %>
-                          <%= render FlatPack::Badge::Component.new(text: "Selected", style: :success, size: :sm) %>
-                        <% else %>
-                          <%= link_to root_path(selected_order_recording_id: list_row.recording.id) do %>
-                            <%= render FlatPack::Button::Component.new(
-                              text: "Open",
-                              style: :secondary,
-                              size: :sm
-                            ) %>
-                          <% end %>
-                        <% end %>
-                      </div>
-
-                      <ol class="mt-3 list-decimal pl-5 text-sm leading-6">
-                        <% list_row.ordered_pages.each do |page_recording| %>
-                          <li><%= page_recording.recordable.title %></li>
-                        <% end %>
-                      </ol>
-                    </div>
+                    ) %>
                   <% end %>
-                </div>
-              <% else %>
-                <%= render FlatPack::Alert::Component.new(
-                  style: :info,
-                  title: "No ordered list yet",
-                  description: capture do %>
-                    <%= link_to "Create", recording_studio_orderable.new_recording_order_list_path(
+
+                  <%= render FlatPack::Button::Component.new(
+                    text: "Add new",
+                    style: :primary,
+                    size: :md,
+                    url: recording_studio_orderable.new_recording_order_list_path(
                       parent_recording_id: @folder_recording.id,
                       group_key: :pages,
                       source_order_recording_id: @page_order_recording&.id,
                       redirect_to: root_path
-                    ), class: "font-medium underline" %> an ordered list now.
-                  <% end
-                ) %>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
+                    )
+                  ) %>
+                </div>
 
-      <div>
+                <% if @list_rows.present? %>
+                  <div class="grid gap-4 lg:grid-cols-2">
+                    <% @list_rows.each do |list_row| %>
+                      <div class="rounded-lg border border-(--surface-border-color) p-4 <%= list_row.selected ? 'bg-(--surface-muted-background-color)' : 'bg-(--surface-background-color)' %>">
+                        <div class="flex items-start justify-between gap-3">
+                          <div>
+                            <p class="text-sm font-semibold"><%= list_row.order.name.presence || "Untitled list" %></p>
+                            <p class="text-xs text-(--surface-muted-content-color)">
+                              Recording <code><%= list_row.recording.id %></code>
+                            </p>
+                          </div>
+                          <% if list_row.selected %>
+                            <%= render FlatPack::Badge::Component.new(text: "Selected", style: :success, size: :sm) %>
+                          <% else %>
+                            <%= link_to root_path(selected_order_recording_id: list_row.recording.id),
+                                        data: { turbo_frame: "page_order_demo" } do %>
+                              <%= render FlatPack::Button::Component.new(
+                                text: "Open",
+                                style: :secondary,
+                                size: :sm
+                              ) %>
+                            <% end %>
+                          <% end %>
+                        </div>
+
+                        <ol class="mt-3 list-decimal pl-5 text-sm leading-6">
+                          <% list_row.ordered_pages.each do |page_recording| %>
+                            <li><%= page_recording.recordable.title %></li>
+                          <% end %>
+                        </ol>
+                      </div>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <%= render FlatPack::Alert::Component.new(
+                    style: :info,
+                    title: "No ordered list yet",
+                    description: capture do %>
+                      <%= link_to "Create", recording_studio_orderable.new_recording_order_list_path(
+                        parent_recording_id: @folder_recording.id,
+                        group_key: :pages,
+                        source_order_recording_id: @page_order_recording&.id,
+                        redirect_to: root_path
+                      ), class: "font-medium underline" %> an ordered list now.
+                    <% end
+                  ) %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
         <div>
-          <% if @folder_recording.present? && @page_order_recording.present? %>
-            <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
-              <%= render FlatPack::Table::Component.new(
-                data: @page_rows,
-                draggable_rows: true,
-                row_id: ->(row) { row.recording.id }
-              ) do |table| %>
-                <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
-                <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
-                <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
-                <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
-              <% end %>
+          <div>
+            <% if @folder_recording.present? && @page_order_recording.present? %>
+              <div data-controller="page-order-form" data-action="table:reordered->page-order-form#sync" class="flex flex-col gap-4">
+                <%= render FlatPack::Table::Component.new(
+                  data: @page_rows,
+                  draggable_rows: true,
+                  row_id: ->(row) { row.recording.id }
+                ) do |table| %>
+                  <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
+                  <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
+                  <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
+                  <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
+                <% end %>
 
-              <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
-                            data: { page_order_form_target: "form" },
-                            class: "flex flex-wrap items-center gap-3" do |form| %>
-                <%= form.hidden_field :selected_order_recording_id, value: @page_order_recording.id %>
-                <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
-                <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
-                <%= render FlatPack::Badge::Component.new(
-                  text: "Changes save after each move",
-                  style: :info,
-                  size: :sm
-                ) %>
-                <span class="text-sm text-(--surface-muted-content-color)">
-                  Editing list <strong><%= @page_order.name.presence || "Untitled list" %></strong>
-                  on recording <code><%= @page_order_recording.id %></code>
-                </span>
-              <% end %>
-            </div>
-          <% elsif @folder_recording.present? %>
-            <%= render FlatPack::Alert::Component.new(
-              style: :info,
-              title: "Choose or create a named list",
-              description: "The draggable table appears when a saved page-order list is selected."
-            ) %>
-          <% else %>
-            <%= render FlatPack::Alert::Component.new(
-              style: :warning,
-              title: "Demo data missing",
-              description: "Run bin/rails db:seed to create the Folder + Page ordering example."
-            ) %>
-          <% end %>
+                <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,
+                              data: { page_order_form_target: "form" },
+                              class: "flex flex-wrap items-center gap-3" do |form| %>
+                  <%= form.hidden_field :selected_order_recording_id, value: @page_order_recording.id %>
+                  <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
+                  <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
+                  <%= render FlatPack::Badge::Component.new(
+                    text: "Changes save after each move",
+                    style: :info,
+                    size: :sm
+                  ) %>
+                  <span class="text-sm text-(--surface-muted-content-color)">
+                    Editing list <strong><%= @page_order.name.presence || "Untitled list" %></strong>
+                    on recording <code><%= @page_order_recording.id %></code>
+                  </span>
+                <% end %>
+              </div>
+            <% elsif @folder_recording.present? %>
+              <%= render FlatPack::Alert::Component.new(
+                style: :info,
+                title: "Choose or create a named list",
+                description: "The draggable table appears when a saved page-order list is selected."
+              ) %>
+            <% else %>
+              <%= render FlatPack::Alert::Component.new(
+                style: :warning,
+                title: "Demo data missing",
+                description: "Run bin/rails db:seed to create the Folder + Page ordering example."
+              ) %>
+            <% end %>
+          </div>
         </div>
-      </div>
+      <% end %>
     </div>
 
     
