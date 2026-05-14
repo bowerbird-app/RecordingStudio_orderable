@@ -10,10 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_17_233016) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_14_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
+
+  create_table "folders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "pages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "recording_studio_access_boundaries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -62,6 +74,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_233016) do
     t.index ["recording_id"], name: "index_recording_studio_events_on_recording_id"
   end
 
+  create_table "recording_studio_recording_studio_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "group_key", null: false
+    t.string "name"
+    t.uuid "ordered_recording_ids", default: [], null: false, array: true
+    t.uuid "owner_id"
+    t.string "owner_type"
+    t.uuid "parent_recording_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_scope_lookup"
+    t.index ["parent_recording_id", "group_key"], name: "index_rs_recording_orders_on_parent_and_group"
+    t.index ["parent_recording_id"], name: "idx_on_parent_recording_id_8a5d7bc4a6"
+  end
+
   create_table "recording_studio_recordings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "parent_recording_id"
@@ -76,32 +102,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_233016) do
     t.index ["recordable_type", "recordable_id", "parent_recording_id", "trashed_at"], name: "index_recording_studio_recordings_on_recordable_parent_trashed"
     t.index ["recordable_type", "recordable_id"], name: "index_recording_studio_recordings_on_recordable"
     t.index ["root_recording_id"], name: "index_rs_recordings_on_root_recording"
-  end
-
-  create_table "recording_studio_recording_studio_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "group_key", null: false
-    t.string "name"
-    t.string "owner_type"
-    t.uuid "owner_id"
-    t.uuid "ordered_recording_ids", default: [], array: true, null: false
-    t.uuid "parent_recording_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_scope_lookup"
-    t.index ["parent_recording_id", "group_key"], name: "index_rs_recording_orders_on_parent_and_group"
-    t.index ["parent_recording_id"], name: "index_recording_studio_recording_studio_orders_on_parent_recording_id"
-  end
-
-  create_table "folders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "pages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
