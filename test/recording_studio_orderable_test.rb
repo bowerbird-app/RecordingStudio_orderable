@@ -46,7 +46,6 @@ class RecordingStudioOrderableTest < Minitest::Test
     home_controller_path = File.expand_path("dummy/app/controllers/home_controller.rb", __dir__)
     home_controller_source = File.read(home_controller_path)
 
-    assert_includes view_source, "Your named lists"
     assert_includes view_source, "Ordered List"
     assert_includes view_source, "Add new"
     assert_includes view_source, "FlatPack::Select::Component"
@@ -55,6 +54,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "an ordered list now."
     assert_includes view_source, "Changes save after each move"
     assert_includes view_source, "selected_order_recording_id"
+    refute_includes view_source, "Your named lists"
+    refute_includes view_source, "Each list is owner-scoped to the signed-in user"
     refute_includes view_source, "Folder page order"
     refute_includes view_source, "Eligible pages omitted from ordered_recording_ids"
     assert_includes helper_source, "Auto-appended eligible page"
