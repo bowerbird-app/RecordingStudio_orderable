@@ -46,7 +46,7 @@
         </ul>
 
         <p class="mt-4 text-sm leading-6">
-          <%= link_to "Open setup guide", setup_path, class: "font-medium underline" %>
+          <%= link_to "Open setup guide", main_app.docs_setup_path, class: "font-medium underline" %>
         </p>
       <% end %>
     <% end %>
@@ -69,7 +69,7 @@
         </ul>
 
         <p class="mt-4 text-sm leading-6">
-          <%= link_to "Review configuration", config_path, class: "font-medium underline" %>
+          <%= link_to "Review configuration", main_app.docs_config_path, class: "font-medium underline" %>
         </p>
       <% end %>
     <% end %>
@@ -92,7 +92,7 @@
         </ul>
 
         <p class="mt-4 text-sm leading-6">
-          <%= link_to "Browse methods", methods_path, class: "font-medium underline" %>
+          <%= link_to "Browse methods", main_app.docs_methods_path, class: "font-medium underline" %>
         </p>
       <% end %>
     <% end %>
@@ -115,7 +115,7 @@
         </ul>
 
         <p class="mt-4 text-sm leading-6">
-          <%= link_to "Inspect routes and views", views_path, class: "font-medium underline" %>
+          <%= link_to "Inspect routes and views", main_app.docs_views_path, class: "font-medium underline" %>
         </p>
       <% end %>
     <% end %>

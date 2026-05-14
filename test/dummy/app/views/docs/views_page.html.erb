@@ -3,16 +3,16 @@
     show_back: true,
     back_href: "javascript:window.history.back()",
     show_home: true,
-    home_url: main_app.root_path,
+    home_url: root_path,
     class: "mb-2"
   ) do |breadcrumb| %>
-    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Dummy app docs") %>
     <% breadcrumb.item(text: "Views") %>
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
     title: "Views",
-    subtitle: "Mounted routes and UI pages exposed by the addon.",
+    subtitle: "Which pages are dummy-owned versus still served by the mounted addon.",
     variant: :h1
   ) %>
 
@@ -20,8 +20,8 @@
     <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
       <% card.header do %>
         <%= render FlatPack::PageTitle::Component.new(
-          title: "Mounted routes",
-          subtitle: "The host app reaches these pages through the engine mount.",
+          title: "Mounted addon pages",
+          subtitle: "Routes that still come from the engine mount.",
           variant: :h3,
           class: "mb-0 pb-0"
         ) %>
@@ -30,7 +30,6 @@
       <% card.body do %>
         <ul class="space-y-3 text-sm leading-6">
           <li><code>/recording_studio_orderable</code> for the addon home page.</li>
-          <li><code>/recording_studio_orderable/setup</code>, <code>/config</code>, <code>/methods</code>, and <code>/views</code> for documentation pages.</li>
           <li><code>/recording_studio_orderable/recording_order_lists/new</code> for named-list creation.</li>
         </ul>
       <% end %>
@@ -39,8 +38,8 @@
     <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
       <% card.header do %>
         <%= render FlatPack::PageTitle::Component.new(
-          title: "Current pages",
-          subtitle: "What the engine renders today.",
+          title: "Dummy-owned docs pages",
+          subtitle: "Documentation routes that now belong to the host app.",
           variant: :h3,
           class: "mb-0 pb-0"
         ) %>
@@ -48,9 +47,10 @@
 
       <% card.body do %>
         <ul class="space-y-3 text-sm leading-6">
-          <li>Home page overview and documentation hub.</li>
-          <li>Setup, Config, Methods, and Views documentation pages.</li>
-          <li>Create ordered list form for owner-scoped named order snapshots.</li>
+          <li><code>/docs/setup</code> for installation and prerequisite guidance.</li>
+          <li><code>/docs/config</code> for configuration guidance.</li>
+          <li><code>/docs/methods</code> for public API summaries.</li>
+          <li><code>/docs/views</code> for route ownership and UI notes.</li>
         </ul>
       <% end %>
     <% end %>
@@ -60,17 +60,17 @@
     <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
       <% card.header do %>
         <%= render FlatPack::PageTitle::Component.new(
-          title: "Mount example",
-          subtitle: "Host app routing that exposes the engine pages.",
+          title: "Dummy routes example",
+          subtitle: "Host app routing that serves the local docs pages.",
           variant: :h3,
           class: "mb-0 pb-0"
         ) %>
       <% end %>
 
       <% card.body do %>
-        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>Rails.application.routes.draw do
-  mount RecordingStudioOrderable::Engine, at: "/recording_studio_orderable"
-end</code></pre>
+        <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>get "docs/config", to: "docs#configuration", as: :docs_config
+get "docs/methods", to: "docs#methods_page", as: :docs_methods
+get "docs/views", to: "docs#views_page", as: :docs_views</code></pre>
       <% end %>
     <% end %>
 
@@ -78,7 +78,7 @@ end</code></pre>
       <% card.header do %>
         <%= render FlatPack::PageTitle::Component.new(
           title: "Sidebar integration",
-          subtitle: "The dummy app links into these pages from its FlatPack sidebar.",
+          subtitle: "The dummy sidebar now links to local docs routes while keeping Setup mounted.",
           variant: :h3,
           class: "mb-0 pb-0"
         ) %>
@@ -86,9 +86,9 @@ end</code></pre>
 
       <% card.body do %>
         <pre class="overflow-x-auto rounded-xl p-4 text-sm leading-6"><code>&lt;%= render FlatPack::Sidebar::Item::Component.new(
-  label: "Setup",
-  href: recording_studio_orderable.setup_path,
-  icon: :wrench_screwdriver
+  label: "Config",
+  href: docs_config_path,
+  icon: :cog_6_tooth
 ) %&gt;</code></pre>
       <% end %>
     <% end %>

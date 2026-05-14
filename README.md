@@ -54,7 +54,7 @@ Interactive reorder UIs do not have to submit the full visible UUID list. The du
 
 Named lists build on top of that owner scope. The unnamed/default order remains singleton per `(parent_recording, group_key, owner_type, owner_id)`, while additional named lists can coexist for the same owner and group. Duplicate names are allowed, so host apps should select named lists by their `RecordingStudio::Recording` id rather than by `name`.
 
-The mountable engine also exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Owner resolution is intentionally host-controlled:
+The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Owner resolution is intentionally host-controlled:
 
 ```ruby
 RecordingStudioOrderable.configure do |config|
@@ -112,6 +112,7 @@ folder_recording.ordered_children_for(:pages).map { |recording| recording.record
 - FlatPack sidebar shell
 - FlatPack table with drag/drop reorder
 - current-user-owned named page-order lists created through the mounted engine page
+- dummy-owned Setup, Config, Methods, and Views documentation pages
 - an eligible page intentionally omitted from `ordered_recording_ids`
 
 Quick start:

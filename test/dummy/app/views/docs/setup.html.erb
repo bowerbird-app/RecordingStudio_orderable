@@ -3,10 +3,10 @@
     show_back: true,
     back_href: "javascript:window.history.back()",
     show_home: true,
-    home_url: main_app.root_path,
+    home_url: root_path,
     class: "mb-2"
   ) do |breadcrumb| %>
-    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Dummy app docs") %>
     <% breadcrumb.item(text: "Setup") %>
   <% end %>
 
@@ -88,7 +88,7 @@ end</code></pre>
       <% card.header do %>
         <%= render FlatPack::PageTitle::Component.new(
           title: "Demo app verification",
-          subtitle: "The included dummy app shows the expected mounted UI path.",
+          subtitle: "The included dummy app shows the expected host-owned docs flow.",
           variant: :h3,
           class: "mb-0 pb-0"
         ) %>
@@ -97,7 +97,7 @@ end</code></pre>
       <% card.body do %>
         <ul class="space-y-3 text-sm leading-6">
           <li>Launch the dummy app and sign in as the seeded admin user.</li>
-          <li>Use the sidebar links to open this addon home page and the docs pages.</li>
+          <li>Use the sidebar links to open the local docs pages and the mounted addon home page.</li>
           <li>Use the folder demo to confirm owner-scoped named lists still work after installation.</li>
         </ul>
       <% end %>

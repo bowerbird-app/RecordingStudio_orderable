@@ -3,16 +3,16 @@
     show_back: true,
     back_href: "javascript:window.history.back()",
     show_home: true,
-    home_url: main_app.root_path,
+    home_url: root_path,
     class: "mb-2"
   ) do |breadcrumb| %>
-    <% breadcrumb.item(text: "RecordingStudioOrderable", href: root_path) %>
+    <% breadcrumb.item(text: "Dummy app docs") %>
     <% breadcrumb.item(text: "Config") %>
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
     title: "Config",
-    subtitle: "Configuration hooks exposed by the addon and when to set them.",
+    subtitle: "Configuration hooks exposed by the addon and how the dummy host wires them.",
     variant: :h1
   ) %>
 

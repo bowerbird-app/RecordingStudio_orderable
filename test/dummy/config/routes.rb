@@ -7,6 +7,11 @@ Rails.application.routes.draw do
   mount RecordingStudio::Engine, at: "/recording_studio"
   mount RecordingStudioOrderable::Engine, at: "/recording_studio_orderable"
 
+  get "docs/setup", to: "docs#setup", as: :docs_setup
+  get "docs/config", to: "docs#configuration", as: :docs_config
+  get "docs/methods", to: "docs#methods_page", as: :docs_methods
+  get "docs/views", to: "docs#views_page", as: :docs_views
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
