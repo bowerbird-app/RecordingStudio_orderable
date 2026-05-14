@@ -1,6 +1,5 @@
 class HomeController < ApplicationController
   PageRow = Struct.new(:recording, :position, :explicitly_ordered, keyword_init: true)
-  ListRow = Struct.new(:recording, :order, :ordered_pages, :selected, keyword_init: true)
 
   before_action :load_workspace_context, only: :index
 
@@ -10,15 +9,6 @@ class HomeController < ApplicationController
     @page_order = @page_order_recording&.recordable
     @stored_page_order_ids = Array(@page_order&.ordered_recording_ids)
     explicit_ids = @stored_page_order_ids.map(&:to_s)
-
-    @list_rows = @page_order_recordings.map do |recording|
-      ListRow.new(
-        recording: recording,
-        order: recording.recordable,
-        ordered_pages: ordered_pages_for(recording.recordable),
-        selected: recording.id == @page_order_recording&.id
-      )
-    end
 
     @ordered_pages = @page_order ? ordered_pages_for(@page_order) : []
     @page_rows = @ordered_pages.each_with_index.map do |recording, index|

@@ -58,6 +58,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, 'action: "change->auto-submit#submit"'
     refute_includes view_source, 'select_tag :selected_order_recording_id'
     refute_includes view_source, 'onchange: "this.form.requestSubmit()"'
+    refute_includes view_source, "grid gap-4 lg:grid-cols-2"
+    refute_includes view_source, "link_to root_path(selected_order_recording_id: list_row.recording.id)"
     assert_includes view_source, "No ordered list yet"
     assert_includes view_source, "an ordered list now."
     assert_includes view_source, "Changes save after each move"
@@ -75,6 +77,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes auto_submit_controller_source, "event.target.form"
     assert_includes home_controller_source, "named_page_order_recordings"
     assert_includes home_controller_source, "selected_page_order_recording"
+    refute_includes home_controller_source, "ListRow"
+    refute_includes home_controller_source, "@list_rows"
   end
 
   def test_engine_home_page_uses_flatpack_components
