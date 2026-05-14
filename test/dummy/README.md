@@ -7,7 +7,7 @@ This Rails app exists to validate RecordingStudioOrderable in a real host applic
 - Devise authentication with a seeded admin user
 - `Current.actor` wiring for Recording Studio events
 - Root workspace and root recording setup
-- Folder + Page ordering demo with a FlatPack-first table
+- Recording Studio custom ordering demo with a FlatPack-first table
 - Current-user-owned named page-order lists created through the mounted RecordingStudioOrderable engine page
 - FlatPack layout integration and Tailwind source scanning
 - Mounted `RecordingStudio::Engine` route behavior inside a host app
@@ -28,7 +28,7 @@ Then open the app and sign in with:
 ## Useful Routes
 
 - `/` - dummy app home page and template guidance
-- `/` - Folder + Page ordering demo
+- `/` - Order Demo
 - `/recording_studio` - mounted Recording Studio engine
 - `/recording_studio_orderable` - mounted RecordingStudioOrderable engine
 - `/users/sign_in` - Devise sign-in page

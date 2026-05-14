@@ -90,7 +90,7 @@ end
 
 ```ruby
 folder_recording = root_recording.record(Folder, parent_recording: root_recording) do |folder|
-  folder.name = "Launch Folder"
+  folder.name = "Order Demo"
 end
 
 page_one = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Mix notes" }

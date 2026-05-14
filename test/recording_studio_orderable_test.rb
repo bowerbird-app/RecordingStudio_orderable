@@ -32,7 +32,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     readme_path = File.expand_path("dummy/README.md", __dir__)
     readme_source = File.read(readme_path)
 
-    assert_includes readme_source, "Folder + Page ordering demo"
+    assert_includes readme_source, "Recording Studio custom ordering demo"
     assert_includes readme_source, "RecordingStudioOrderable"
   end
 

@@ -1,17 +1,18 @@
+<% if flash[:notice].present? %>
+  <%= render FlatPack::Alert::Component.new(style: :success, title: flash[:notice]) %>
+<% end %>
+
+<% if flash[:alert].present? %>
+  <%= render FlatPack::Alert::Component.new(style: :danger, title: flash[:alert]) %>
+<% end %>
+
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
-    title: @folder&.name || "RecordingStudioOrderable dummy app",
-    subtitle: "Folder + Page ordering demo backed by RecordingStudio::RecordingStudioOrder snapshots.",
+    title: "Order Demo",
+    subtitle: "Recording Studio custom ordering demo powered by RecordingStudio::RecordingStudioOrder snapshots.",
     variant: :h1
   ) %>
 
-  <% if flash[:notice].present? %>
-    <%= render FlatPack::Alert::Component.new(style: :success, title: flash[:notice]) %>
-  <% end %>
-
-  <% if flash[:alert].present? %>
-    <%= render FlatPack::Alert::Component.new(style: :danger, title: flash[:alert]) %>
-  <% end %>
 
   <div class="">
     <div class="flex flex-col gap-6">

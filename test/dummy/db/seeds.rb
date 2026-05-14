@@ -31,7 +31,7 @@ folder_recording = RecordingStudio::Recording.unscoped.find_by(
   parent_recording_id: root_recording.id
 )
 folder_recording ||= root_recording.record(Folder, parent_recording: root_recording) do |folder|
-  folder.name = "Launch Folder"
+  folder.name = "Order Demo"
 end
 folder = folder_recording.recordable
 
