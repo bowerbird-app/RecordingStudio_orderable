@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced the template sample addon with `RecordingStudio::RecordingStudioOrder` ordering support
 - Added Folder + Page ordering demo data and FlatPack table UI in the dummy app
 - Bumped the dummy app FlatPack dependency from `v0.1.33` to `v0.1.53` and hardened `current_recording` for plain delegate recordings
+- Bumped the dummy app FlatPack dependency from `v0.1.58` to `v0.1.60`
 
 ## [0.1.1] - 2026-04-28
 
