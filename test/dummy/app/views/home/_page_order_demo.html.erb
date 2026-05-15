@@ -11,10 +11,9 @@
     draggable_rows: true,
     row_id: ->(row) { row.recording.id }
   ) do |table| %>
-    <% table.column(title: "Order", html: ->(row) { row.position.to_s }) %>
+    <% table.column(title: "", html: ->(_row) { page_order_drag_handle }) %>
     <% table.column(title: "Page", html: ->(row) { page_order_page_cell(row) }) %>
     <% table.column(title: "Recording id", html: ->(row) { row.recording.id }) %>
-    <% table.column(title: "Move", html: ->(_row) { page_order_move_buttons }) %>
   <% end %>
 
   <%= form_with url: demo_folder_page_order_path(@folder_recording), method: :patch,

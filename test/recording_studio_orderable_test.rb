@@ -68,11 +68,16 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "an ordered list now."
     assert_includes view_source, "selected_order_recording_id"
     assert_includes demo_partial_source, "FlatPack::Table::Component"
+    assert_includes demo_partial_source, 'table.column(title: "", html: ->(_row) { page_order_drag_handle })'
     assert_includes demo_partial_source, 'data-controller="<%= [("order-update-alert" if send_custom_event), "page-order-form"].compact.join(" ") %>"'
     assert_includes demo_partial_source, 'data-page-order-form-send-custom-event-value="<%= send_custom_event %>"'
     assert_includes demo_partial_source, "Code Example"
     assert_includes demo_partial_source, 'data-page-order-form-target="status"'
     assert_includes helper_source, "page_order_demo_code_sample"
+    assert_includes helper_source, "page_order_drag_handle"
+    assert_includes helper_source, 'content_tag('
+    assert_includes helper_source, '"⋮⋮"'
+    assert_includes helper_source, 'cursor-grab'
     assert_includes helper_source, "Example 1: Custom Event"
     assert_includes helper_source, "Example 2: Flash Message"
     refute_includes view_source, "Your named lists"
@@ -80,8 +85,9 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes view_source, "Folder page order"
     refute_includes view_source, "Eligible pages omitted from ordered_recording_ids"
     assert_includes helper_source, "Auto-appended eligible page"
-    assert_includes helper_source, "flat-pack--table-sortable#moveUp"
-    assert_includes helper_source, "flat-pack--table-sortable#moveDown"
+    refute_includes helper_source, "flat-pack--table-sortable#moveUp"
+    refute_includes helper_source, "flat-pack--table-sortable#moveDown"
+    refute_includes demo_partial_source, 'table.column(title: "Move"'
     assert_includes controller_source, "detectSingleMove"
     assert_includes controller_source, "requestAnimationFrame"
     assert_includes controller_source, "fetch(this.formTarget.action"
@@ -92,6 +98,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes controller_source, "window.Turbo?.visit"
     assert_includes controller_source, "restoreRowOrder"
     assert_includes controller_source, "updateDisplayedPositions"
+    assert_includes controller_source, 'querySelector("[data-page-order-position]")'
+    refute_includes controller_source, 'querySelector("td")'
     order_update_alert_controller_path = File.expand_path("dummy/app/javascript/controllers/order_update_alert_controller.js", __dir__)
     order_update_alert_controller_source = File.read(order_update_alert_controller_path)
     assert_includes order_update_alert_controller_source, "recordingstudio:order:updated"

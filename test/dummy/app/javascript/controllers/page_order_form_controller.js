@@ -116,10 +116,10 @@ export default class extends Controller {
 
     rowIds.forEach((rowId, index) => {
       const row = tbody.querySelector(`tr[data-id="${rowId}"]`)
-      const firstCell = row?.querySelector("td")
+      const positionCell = row?.querySelector("[data-page-order-position]")
 
-      if (firstCell) {
-        firstCell.textContent = String(index + 1)
+      if (positionCell) {
+        positionCell.textContent = String(index + 1)
       }
     })
   }

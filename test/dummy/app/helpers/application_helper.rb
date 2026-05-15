@@ -17,28 +17,13 @@ module ApplicationHelper
     ])
   end
 
-  def page_order_move_buttons
-    safe_join([
-      render(
-        FlatPack::Button::Component.new(
-          text: "Up",
-          style: :ghost,
-          size: :sm,
-          type: "button",
-          data: { action: "click->flat-pack--table-sortable#moveUp" }
-        )
-      ),
-      render(
-        FlatPack::Button::Component.new(
-          text: "Down",
-          style: :ghost,
-          size: :sm,
-          type: "button",
-          class: "ml-2",
-          data: { action: "click->flat-pack--table-sortable#moveDown" }
-        )
-      )
-    ])
+  def page_order_drag_handle
+    content_tag(
+      :span,
+      "⋮⋮",
+      aria: { hidden: true },
+      class: "inline-flex text-[var(--surface-muted-content-color)] cursor-grab"
+    )
   end
 
   def page_order_demo_title(demo_variant)
