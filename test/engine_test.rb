@@ -43,16 +43,31 @@ class EngineTest < Minitest::Test
     assert_equal "custom_order", RecordingStudioOrderable.configuration.event_action_prefix
   end
 
-  def test_load_config_swallows_configuration_errors
+  def test_load_config_ignores_missing_yaml_file
     app = Struct.new(:config) do
       def config_for(_name)
-        raise "boom"
+        raise "Could not load configuration. No such file - /tmp/recording_studio_orderable.yml"
       end
     end.new(Struct.new(:x).new(nil))
 
     find_initializer("recording_studio_orderable.load_config").block.call(app)
 
     assert_equal false, RecordingStudioOrderable.configuration.log_order_events
+  end
+
+  def test_load_config_raises_for_invalid_configuration
+    app = Struct.new(:config) do
+      def config_for(_name)
+        raise "boom"
+      end
+    end.new(Struct.new(:x).new(nil))
+
+    error = assert_raises(RecordingStudioOrderable::ConfigurationLoadError) do
+      find_initializer("recording_studio_orderable.load_config").block.call(app)
+    end
+
+    assert_includes error.message, "Invalid recording_studio_orderable configuration"
+    assert_includes error.message, "boom"
   end
 
   def test_integrate_recording_studio_registers_type_and_extension

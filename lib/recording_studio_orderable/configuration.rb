@@ -1,14 +1,21 @@
 # frozen_string_literal: true
 
 module RecordingStudioOrderable
+  class ConfigurationLoadError < StandardError; end
+
   class Configuration
-    attr_accessor :log_order_events, :event_action_prefix, :authenticate_controller, :current_owner_resolver
+    attr_accessor :log_order_events,
+                  :event_action_prefix,
+                  :authenticate_controller,
+                  :current_owner_resolver,
+                  :authorize_parent_recording
 
     def initialize
       @log_order_events = false
       @event_action_prefix = "recording_order"
       @authenticate_controller = nil
       @current_owner_resolver = nil
+      @authorize_parent_recording = nil
     end
 
     def to_h
@@ -16,7 +23,8 @@ module RecordingStudioOrderable
         log_order_events: log_order_events,
         event_action_prefix: event_action_prefix,
         authenticate_controller: authenticate_controller,
-        current_owner_resolver: current_owner_resolver
+        current_owner_resolver: current_owner_resolver,
+        authorize_parent_recording: authorize_parent_recording
       }
     end
 

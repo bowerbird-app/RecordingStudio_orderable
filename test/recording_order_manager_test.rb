@@ -25,8 +25,13 @@ class RecordingOrderManagerTest < Minitest::Test
                                     Time.utc(2024, 1, 3))
     @order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil,
                                                                                         %w[page-2 missing-id page-1])
-    @order_recording = FakeRecording.new("order-1", "RecordingStudio::RecordingStudioOrder", @order, Time.utc(2024, 1, 4),
-                                         Time.utc(2024, 1, 4))
+    @order_recording = FakeRecording.new(
+      "order-1",
+      "RecordingStudio::RecordingStudioOrder",
+      @order,
+      Time.utc(2024, 1, 4),
+      Time.utc(2024, 1, 4)
+    )
     @owner = FakeOwner.new("user-1")
     @scoped_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new(
       "pages",
@@ -124,8 +129,13 @@ class RecordingOrderManagerTest < Minitest::Test
       "Johnny's list"
     )
     @parent_recording.child_recordings << @scoped_order_recording
-    @parent_recording.child_recordings << FakeRecording.new("order-3", "RecordingStudio::RecordingStudioOrder", named_order,
-                                                            Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
+    @parent_recording.child_recordings << FakeRecording.new(
+      "order-3",
+      "RecordingStudio::RecordingStudioOrder",
+      named_order,
+      Time.utc(2024, 1, 6),
+      Time.utc(2024, 1, 6)
+    )
     @parent_recording.child_recordings << FakeRecording.new(
       "order-4",
       "RecordingStudio::RecordingStudioOrder",
@@ -298,6 +308,41 @@ class RecordingOrderManagerTest < Minitest::Test
     end
   end
 
+  def test_find_or_create_recording_order_recovers_from_record_not_unique
+    parent_recording = FakeParentRecording.new("folder-2", FakeFolder.new, [@page_one, @page_two])
+    existing_order = Struct.new(:id).new("existing-order")
+    lookup_count = 0
+
+    parent_recording.define_singleton_method(:record) do |*_args, **_kwargs|
+      raise ActiveRecord::RecordNotUnique, "duplicate default order"
+    end
+
+    RecordingStudioOrderable::RecordingOrderManager.stub(
+      :recording_order_for,
+      lambda do |_parent_recording, _group_key = nil, owner: nil|
+        lookup_count += 1
+        next nil if lookup_count == 1
+
+        assert_equal @owner, owner
+        existing_order
+      end
+    ) do
+      with_temporary_recording_order_class do
+        result = RecordingStudioOrderable::RecordingOrderManager.find_or_create_recording_order!(
+          parent_recording,
+          :pages,
+          owner: @owner,
+          actor: :actor,
+          metadata: { source: "test" }
+        )
+
+        assert_same existing_order, result
+      end
+    end
+
+    assert_equal 2, lookup_count
+  end
+
   def test_resolve_group_definition_requires_orderable_parent
     parent_recording = FakeParentRecording.new("folder-3", Object.new, [])
 
@@ -334,7 +379,8 @@ class RecordingOrderManagerTest < Minitest::Test
     RecordingStudio.const_set(:RecordingStudioOrder, temporary_class)
     yield
   ensure
-    RecordingStudio.send(:remove_const, :RecordingStudioOrder) if RecordingStudio.const_defined?(:RecordingStudioOrder, false)
+    RecordingStudio.send(:remove_const, :RecordingStudioOrder) if RecordingStudio.const_defined?(:RecordingStudioOrder,
+                                                                                                 false)
     RecordingStudio.const_set(:RecordingStudioOrder, original_constant) if had_constant
   end
 end

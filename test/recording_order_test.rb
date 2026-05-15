@@ -442,6 +442,22 @@ class RecordingOrderTest < Minitest::Test
     end)
   end
 
+  def test_normalize_name_strips_present_values
+    order = build_order(ordered_recording_ids: %w[page-2 page-1], name: "  Saved list  ")
+
+    order.send(:normalize_name)
+
+    assert_equal "Saved list", order.name
+  end
+
+  def test_normalize_name_converts_blank_values_to_nil
+    order = build_order(ordered_recording_ids: %w[page-2 page-1], name: "   ")
+
+    order.send(:normalize_name)
+
+    assert_nil order.name
+  end
+
   def test_eligible_child_validation_rejects_missing_self_and_cross_scope_recordings
     order = build_order(
       ordered_recording_ids: %w[

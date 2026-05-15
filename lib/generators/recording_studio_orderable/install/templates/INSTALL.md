@@ -3,6 +3,7 @@ RecordingStudioOrderable install complete.
 Next steps:
 
 1. Review `config/initializers/recording_studio_orderable.rb`.
+  Make sure it defines `authenticate_controller`, `current_owner_resolver`, and `authorize_parent_recording` for your host app.
 2. Run `rails generate recording_studio_orderable:migrations`.
 3. Opt parent recordables into order groups, for example:
    ```ruby

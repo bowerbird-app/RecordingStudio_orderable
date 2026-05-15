@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_record"
+
 module RecordingStudioOrderable
   class RecordingOrderManager
     class ConfigurationError < StandardError; end
@@ -67,6 +69,11 @@ module RecordingStudioOrderable
           metadata: metadata,
           parent_recording: parent_recording
         ).recordable
+      rescue ActiveRecord::RecordNotUnique
+        recovered_order = recording_order_for(parent_recording, resolved_group_key, owner: owner)
+        return recovered_order if recovered_order
+
+        raise
       end
 
       def create_named_recording_order!(parent_recording, group_key = nil, name:, owner: nil, actor: nil,

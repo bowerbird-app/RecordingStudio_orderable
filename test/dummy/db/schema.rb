@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_14_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_15_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -84,6 +84,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_14_000002) do
     t.uuid "parent_recording_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_scope_lookup"
+    t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_unique_default_scope", unique: true, where: "(COALESCE(btrim((name)::text), ''::text) = ''::text)"
     t.index ["parent_recording_id", "group_key"], name: "index_rs_recording_orders_on_parent_and_group"
     t.index ["parent_recording_id"], name: "idx_on_parent_recording_id_8a5d7bc4a6"
   end

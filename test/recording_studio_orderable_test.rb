@@ -45,7 +45,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     helper_source = File.read(helper_path)
     controller_path = File.expand_path("dummy/app/javascript/controllers/page_order_form_controller.js", __dir__)
     controller_source = File.read(controller_path)
-    auto_submit_controller_path = File.expand_path("dummy/app/javascript/controllers/auto_submit_controller.js", __dir__)
+    auto_submit_controller_path = File.expand_path("dummy/app/javascript/controllers/auto_submit_controller.js",
+                                                   __dir__)
     auto_submit_controller_source = File.read(auto_submit_controller_path)
     home_controller_path = File.expand_path("dummy/app/controllers/home_controller.rb", __dir__)
     home_controller_source = File.read(home_controller_path)
@@ -54,13 +55,13 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "Ordered List"
     assert_includes view_source, "Add new"
     assert_includes view_source, "FlatPack::Select::Component"
-    assert_includes view_source, 'hidden_field_tag :demo, @demo_variant'
+    assert_includes view_source, "hidden_field_tag :demo, @demo_variant"
     assert_includes view_source, 'turbo_frame_tag "page_order_demo"'
     assert_includes view_source, 'data: { turbo_frame: "page_order_demo" }'
     assert_includes view_source, 'controller: "auto-submit"'
     assert_includes view_source, 'action: "change->auto-submit#submit"'
     assert_includes view_source, 'render "page_order_demo", demo_variant: @demo_variant'
-    refute_includes view_source, 'select_tag :selected_order_recording_id'
+    refute_includes view_source, "select_tag :selected_order_recording_id"
     refute_includes view_source, 'onchange: "this.form.requestSubmit()"'
     refute_includes view_source, "grid gap-4 lg:grid-cols-2"
     refute_includes view_source, "link_to root_path(selected_order_recording_id: list_row.recording.id)"
@@ -69,15 +70,17 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "selected_order_recording_id"
     assert_includes demo_partial_source, "FlatPack::Table::Component"
     assert_includes demo_partial_source, 'table.column(title: "", html: ->(_row) { page_order_drag_handle })'
-    assert_includes demo_partial_source, 'data-controller="<%= [("order-update-alert" if send_custom_event), "page-order-form"].compact.join(" ") %>"'
+    expected_controller_binding =
+      'data-controller="<%= [("order-update-alert" if send_custom_event), "page-order-form"].compact.join(" ") %>"'
+    assert_includes demo_partial_source, expected_controller_binding
     assert_includes demo_partial_source, 'data-page-order-form-send-custom-event-value="<%= send_custom_event %>"'
     assert_includes demo_partial_source, "Code Example"
     assert_includes demo_partial_source, 'data-page-order-form-target="status"'
     assert_includes helper_source, "page_order_demo_code_sample"
     assert_includes helper_source, "page_order_drag_handle"
-    assert_includes helper_source, 'content_tag('
+    assert_includes helper_source, "content_tag("
     assert_includes helper_source, '"⋮⋮"'
-    assert_includes helper_source, 'cursor-grab'
+    assert_includes helper_source, "cursor-grab"
     assert_includes helper_source, "Example 1: Custom Event"
     assert_includes helper_source, "Example 2: Flash Message"
     refute_includes view_source, "Your named lists"
@@ -100,7 +103,9 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes controller_source, "updateDisplayedPositions"
     assert_includes controller_source, 'querySelector("[data-page-order-position]")'
     refute_includes controller_source, 'querySelector("td")'
-    order_update_alert_controller_path = File.expand_path("dummy/app/javascript/controllers/order_update_alert_controller.js", __dir__)
+    order_update_alert_controller_path = File.expand_path(
+      "dummy/app/javascript/controllers/order_update_alert_controller.js", __dir__
+    )
     order_update_alert_controller_source = File.read(order_update_alert_controller_path)
     assert_includes order_update_alert_controller_source, "recordingstudio:order:updated"
     assert_includes order_update_alert_controller_source, "console.log(message)"
@@ -142,7 +147,7 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     assert_includes controller_source, "layout :recording_studio_orderable_layout"
     assert_includes controller_source, '"application"'
-    refute_includes controller_source, 'flat_pack_sidebar'
+    refute_includes controller_source, "flat_pack_sidebar"
   end
 
   def test_engine_new_order_list_page_uses_back_only_breadcrumb
@@ -150,7 +155,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     view_source = File.read(view_path)
 
     assert_includes view_source, "FlatPack::Breadcrumb::Component"
-    assert_includes view_source, 'show_back: true'
+    assert_includes view_source, "show_back: true"
     assert_includes view_source, 'back_href: "javascript:window.history.back()"'
     assert_includes view_source, "@parent_recording_label"
     refute_includes view_source, "show_home: true"

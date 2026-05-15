@@ -19,7 +19,8 @@
   <div class="flex flex-wrap gap-2">
     <%= render FlatPack::Badge::Component.new(text: "Default event logging: off", style: :info, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Owner resolution: host-controlled", style: :warning, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "Authentication: optional hook", style: :success, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Authentication: host-controlled", style: :success, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Parent authorization: required for list UI", style: :warning, size: :sm) %>
   </div>
 
   <div>
@@ -37,7 +38,8 @@
           <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">log_order_events        # semantic order-event logging, default: false
 event_action_prefix    # action name prefix, default: "recording_order"
 authenticate_controller
-current_owner_resolver</code></pre>
+current_owner_resolver
+authorize_parent_recording</code></pre>
         </div>
       </div>
     </div>
@@ -54,6 +56,7 @@ current_owner_resolver</code></pre>
     <div>
       <ul class="space-y-3 text-sm leading-6">
         <li>Set auth and owner hooks in the generated initializer so mounted UI requests stay inside host app rules.</li>
+        <li>Authorizing the resolved parent recording is required before the mounted named-list flow will render or create lists.</li>
         <li>Turn on event logging only if your Recording Studio event stream needs addon-specific audit entries.</li>
         <li>Keep the prefix stable once downstream reporting depends on those action names.</li>
       </ul>
@@ -75,6 +78,9 @@ current_owner_resolver</code></pre>
           <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
   config.authenticate_controller = -&gt;(controller) { controller.authenticate_user! }
   config.current_owner_resolver = -&gt;(controller) { controller.current_user }
+  config.authorize_parent_recording = -&gt;(controller, parent_recording) do
+    controller.current_user.present? &amp;&amp; parent_recording.present?
+  end
   config.log_order_events = false
   config.event_action_prefix = "recording_order"
 end</code></pre>

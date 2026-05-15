@@ -24,12 +24,13 @@ class DocumentationSurfaceTest < Minitest::Test
   end
 
   def test_engine_application_controller_uses_plain_application_layout
-    controller_path = File.expand_path("../app/controllers/recording_studio_orderable/application_controller.rb", __dir__)
+    controller_path = File.expand_path("../app/controllers/recording_studio_orderable/application_controller.rb",
+                                       __dir__)
     controller_source = File.read(controller_path)
 
-    assert_includes controller_source, 'layout :recording_studio_orderable_layout'
+    assert_includes controller_source, "layout :recording_studio_orderable_layout"
     assert_includes controller_source, '"application"'
-    refute_includes controller_source, 'flat_pack_sidebar'
+    refute_includes controller_source, "flat_pack_sidebar"
   end
 
   def test_dummy_routes_define_local_documentation_pages

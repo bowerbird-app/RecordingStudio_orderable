@@ -15,6 +15,7 @@ module RecordingStudio
     validate :ordered_recording_ids_must_be_uuids
     validate :ordered_recording_ids_must_belong_to_eligible_children, if: -> { resolved_parent_recording.present? }
 
+    before_validation :normalize_name
     before_validation :normalize_ordered_recording_ids
 
     alias_attribute :order_group, :group_key
@@ -260,6 +261,10 @@ module RecordingStudio
       self.ordered_recording_ids = normalized_array_ids
     end
 
+    def normalize_name
+      self.name = name.to_s.strip.presence
+    end
+
     def group_key_must_be_supported
       return if resolved_parent_recording.blank? || group_key.blank?
 
@@ -345,5 +350,4 @@ module RecordingStudio
     alias reorder_recordings! reorder!
     alias cleanup! cleanup_missing_children!
   end
-
 end

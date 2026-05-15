@@ -12,23 +12,27 @@ class ConfigurationTest < Minitest::Test
     assert_equal "recording_order", @configuration.event_action_prefix
     assert_nil @configuration.authenticate_controller
     assert_nil @configuration.current_owner_resolver
+    assert_nil @configuration.authorize_parent_recording
   end
 
   def test_merge_updates_known_attributes
     authenticate_controller = ->(_controller) {}
     current_owner_resolver = ->(_controller) { :owner }
+    authorize_parent_recording = ->(_controller, _parent_recording) { true }
 
     @configuration.merge!(
       log_order_events: true,
       event_action_prefix: "ordering",
       authenticate_controller: authenticate_controller,
-      current_owner_resolver: current_owner_resolver
+      current_owner_resolver: current_owner_resolver,
+      authorize_parent_recording: authorize_parent_recording
     )
 
     assert_equal true, @configuration.log_order_events
     assert_equal "ordering", @configuration.event_action_prefix
     assert_same authenticate_controller, @configuration.authenticate_controller
     assert_same current_owner_resolver, @configuration.current_owner_resolver
+    assert_same authorize_parent_recording, @configuration.authorize_parent_recording
   end
 
   def test_merge_ignores_unknown_keys

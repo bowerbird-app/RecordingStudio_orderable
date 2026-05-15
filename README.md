@@ -71,14 +71,21 @@ Interactive reorder UIs do not have to submit the full visible UUID list. The du
 
 Named lists build on top of that owner scope. The unnamed/default order remains singleton per `(parent_recording, group_key, owner_type, owner_id)`, while additional named lists can coexist for the same owner and group. Duplicate names are allowed, so host apps should select named lists by their `RecordingStudio::Recording` id rather than by `name`.
 
-The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Owner resolution is intentionally host-controlled:
+The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Owner resolution and parent-recording authorization are intentionally host-controlled. The named-list UI fails closed unless both concerns are configured:
 
 ```ruby
 RecordingStudioOrderable.configure do |config|
   config.authenticate_controller = ->(controller) { controller.authenticate_user! }
   config.current_owner_resolver = ->(controller) { controller.current_user }
+  config.authorize_parent_recording = lambda do |controller, parent_recording|
+    controller.current_user.present? && parent_recording.present?
+  end
 end
 ```
+
+`authorize_parent_recording` should enforce your real host-app policy for the resolved `RecordingStudio::Recording`, not just the presence of a logged-in user. Invalid engine configuration now raises a boot-time error instead of being ignored silently.
+
+Default unnamed orders are also enforced as singleton records at the database layer per `(parent_recording, group_key, owner_type, owner_id)` scope. Named lists remain unrestricted by `name` and should still be addressed by their `RecordingStudio::Recording` id.
 
 Addon-specific semantic event logging is optional and quiet by default:
 
@@ -100,8 +107,9 @@ end
    rails generate recording_studio_orderable:migrations
    bin/rails db:migrate
    ```
-4. Register host recordable types with Recording Studio as usual.
-5. Opt parent recordables into one or more order groups.
+4. Configure `authenticate_controller`, `current_owner_resolver`, and `authorize_parent_recording` in the generated initializer before exposing the mounted UI.
+5. Register host recordable types with Recording Studio as usual.
+6. Opt parent recordables into one or more order groups.
 
 ## Example
 

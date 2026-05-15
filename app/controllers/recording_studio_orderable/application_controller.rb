@@ -33,6 +33,19 @@ module RecordingStudioOrderable
       redirect_to root_path, alert: "Authenticated owner is required."
     end
 
+    def authorize_parent_recording!(parent_recording)
+      hook = RecordingStudioOrderable.configuration.authorize_parent_recording
+      unless hook.respond_to?(:call)
+        redirect_parent_recording_access_denied
+        return
+      end
+
+      result = hook.call(self, parent_recording)
+      return if result || performed?
+
+      redirect_parent_recording_access_denied
+    end
+
     def safe_local_redirect_target(target)
       value = target.to_s.strip
       return if value.blank?
@@ -51,6 +64,10 @@ module RecordingStudioOrderable
 
       separator = path.include?("?") ? "&" : "?"
       "#{path}#{separator}#{key}=#{ERB::Util.url_encode(value.to_s)}"
+    end
+
+    def redirect_parent_recording_access_denied
+      redirect_to root_path, alert: "You are not allowed to access that recording order."
     end
   end
 end

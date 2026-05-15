@@ -6,13 +6,22 @@ module RecordingStudioOrderable
 
     initializer "recording_studio_orderable.load_config" do |app|
       if app.respond_to?(:config_for)
-        yaml = app.config_for(:recording_studio_orderable)
+        yaml = RecordingStudioOrderable::Engine.load_yaml_config(app)
         RecordingStudioOrderable.configuration.merge!(yaml) if yaml.respond_to?(:each)
       end
 
       x_config = app.config.x.try(:recording_studio_orderable)
       RecordingStudioOrderable.configuration.merge!(x_config.to_h) if x_config.respond_to?(:to_h)
-    rescue StandardError
+    rescue StandardError => e
+      raise RecordingStudioOrderable::ConfigurationLoadError,
+            "Invalid recording_studio_orderable configuration: #{e.message}"
+    end
+
+    def self.load_yaml_config(app)
+      app.config_for(:recording_studio_orderable)
+    rescue RuntimeError => e
+      raise unless e.message.include?("Could not load configuration. No such file")
+
       nil
     end
 
