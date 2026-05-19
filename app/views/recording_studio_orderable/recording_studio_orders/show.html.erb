@@ -1,0 +1,104 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: recording_studio_orders_path(parent_recording_id: @parent_recording.id),
+    class: "mb-2"
+  ) do |breadcrumb| %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "#{@type_row.recordable_type} Orders",
+    subtitle: "Custom orders for #{@parent_recording_label}",
+    variant: :h1
+  ) %>
+
+  <div class="flex items-center justify-end">
+    <%= render FlatPack::Button::Component.new(
+      text: "Add",
+      style: :primary,
+      size: :md,
+      url: new_recording_studio_order_path(parent_recording_id: @parent_recording.id, group_key: @type_row.group_key)
+    ) %>
+  </div>
+
+  <%= render FlatPack::Table::Component.new(data: @named_order_rows) do |table| %>
+    <% table.column(title: "Name", html: ->(row) { row.name }) %>
+    <% table.column(title: "Actions", html: ->(row) {
+      link_to(
+        "Edit",
+        edit_recording_studio_order_path(
+          row.recording_id,
+          parent_recording_id: @parent_recording.id,
+          group_key: @type_row.group_key,
+          recordable_type: @type_row.recordable_type
+        ),
+        class: "font-medium underline"
+      )
+    }) %>
+  <% end %>
+</div><div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <% add_group_key = default_group_key_for(@recording_studio) %>
+
+  <div class="flex flex-col items-start gap-4">
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Custom Orders for #{@recording_studio_label}",
+      subtitle: "Drag and drop to reorder. Changes are saved with a custom event.",
+      variant: :h1
+    ) %>
+
+    <% if @recording_studio_orders.any? && add_group_key.present? %>
+      <%= render FlatPack::Button::Component.new(
+        text: "Add",
+        style: :primary,
+        url: recording_studio_orderable.new_recording_studio_order_path(
+          parent_recording_id: @recording_studio.id,
+          group_key: add_group_key
+        )
+      ) %>
+    <% end %>
+  </div>
+
+  <div class="mb-4">
+    <span class="inline-block rounded bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+      Type: <%= @recording_studio.recordable_type %>
+    </span>
+  </div>
+
+  <% if @recording_studio_orders.any? %>
+    <% rows = @recording_studio_orders.map { |order|
+      {
+        name: order.name,
+        created_at: order.created_at.strftime("%Y-%m-%d %H:%M"),
+        action: link_to(
+          "Edit",
+          recording_studio_orderable.edit_recording_studio_order_path(order),
+          class: "font-medium underline"
+        )
+      }
+    } %>
+
+    <%= render FlatPack::Table::Component.new(data: rows, class: "w-full") do |table| %>
+      <% table.column(title: "Order Name") { |row| row[:name] } %>
+      <% table.column(title: "Created At") { |row| row[:created_at] } %>
+      <% table.column(title: "Action") { |row| row[:action] } %>
+    <% end %>
+  <% else %>
+    <%= render FlatPack::EmptyState::Component.new(
+      title: "No custom orders yet",
+      description: "Create a custom order to start arranging this recording studio."
+    ) do |empty_state| %>
+      <% if add_group_key.present? %>
+        <% empty_state.actions do %>
+          <%= render FlatPack::Button::Component.new(
+            text: "Add",
+            style: :primary,
+            url: recording_studio_orderable.new_recording_studio_order_path(
+              parent_recording_id: @recording_studio.id,
+              group_key: add_group_key
+            )
+          ) %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

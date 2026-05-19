@@ -1,0 +1,49 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: "javascript:window.history.back()",
+    class: "mb-2"
+  ) do |breadcrumb| %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Recording Studio Orders",
+    subtitle: (@parent_recording_label.present? ? "Manage custom orders for #{@parent_recording_label}" : "Browse orderable types and their custom order counts."),
+    variant: :h1
+  ) %>
+
+  <% if @type_rows.any? %>
+    <%= render FlatPack::Table::Component.new(data: @type_rows) do |table| %>
+      <% table.column(title: "Types", html: ->(row) { row.recordable_type }) %>
+      <% table.column(title: "Custom Orders", html: ->(row) { row.custom_orders_count.to_s }) %>
+      <% table.column(title: "Actions", html: ->(row) {
+        parent_recording_id = row.parent_recording_id || @parent_recording&.id
+        actions = []
+
+        if parent_recording_id.present?
+          actions << link_to(
+            "View",
+            recording_studio_order_path(row.recordable_type, parent_recording_id: parent_recording_id),
+            class: "font-medium underline"
+          )
+        end
+
+        if parent_recording_id.present? && row.group_key.present?
+          actions << link_to(
+            "Add",
+            new_recording_studio_order_path(parent_recording_id: parent_recording_id, group_key: row.group_key),
+            class: "font-medium underline"
+          )
+        end
+
+        safe_join(actions, " ")
+      }) %>
+    <% end %>
+  <% else %>
+    <%= render FlatPack::EmptyState::Component.new(
+      title: "No orderable types found",
+      description: "Orderable recording types appear here once they define order groups and have recordings."
+    ) %>
+  <% end %>
+</div>
+</div>

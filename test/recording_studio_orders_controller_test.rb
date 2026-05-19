@@ -115,10 +115,10 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     @controller.create
 
     assert_equal "/return", @controller.redirected_to
-    assert_equal "Unable to create that recording order list.", @controller.flash_payload[:alert]
+    assert_equal "Unable to create that recording studio order.", @controller.flash_payload[:alert]
   end
 
-  def test_create_redirects_with_notice_when_list_is_created
+  def test_create_redirects_with_notice_when_order_is_created
     created_at = Time.utc(2024, 1, 2)
     order = Struct.new(:recordings).new([
                                           Struct.new(:id, :created_at).new("order-recording-1", created_at)
@@ -129,7 +129,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     @controller.create
 
     assert_equal "/return?selected_order_recording_id=order-recording-1", @controller.redirected_to
-    assert_equal "Created list.", @controller.flash_payload[:notice]
+    assert_equal "Created order.", @controller.flash_payload[:notice]
   end
 
   def test_create_redirects_when_parent_recording_is_missing
@@ -160,7 +160,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
 
     assert_equal "/", @controller.redirected_to
-    assert_equal "Unable to load that recording order list form.", @controller.flash_payload[:alert]
+    assert_equal "Unable to load that recording studio order form.", @controller.flash_payload[:alert]
   end
 
   def test_load_form_context_redirects_when_parent_recording_is_missing
@@ -186,7 +186,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       parent_recording_id: "parent-1",
       group_key: "pages",
       source_order_recording_id: "source-order",
-      recording_order_list: { name: "Saved list" }
+      recording_studio_order: { name: "Saved order" }
     }
     parent_recording = @parent_recording
 
@@ -206,11 +206,212 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
 
     assert_equal [@parent_recording, "pages"], captured[:args]
-    assert_equal "Saved list", captured[:kwargs][:name]
+    assert_equal "Saved order", captured[:kwargs][:name]
     assert_same owner, captured[:kwargs][:owner]
     assert_same owner, captured[:kwargs][:actor]
-    assert_equal({ source: "recording_studio_orderable.recording_order_lists#create" }, captured[:kwargs][:metadata])
+    assert_equal({ source: "recording_studio_orderable.recording_studio_orders#create" }, captured[:kwargs][:metadata])
     assert_equal "source-order", captured[:kwargs][:source_order_recording_id]
+  end
+
+  def test_load_index_context_builds_type_rows_from_group_definitions
+    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
+    @controller.params_hash = { parent_recording_id: "parent-1" }
+    parent_recording = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] },
+      "assets" => { group_key: "assets", allows: ["Asset"] }
+    })
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) { |_id| parent_recording }
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :named_recording_order_recordings,
+        lambda do |_recording, group_key, owner:|
+          assert_nil owner
+          group_key == "pages" ? [Struct.new(:id, :recordable).new("order-1", Struct.new(:name).new("Alpha"))] : []
+        end
+      ) do
+        @controller.send(:load_index_context)
+      end
+    end
+
+    rows = @controller.instance_variable_get(:@type_rows)
+
+    assert_nil @controller.redirected_to
+    assert_equal ["Asset", "Page"], rows.map(&:recordable_type)
+    assert_equal [0, 1], rows.map(&:custom_orders_count)
+  end
+
+  def test_load_index_context_without_parent_recording_id_builds_global_type_rows
+    parent_recording_one = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] },
+    },
+      id: "parent-1",
+      recordable_type: "Folder"
+    )
+    parent_recording_two = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] },
+    },
+      id: "parent-2",
+      recordable_type: "Folder"
+    )
+    non_orderable_recording = ParentRecording.new(
+      "ignored-order",
+      Recordable.new("Order", nil),
+      "RecordingStudio::RecordingStudioOrder"
+    )
+
+    @controller.params_hash = {}
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:all) { [parent_recording_one, parent_recording_two, non_orderable_recording] }
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :named_recording_order_recordings,
+        lambda do |recording, _group_key, owner:|
+          assert_nil owner
+          recording.id == "parent-1" ? [Struct.new(:id, :recordable).new("order-1", Struct.new(:name).new("Alpha"))] : []
+        end
+      ) do
+        @controller.send(:load_index_context)
+      end
+    end
+
+    rows = @controller.instance_variable_get(:@type_rows)
+
+    assert_nil @controller.redirected_to
+    assert_equal 1, rows.size
+    assert_equal "Folder", rows.first.recordable_type
+    assert_equal "pages", rows.first.group_key
+    assert_equal 1, rows.first.custom_orders_count
+    assert_equal "parent-1", rows.first.parent_recording_id
+  end
+
+  def test_load_show_context_sets_type_row_and_named_order_rows
+    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
+    @controller.params_hash = { parent_recording_id: "parent-1", id: "Page" }
+    parent_recording = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] }
+    })
+    named_order_recording = Struct.new(:id, :recordable).new("order-1", Struct.new(:name).new("Homepage"))
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) { |_id| parent_recording }
+      RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recordings, [named_order_recording]) do
+        @controller.send(:load_show_context)
+      end
+    end
+
+    type_row = @controller.instance_variable_get(:@type_row)
+    named_rows = @controller.instance_variable_get(:@named_order_rows)
+
+    assert_nil @controller.redirected_to
+    assert_equal "Page", type_row.recordable_type
+    assert_equal "pages", type_row.group_key
+    assert_equal ["Homepage"], named_rows.map(&:name)
+    assert_equal ["order-1"], named_rows.map(&:recording_id)
+  end
+
+  def test_load_index_context_redirects_when_parent_recording_is_missing
+    @controller.params_hash = { parent_recording_id: "missing" }
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) do |_id|
+        raise ActiveRecord::RecordNotFound, "missing"
+      end
+      @controller.send(:load_index_context)
+    end
+
+    assert_equal "/", @controller.redirected_to
+    assert_equal "Parent recording not found.", @controller.flash_payload[:alert]
+  end
+
+  def test_load_show_context_uses_generic_alert_for_unknown_type
+    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
+    @controller.params_hash = { parent_recording_id: "parent-1", id: "Unknown" }
+    parent_recording = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] }
+    })
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) { |_id| parent_recording }
+      @controller.send(:load_show_context)
+    end
+
+    assert_equal "/", @controller.redirected_to
+    assert_equal "Unable to load recording studio orders.", @controller.flash_payload[:alert]
+  end
+
+  def test_redirect_edit_placeholder_redirects_to_show_with_notice
+    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
+    @controller.params_hash = { parent_recording_id: "parent-1", recordable_type: "Page" }
+    @controller.define_singleton_method(:recording_studio_order_path) do |recordable_type, parent_recording_id:|
+      "/recording_studio_orders/#{recordable_type}?parent_recording_id=#{parent_recording_id}"
+    end
+    parent_recording = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] }
+    })
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) { |_id| parent_recording }
+      @controller.send(:redirect_edit_placeholder)
+    end
+
+    assert_equal "/recording_studio_orders/Page?parent_recording_id=parent-1", @controller.redirected_to
+    assert_equal "Editing recording studio orders is not implemented yet.", @controller.flash_payload[:alert]
+  end
+
+  def test_authorize_parent_recording_from_params_redirects_when_parent_missing
+    @controller.params_hash = { parent_recording_id: "missing" }
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) do |_id|
+        raise ActiveRecord::RecordNotFound, "missing"
+      end
+      @controller.send(:authorize_parent_recording_from_params!)
+    end
+
+    assert_equal "/", @controller.redirected_to
+    assert_equal "Parent recording not found.", @controller.flash_payload[:alert]
+  end
+
+  def test_parent_recording_label_falls_back_to_type_and_id
+    parent_recording = ParentRecording.new("parent-42", Recordable.new(nil, nil), "Folder")
+
+    assert_equal "Folder parent-42", @controller.send(:parent_recording_label, parent_recording)
+  end
+
+  def test_orderable_parent_recordings_supports_where_not_scope
+    parent_recording = build_parent_recording_with_groups({
+      "pages" => { group_key: "pages", allows: ["Page"] }
+    })
+    relation = Struct.new(:records) do
+      def not(**)
+        self
+      end
+
+      def to_a
+        records
+      end
+    end.new([parent_recording])
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:where) { relation }
+      rows = @controller.send(:orderable_parent_recordings)
+      assert_equal [parent_recording], rows
+    end
+  end
+
+  def test_order_group_definitions_for_returns_empty_when_not_strict
+    parent_recording = ParentRecording.new("parent-1", Object.new, "Object")
+
+    assert_equal({}, @controller.send(:order_group_definitions_for, parent_recording, strict: false))
+  end
+
+  def test_order_group_definitions_for_raises_when_strict
+    parent_recording = ParentRecording.new("parent-1", Object.new, "Object")
+
+    assert_raises(NoMethodError) do
+      @controller.send(:order_group_definitions_for, parent_recording)
+    end
   end
 
   def test_authorize_parent_recording_denies_when_hook_returns_false
@@ -237,6 +438,15 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   private
+
+  def build_parent_recording_with_groups(group_definitions, id: "parent-1", recordable_type: "Folder")
+    recordable_class = Class.new do
+      define_method(:name) { "Folder" }
+    end
+    recordable_class.define_singleton_method(:recording_studio_order_group_definitions) { group_definitions }
+
+    ParentRecording.new(id, recordable_class.new, recordable_type)
+  end
 
   def with_temporary_recording_class
     had_constant = RecordingStudio.const_defined?(:Recording, false)
