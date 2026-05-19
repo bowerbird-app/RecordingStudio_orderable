@@ -7,8 +7,8 @@
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Create ordered list",
-    subtitle: "Create a new order list for #{@parent_recording_label}",
+    title: "Create Custom Order",
+    subtitle: "Create a custom order for #{@parent_recording_label}",
     variant: :h1
   ) %>
 
@@ -22,22 +22,16 @@
       <div class="flex flex-col gap-2">
         <%= render FlatPack::TextInput::Component.new(
           name: "recording_order_list[name]",
-          label: "List name",
+          label: "Order Name",
           required: true,
-          placeholder: "My saved list",
+          placeholder: "My New Order",
           class: "!rounded-full"
         ) %>
-        <p class="text-xs text-(--surface-muted-content-color)">
-          Parent <strong><%= @parent_recording_label %></strong>, group <strong><%= @group_key.to_s.humanize %></strong>
-        </p>
-        <p class="text-xs text-(--surface-muted-content-color)">
-          Recording ID <code><%= @parent_recording.id %></code>
-        </p>
       </div>
 
       <div class="flex items-center gap-3">
         <%= render FlatPack::Button::Component.new(
-          text: "Create ordered list",
+          text: "Create",
           style: :primary,
           size: :md,
           type: "submit",
