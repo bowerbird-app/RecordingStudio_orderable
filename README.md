@@ -107,6 +107,7 @@ end
    rails generate recording_studio_orderable:migrations
    bin/rails db:migrate
    ```
+  If older unnamed orders already exist for the same parent/group/owner scope, the migration preserves the newest one as the default and renames the older duplicates so the unique index can be added safely.
 4. Configure `authenticate_controller`, `current_owner_resolver`, and `authorize_parent_recording` in the generated initializer before exposing the mounted UI.
 5. Register host recordable types with Recording Studio as usual.
 6. Opt parent recordables into one or more order groups.

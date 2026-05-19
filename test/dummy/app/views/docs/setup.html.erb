@@ -57,6 +57,7 @@ rails generate recording_studio_orderable:migrations
 bin/rails db:migrate</code></pre>
         </div>
       </div>
+      <p class="mt-3 text-sm leading-6">If duplicate unnamed orders already exist, the migration keeps the newest default order and renames older duplicates so the new unique index can be added safely.</p>
       <p class="mt-3 text-sm leading-6">Opt parent recordables into one or more order groups after installation.</p>
     </div>
   </div>
