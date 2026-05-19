@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module RecordingStudioOrderable
-  class RecordingOrderListsController < ApplicationController
+  class RecordingStudioOrdersController < ApplicationController
     before_action :ensure_current_recording_studio_orderable_owner!
     before_action :load_form_context, only: :new
     before_action :authorize_parent_recording_from_params!, only: :create
 
     def create
       order = create_named_recording_order
-      redirect_to create_redirect_target(order) || root_path, notice: "Created list."
+      redirect_to create_redirect_target(order) || root_path, notice: "Created order."
     rescue ActiveRecord::RecordNotFound
       redirect_to root_path, alert: "Parent recording not found."
     rescue RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,

@@ -1,15 +1,16 @@
-# frozen_string_literal: true
-
+$LOAD_PATH.unshift File.expand_path(".", __dir__)
+$LOAD_PATH.unshift File.expand_path("../", __dir__)
 require "test_helper"
 require "action_controller"
+require File.expand_path("test_helper", __dir__)
 require_relative "../app/controllers/recording_studio_orderable/application_controller"
-require_relative "../app/controllers/recording_studio_orderable/recording_order_lists_controller"
+require_relative "../app/controllers/recording_studio_orderable/recording_studio_orders_controller"
 
-class RecordingOrderListsControllerTest < Minitest::Test
+class RecordingStudioOrdersControllerTest < Minitest::Test
   ParentRecording = Struct.new(:id, :recordable, :recordable_type)
   Recordable = Struct.new(:name, :title)
 
-  class ControllerDouble < RecordingStudioOrderable::RecordingOrderListsController
+  class ControllerDouble < RecordingStudioOrderable::RecordingStudioOrdersController
     attr_accessor :params_hash, :redirected_to, :flash_payload
 
     def params

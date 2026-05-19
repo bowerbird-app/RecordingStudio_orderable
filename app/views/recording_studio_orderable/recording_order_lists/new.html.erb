@@ -13,7 +13,7 @@
   ) %>
 
   <div>
-    <%= form_with url: recording_order_lists_path, scope: :recording_order_list, class: "flex flex-col gap-4" do |form| %>
+    <%= form_with url: recording_studio_orders_path, scope: :recording_studio_order, class: "flex flex-col gap-4" do |form| %>
       <%= hidden_field_tag :parent_recording_id, @parent_recording.id %>
       <%= hidden_field_tag :group_key, @group_key %>
       <%= hidden_field_tag :redirect_to, @redirect_to if @redirect_to.present? %>
@@ -21,7 +21,7 @@
 
       <div class="flex flex-col gap-2">
         <%= render FlatPack::TextInput::Component.new(
-          name: "recording_order_list[name]",
+          name: "recording_studio_order[name]",
           label: "Order Name",
           required: true,
           placeholder: "My New Order",

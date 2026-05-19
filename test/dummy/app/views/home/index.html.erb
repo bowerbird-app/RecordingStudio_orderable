@@ -56,7 +56,7 @@
                     text: "Add new",
                     style: :primary,
                     size: :md,
-                    url: recording_studio_orderable.new_recording_order_list_path(
+                    url: recording_studio_orderable.new_recording_studio_order_path(
                       parent_recording_id: @folder_recording.id,
                       group_key: :pages,
                       source_order_recording_id: @page_order_recording&.id,
@@ -70,7 +70,7 @@
                     style: :info,
                     title: "No ordered list yet",
                     description: capture do %>
-                      <%= link_to "Create", recording_studio_orderable.new_recording_order_list_path(
+                      <%= link_to "Create", recording_studio_orderable.new_recording_studio_order_path(
                         parent_recording_id: @folder_recording.id,
                         group_key: :pages,
                         source_order_recording_id: @page_order_recording&.id,
