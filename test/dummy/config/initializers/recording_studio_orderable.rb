@@ -5,8 +5,8 @@ RecordingStudioOrderable.configure do |config|
     controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
   end
 
-  config.current_owner_resolver = lambda do |controller|
-    controller.send(:current_user) if controller.respond_to?(:current_user, true)
+  config.current_owner_resolver = lambda do |_controller|
+    RecordingStudio.configuration.actor&.call
   end
 
   config.authorize_parent_recording = lambda do |controller, parent_recording|

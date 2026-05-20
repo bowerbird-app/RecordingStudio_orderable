@@ -71,12 +71,12 @@ Interactive reorder UIs do not have to submit the full visible UUID list. The du
 
 Named lists build on top of that owner scope. The unnamed/default order remains singleton per `(parent_recording, group_key, owner_type, owner_id)`, while additional named lists can coexist for the same owner and group. Duplicate names are allowed, so host apps should select named lists by their `RecordingStudio::Recording` id rather than by `name`.
 
-The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Owner resolution and parent-recording authorization are intentionally host-controlled. The named-list UI fails closed unless both concerns are configured:
+The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Parent-recording authorization is host-controlled, and both authentication and owner resolution can default to `RecordingStudio.configuration.actor` unless overridden.
 
 ```ruby
 RecordingStudioOrderable.configure do |config|
   config.authenticate_controller = ->(controller) { controller.authenticate_user! }
-  config.current_owner_resolver = ->(controller) { controller.current_user }
+  config.current_owner_resolver = ->(_controller) { RecordingStudio.configuration.actor&.call }
   config.authorize_parent_recording = lambda do |controller, parent_recording|
     controller.current_user.present? && parent_recording.present?
   end
@@ -108,7 +108,7 @@ end
    bin/rails db:migrate
    ```
   If older unnamed orders already exist for the same parent/group/owner scope, the migration preserves the newest one as the default and renames the older duplicates so the unique index can be added safely.
-4. Configure `authenticate_controller`, `current_owner_resolver`, and `authorize_parent_recording` in the generated initializer before exposing the mounted UI.
+4. Configure `authorize_parent_recording` in the generated initializer before exposing the mounted UI. `authenticate_controller` and `current_owner_resolver` are optional and only needed if you want behavior different from the default `RecordingStudio.configuration.actor` fallback.
 5. Register host recordable types with Recording Studio as usual.
 6. Opt parent recordables into one or more order groups.
 

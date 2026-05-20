@@ -138,6 +138,29 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     assert_equal true, authenticated
   end
 
+  def test_authenticate_request_falls_back_to_recording_studio_actor_when_hook_is_unset
+    RecordingStudioOrderable.configuration.authenticate_controller = nil
+    fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      @controller.send(:authenticate_recording_studio_orderable_request!)
+    end
+
+    assert_nil @controller.redirected_to
+  end
+
+  def test_authenticate_request_redirects_when_recording_studio_actor_is_missing
+    RecordingStudioOrderable.configuration.authenticate_controller = nil
+    fake_configuration = Struct.new(:actor).new(nil)
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      @controller.send(:authenticate_recording_studio_orderable_request!)
+    end
+
+    assert_equal "/", @controller.redirected_to
+    assert_equal "Authentication is required.", @controller.flash_payload[:alert]
+  end
+
   def test_current_owner_resolver_and_owner_guard_use_configured_owner
     RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { :owner }
 
@@ -146,6 +169,37 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     @controller.send(:ensure_current_recording_studio_orderable_owner!)
 
     assert_nil @controller.redirected_to
+  end
+
+  def test_current_owner_resolver_falls_back_to_recording_studio_actor
+    RecordingStudioOrderable.configuration.current_owner_resolver = nil
+
+    fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      assert_equal :actor_owner, @controller.send(:current_recording_studio_orderable_owner)
+    end
+  end
+
+  def test_current_owner_resolver_returns_nil_when_recording_studio_actor_missing
+    RecordingStudioOrderable.configuration.current_owner_resolver = nil
+
+    fake_configuration = Struct.new(:actor).new(nil)
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      assert_nil @controller.send(:current_recording_studio_orderable_owner)
+    end
+  end
+
+  def test_safe_local_redirect_target_accepts_local_path_and_rejects_external_url
+    assert_equal "/orders", @controller.send(:safe_local_redirect_target, "/orders")
+    assert_nil @controller.send(:safe_local_redirect_target, "https://example.com/orders")
+  end
+
+  def test_append_query_param_handles_existing_query_and_blank_values
+    assert_equal "/orders?a=1", @controller.send(:append_query_param, "/orders", :a, 1)
+    assert_equal "/orders?a=1&b=2", @controller.send(:append_query_param, "/orders?a=1", :b, 2)
+    assert_equal "/orders", @controller.send(:append_query_param, "/orders", :a, nil)
   end
 
   def test_create_uses_generic_alert_for_invalid_input_failures
@@ -158,6 +212,24 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
     assert_equal "/return", @controller.redirected_to
     assert_equal "Unable to create that recording studio order.", @controller.flash_payload[:alert]
+  end
+
+  def test_show_renders_show_order_when_single_order_is_present
+    single_order = Struct.new(:recordable).new(Struct.new(:name).new("Pinned"))
+    @controller.instance_variable_set(:@single_order, single_order)
+
+    @controller.show
+
+    assert_equal :show_order, @controller.rendered_template
+    assert_equal "Pinned", @controller.instance_variable_get(:@order_display_name)
+  end
+
+  def test_show_renders_show_when_single_order_is_missing
+    @controller.instance_variable_set(:@single_order, nil)
+
+    @controller.show
+
+    assert_equal :show, @controller.rendered_template
   end
 
   def test_create_redirects_with_notice_when_order_is_created
@@ -241,6 +313,74 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
     assert_equal "/", @controller.redirected_to
     assert_equal "Unable to load that recording studio order form.", @controller.flash_payload[:alert]
+  end
+
+  def test_named_order_count_for_sums_rows_across_group_definitions
+    parent_recording = @parent_recording
+
+    @controller.stub(:order_group_definitions_for, {
+                       "pages" => { group_key: "pages" },
+                       "notes" => { group_key: "notes" }
+                     }) do
+      @controller.stub(:named_order_rows_for, lambda { |_parent, group_key|
+                         group_key == "pages" ? [1, 2] : [3]
+                       }) do
+        assert_equal 3, @controller.send(:named_order_count_for, parent_recording)
+      end
+    end
+  end
+
+  def test_type_row_for_returns_matching_row
+    parent_recording = @parent_recording
+    row = RecordingStudioOrderable::RecordingStudioOrdersController::TypeRow.new(
+      recordable_type: "Page",
+      group_key: "pages",
+      custom_orders_count: 0,
+      parent_recording_id: parent_recording.id
+    )
+
+    @controller.stub(:recording_type_rows, [row]) do
+      result = @controller.send(:type_row_for!, parent_recording, "Page")
+      assert_same row, result
+    end
+  end
+
+  def test_default_group_key_for_reads_first_group_key
+    parent_recording = @parent_recording
+
+    @controller.stub(:order_group_definitions_for, {
+                       "pages" => { group_key: "pages" }
+                     }) do
+      assert_equal "pages", @controller.send(:default_group_key_for, parent_recording)
+    end
+  end
+
+  def test_order_group_definitions_for_raises_when_recordable_class_is_missing
+    parent_recording = ParentRecording.new("parent-2", nil, "Missing::Type")
+
+    assert_raises(RecordingStudioOrderable::RecordingOrderManager::ConfigurationError) do
+      @controller.send(:order_group_definitions_for, parent_recording)
+    end
+  end
+
+  def test_order_group_definitions_for_supports_legacy_group_definition_method
+    klass = Class.new do
+      def self.recording_studio_order_group_definition
+        singleton_class.define_method(:recording_studio_order_group_definitions) do
+          {
+            "pages" => {
+              group_key: "pages",
+              allows: ["Page"]
+            }
+          }
+        end
+      end
+    end
+
+    parent_recording = ParentRecording.new("parent-3", klass.new, "LegacyType")
+
+    result = @controller.send(:order_group_definitions_for, parent_recording)
+    assert_equal "pages", result.fetch("pages").fetch(:group_key)
   end
 
   def test_load_form_context_redirects_when_parent_recording_is_missing

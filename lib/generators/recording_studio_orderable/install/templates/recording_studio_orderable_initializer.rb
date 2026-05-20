@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 RecordingStudioOrderable.configure do |config|
-  # Protect the mounted UI with your host app's authentication flow.
+  # Optional override: protect mounted UI with host app auth.
+  # If omitted, Orderable falls back to RecordingStudio.configuration.actor.
   config.authenticate_controller = lambda do |controller|
     controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
   end
 
-  # Resolve the owner scope used for named lists and owner-scoped default orders.
-  config.current_owner_resolver = lambda do |controller|
-    controller.send(:current_user) if controller.respond_to?(:current_user, true)
+  # Resolve owner scope through RecordingStudio actor config (typically Current.actor).
+  config.current_owner_resolver = lambda do |_controller|
+    RecordingStudio.configuration.actor&.call
   end
 
   # Authorize the resolved parent recording before the mounted list UI can read or mutate it.

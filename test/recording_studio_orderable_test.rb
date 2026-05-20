@@ -168,7 +168,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/edit.html.erb", __dir__)
     view_source = File.read(view_path)
 
-    assert_includes view_source, "Edit Custom Order"
+    assert_includes view_source, 'title: "Custom Order for #{@source_order_name}"'
     assert_includes view_source, "FlatPack::Table::Component"
     assert_includes view_source, "draggable_rows: true"
     assert_includes view_source, "table:reordered->page-order-form#sync"

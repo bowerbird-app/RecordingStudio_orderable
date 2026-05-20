@@ -18,7 +18,7 @@
 
   <div class="flex flex-wrap gap-2">
     <%= render FlatPack::Badge::Component.new(text: "Default event logging: off", style: :info, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "Owner resolution: host-controlled", style: :warning, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Owner resolution: Recording Studio actor", style: :warning, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Authentication: host-controlled", style: :success, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Parent authorization: required for list UI", style: :warning, size: :sm) %>
   </div>
@@ -26,7 +26,7 @@
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "Configuration keys",
-      subtitle: "Each key is host-owned and can be set in the generated initializer.",
+      subtitle: "Hooks are host-owned; owner resolution can delegate to Recording Studio actor config.",
       variant: :h3,
       class: "mb-0 pb-0"
     ) %>
@@ -62,13 +62,13 @@
 
         <%= render FlatPack::PageTitle::Component.new(
           title: "authenticate_controller",
-          subtitle: "Injects host-owned authentication behavior into mounted addon requests. Before protected controller actions run, the engine calls this lambda with the current controller instance so your app can enforce sign-in rules.",
+          subtitle: "Optional override for request authentication. If unset, Orderable requires a present actor from RecordingStudio.configuration.actor before mounted actions proceed.",
           variant: :h4,
           class: "mb-0 pb-0 mt-8"
         ) %>
         <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
           <div class="p-4">
-            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Called before mounted UI requests so your host app can enforce authentication.
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Optional override. You can omit this key if RecordingStudio.configuration.actor is already wired.
   RecordingStudioOrderable.configure do |config|
     config.authenticate_controller = -&gt;(controller) do
       controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
@@ -79,16 +79,16 @@
 
         <%= render FlatPack::PageTitle::Component.new(
           title: "current_owner_resolver",
-          subtitle: "Resolves the owner context used to scope default and named orders. On each request, the engine executes this lambda and uses the returned object when reading, creating, and applying order snapshots.",
+          subtitle: "Optional override for owner scope used by default and named orders. If unset, Orderable falls back to RecordingStudio.configuration.actor, which typically resolves to Current.actor.",
           variant: :h4,
           class: "mb-0 pb-0 mt-8"
         ) %>
         <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
           <div class="p-4">
-            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Returns the current owner object used to scope owner-specific default and named orders.
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Optional override. You can omit this key to use RecordingStudio.configuration.actor by default.
   RecordingStudioOrderable.configure do |config|
-    config.current_owner_resolver = -&gt;(controller) do
-      controller.send(:current_user) if controller.respond_to?(:current_user, true)
+    config.current_owner_resolver = -&gt;(_controller) do
+      RecordingStudio.configuration.actor&amp;.call
     end
   end</code></pre>
           </div>
@@ -123,7 +123,10 @@
 
     <div>
       <ul class="space-y-3 text-sm leading-6">
-        <li>Set auth and owner hooks in the generated initializer so all mounted UI requests stay inside host app rules.</li>
+        <li>`authenticate_controller` is optional when your app already sets `RecordingStudio.configuration.actor` reliably for each request.</li>
+        <li>Set parent-authorization hooks in the generated initializer so mounted UI requests stay inside host app rules.</li>
+        <li>`current_owner_resolver` is optional unless you need owner resolution different from `RecordingStudio.configuration.actor`.</li>
+        <li>Keep Recording Studio actor wiring in one place via <code>RecordingStudio.configure { |config| config.actor = -&gt; { Current.actor } }</code>.</li>
         <li>Authorizing the resolved parent recording is required before mounted list pages can read, render, or create lists.</li>
         <li>Turn on event logging only if your Recording Studio event stream needs addon-specific audit entries.</li>
         <li>Keep the prefix stable once downstream reporting depends on those action names.</li>
@@ -134,7 +137,7 @@
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "Initializer example",
-      subtitle: "Typical host app configuration for mounted UI access and current-user ownership.",
+      subtitle: "Typical host app configuration for mounted UI access and Recording Studio actor ownership.",
       variant: :h3,
       class: "mb-0 pb-0"
     ) %>
@@ -148,8 +151,8 @@
     controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
   end
 
-  config.current_owner_resolver = -&gt;(controller) do
-    controller.send(:current_user) if controller.respond_to?(:current_user, true)
+  config.current_owner_resolver = -&gt;(_controller) do
+    RecordingStudio.configuration.actor&amp;.call
   end
 
   config.authorize_parent_recording = -&gt;(controller, parent_recording) do
