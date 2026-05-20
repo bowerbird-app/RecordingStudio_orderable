@@ -25,23 +25,91 @@
 
   <div>
     <%= render FlatPack::PageTitle::Component.new(
-      title: "Available options",
-      subtitle: "All supported configuration keys from the engine configuration object.",
+      title: "Configuration keys",
+      subtitle: "Each key is host-owned and can be set in the generated initializer.",
       variant: :h3,
       class: "mb-0 pb-0"
     ) %>
-
-    <div>
-      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
-        <div class="p-4">
-          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">log_order_events        # semantic order-event logging, default: false
-event_action_prefix    # action name prefix, default: "recording_order"
-authenticate_controller
-current_owner_resolver
-authorize_parent_recording</code></pre>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "log_order_events",
+          subtitle: "Enables or disables addon semantic order event logging. When enabled, runtime order actions emit prefixed event names into the Recording Studio event stream; when disabled, those addon-specific events are skipped.",
+          variant: :h4,
+          class: "mb-0 pb-0 mt-8"
+        ) %>
+        <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+          <div class="p-4">
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Controls whether addon-specific semantic order events are logged. Default is false.
+  RecordingStudioOrderable.configure do |config|
+    config.log_order_events = true
+  end</code></pre>
+          </div>
         </div>
-      </div>
+
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "event_action_prefix",
+          subtitle: "Defines the action-name prefix used by addon semantic events. The engine combines this prefix with operation-specific suffixes so downstream logs and analytics can group order activity under a stable namespace.",
+          variant: :h4,
+          class: "mb-0 pb-0 mt-8"
+        ) %>
+        <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+          <div class="p-4">
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Sets the action name prefix used for semantic order events. Default is "recording_order".
+  RecordingStudioOrderable.configure do |config|
+    config.event_action_prefix = "recording_order"
+  end</code></pre>
+          </div>
+        </div>
+
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "authenticate_controller",
+          subtitle: "Injects host-owned authentication behavior into mounted addon requests. Before protected controller actions run, the engine calls this lambda with the current controller instance so your app can enforce sign-in rules.",
+          variant: :h4,
+          class: "mb-0 pb-0 mt-8"
+        ) %>
+        <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+          <div class="p-4">
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Called before mounted UI requests so your host app can enforce authentication.
+  RecordingStudioOrderable.configure do |config|
+    config.authenticate_controller = -&gt;(controller) do
+      controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
+    end
+  end</code></pre>
+          </div>
+        </div>
+
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "current_owner_resolver",
+          subtitle: "Resolves the owner context used to scope default and named orders. On each request, the engine executes this lambda and uses the returned object when reading, creating, and applying order snapshots.",
+          variant: :h4,
+          class: "mb-0 pb-0 mt-8"
+        ) %>
+        <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+          <div class="p-4">
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Returns the current owner object used to scope owner-specific default and named orders.
+  RecordingStudioOrderable.configure do |config|
+    config.current_owner_resolver = -&gt;(controller) do
+      controller.send(:current_user) if controller.respond_to?(:current_user, true)
+    end
+  end</code></pre>
+          </div>
+        </div>
+
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "authorize_parent_recording",
+          subtitle: "Applies host authorization to the resolved parent recording before list access. The engine passes both controller and parent recording into this lambda and proceeds only when the return value is truthy.",
+          variant: :h4,
+          class: "mb-0 pb-0 mt-8"
+        ) %>
+        <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+          <div class="p-4">
+            <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Receives the resolved parent recording and should return truthy only when the current owner can access that order context.
+  RecordingStudioOrderable.configure do |config|
+    config.authorize_parent_recording = -&gt;(controller, parent_recording) do
+      controller.send(:current_user).present? &amp;&amp; parent_recording.present?
+    end
+  end</code></pre>
+          </div>
+        </div>
     </div>
   </div>
 
@@ -55,8 +123,8 @@ authorize_parent_recording</code></pre>
 
     <div>
       <ul class="space-y-3 text-sm leading-6">
-        <li>Set auth and owner hooks in the generated initializer so mounted UI requests stay inside host app rules.</li>
-        <li>Authorizing the resolved parent recording is required before the mounted named-list flow will render or create lists.</li>
+        <li>Set auth and owner hooks in the generated initializer so all mounted UI requests stay inside host app rules.</li>
+        <li>Authorizing the resolved parent recording is required before mounted list pages can read, render, or create lists.</li>
         <li>Turn on event logging only if your Recording Studio event stream needs addon-specific audit entries.</li>
         <li>Keep the prefix stable once downstream reporting depends on those action names.</li>
       </ul>
@@ -76,11 +144,18 @@ authorize_parent_recording</code></pre>
         <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
         <div class="p-4">
           <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
-  config.authenticate_controller = -&gt;(controller) { controller.authenticate_user! }
-  config.current_owner_resolver = -&gt;(controller) { controller.current_user }
-  config.authorize_parent_recording = -&gt;(controller, parent_recording) do
-    controller.current_user.present? &amp;&amp; parent_recording.present?
+  config.authenticate_controller = -&gt;(controller) do
+    controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
   end
+
+  config.current_owner_resolver = -&gt;(controller) do
+    controller.send(:current_user) if controller.respond_to?(:current_user, true)
+  end
+
+  config.authorize_parent_recording = -&gt;(controller, parent_recording) do
+    controller.send(:current_user).present? &amp;&amp; parent_recording.present?
+  end
+
   config.log_order_events = false
   config.event_action_prefix = "recording_order"
 end</code></pre>
