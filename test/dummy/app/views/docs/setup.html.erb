@@ -33,7 +33,7 @@
     <div>
       <ul class="space-y-3 text-sm leading-6">
         <li>A Rails app with Recording Studio already mounted and working.</li>
-        <li>Recordable parent and child models registered the same way as the rest of your Recording Studio setup.</li>
+        <li>Host parent and child recordable models registered the same way as the rest of your Recording Studio setup.</li>
         <li>A parent recordable that will opt into at least one named order group.</li>
       </ul>
     </div>
@@ -58,6 +58,7 @@ bin/rails db:migrate</code></pre>
         </div>
       </div>
       <p class="mt-3 text-sm leading-6">If duplicate unnamed orders already exist, the migration keeps the newest default order and renames older duplicates so the new unique index can be added safely.</p>
+      <p class="mt-3 text-sm leading-6">Before exposing mounted named-list pages, configure <code>authenticate_controller</code>, <code>current_owner_resolver</code>, and <code>authorize_parent_recording</code> in the generated initializer.</p>
       <p class="mt-3 text-sm leading-6">Opt parent recordables into one or more order groups after installation.</p>
     </div>
   </div>
