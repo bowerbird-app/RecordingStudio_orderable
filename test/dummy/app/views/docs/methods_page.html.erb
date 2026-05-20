@@ -16,6 +16,12 @@
     variant: :h1
   ) %>
 
+  <div class="flex flex-wrap gap-2">
+    <%= render FlatPack::Badge::Component.new(text: "Groups define allowed child types", style: :info, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Owner scope is optional", style: :warning, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Mutations persist new snapshots", style: :success, size: :sm) %>
+  </div>
+
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "OrderableRecordable",
@@ -24,16 +30,76 @@
       class: "mb-0 pb-0"
     ) %>
 
-    <div>
-      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
-        <div class="p-4">
-          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">recording_studio_order_group
-recording_orders
-recording_order_for
-find_or_create_recording_order!
-ordered_children_for</code></pre>
-        </div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_studio_order_group",
+      subtitle: "Class macro that declares a named order group and the recordable types it accepts.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">class Folder &lt; ApplicationRecord
+  include RecordingStudioOrderable::OrderableRecordable
+
+  recording_studio_order_group :pages, allows: [Page]
+  recording_studio_order_group :sections, allows: [Section]
+end</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_orders and named_recording_orders",
+      subtitle: "Reads existing order records from the parent's current recording, optionally scoped by owner.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.recording_orders(owner: current_user)
+folder.named_recording_orders(:pages, owner: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_order_for and named_recording_order_for",
+      subtitle: "Fetches one order for a group, or one named order tied to a specific recording id.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.recording_order_for(:pages, owner: current_user)
+folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "find_or_create_recording_order!",
+      subtitle: "Creates an order when missing, otherwise returns the current order for the same group and owner scope.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.find_or_create_recording_order!(
+  :pages,
+  owner: current_user,
+  actor: current_user,
+  metadata: { source: "ui" }
+)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "children_for_order_group and ordered_children_for",
+      subtitle: "Returns eligible children for a group, then returns those same children in explicit order.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.children_for_order_group(:pages)
+folder.ordered_children_for(:pages, owner: current_user)</code></pre>
       </div>
     </div>
   </div>
@@ -46,16 +112,68 @@ ordered_children_for</code></pre>
       class: "mb-0 pb-0"
     ) %>
 
-    <div>
-      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
-        <div class="p-4">
-          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">recording_orders
-named_recording_orders
-recording_order_for
-named_recording_order_for
-ordered_children_for</code></pre>
-        </div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_order_recordings and named_recording_order_recordings",
+      subtitle: "Returns Recording rows that store order snapshots for a group or named order key.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recordings(:pages, owner: current_user)
+folder_recording.named_recording_order_recordings(:pages, owner: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_orders and named_recording_orders",
+      subtitle: "Returns RecordingStudioOrder models extracted from the matching snapshot recordings.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_orders(owner: current_user)
+folder_recording.named_recording_orders(:pages, owner: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_order_for and named_recording_order_for",
+      subtitle: "Fetches one resolved RecordingStudioOrder model for the requested scope.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_for(:pages, owner: current_user)
+folder_recording.named_recording_order_for("order-recording-uuid", :pages, owner: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "recording_order_recording_for and named_recording_order_recording_for",
+      subtitle: "Fetches the underlying Recording snapshot row rather than the order model wrapper.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recording_for(:pages, owner: current_user)
+folder_recording.named_recording_order_recording_for("order-recording-uuid", :pages, owner: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "find_or_create_recording_order! and ordered_children_for",
+      subtitle: "Creates the scoped order when absent and reads children in stored order in one API surface.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
+folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
       </div>
     </div>
   </div>
@@ -68,23 +186,64 @@ ordered_children_for</code></pre>
       class: "mb-0 pb-0"
     ) %>
 
-    <div>
-      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
-        <div class="p-4">
-          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">include_child!
-remove_child!
-move_before!
-move_after!
-move_to_start!
-move_to_end!
-move_to_position!
-reorder!
-cleanup_missing_children!</code></pre>
-            <p class="mt-3 text-xs leading-5 text-(--flatpack-color-muted)">
-              Note: trash, access, and device session helpers are provided by RecordingStudio addon gems, not core.
-            </p>
-        </div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "include_child! and remove_child!",
+      subtitle: "Appends or removes one child recording id, then persists a revised order snapshot.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.include_child!(page_three_recording, actor: current_user, metadata: { source: "seed" })
+page_order.remove_child!(page_archived_recording, actor: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "move_before! and move_after!",
+      subtitle: "Moves one child relative to another child while preserving the rest of the order.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.move_before!(moving: page_three_recording, before: page_one_recording, actor: current_user)
+page_order.move_after!(moving: page_one_recording, after: page_two_recording, actor: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "move_to_start!, move_to_end!, and move_to_position!",
+      subtitle: "Places a child at an absolute position in the order and writes a new snapshot.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.move_to_start!(moving: page_two_recording, actor: current_user)
+page_order.move_to_end!(moving: page_one_recording, actor: current_user)
+page_order.move_to_position!(moving: page_three_recording, position: 1, actor: current_user)</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "reorder! and cleanup_missing_children!",
+      subtitle: "Replaces the full ordered id set, or normalizes it to remove stale and invalid child ids.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.reorder!(
+  ordered_recording_ids: [page_two_recording.id, page_one_recording.id],
+  actor: current_user,
+  metadata: { source: "bulk_edit" }
+)
+
+page_order.cleanup_missing_children!(actor: current_user)</code></pre>
+        <p class="mt-3 text-xs leading-5 text-(--flatpack-color-muted)">
+          Note: trash, access, and device session helpers are provided by RecordingStudio addon gems, not core.
+        </p>
       </div>
     </div>
   </div>
