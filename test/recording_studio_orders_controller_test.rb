@@ -666,6 +666,37 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     assert_equal "Parent recording not found.", @controller.flash_payload[:alert]
   end
 
+  def test_parent_recording_from_params_finds_by_recording_id
+    @controller.params_hash = { parent_recording_id: "parent-1" }
+    parent_recording = @parent_recording
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) { |_id| parent_recording }
+      recording_class.define_singleton_method(:find_by!) do |**_kwargs|
+        raise "should not fallback when find succeeds"
+      end
+
+      assert_equal parent_recording, @controller.send(:parent_recording_from_params)
+    end
+  end
+
+  def test_parent_recording_from_params_falls_back_to_recordable_id
+    @controller.params_hash = { parent_recording_id: "folder-recordable-id" }
+    parent_recording = @parent_recording
+
+    with_temporary_recording_class do |recording_class|
+      recording_class.define_singleton_method(:find) do |_id|
+        raise ActiveRecord::RecordNotFound, "missing"
+      end
+      recording_class.define_singleton_method(:find_by!) do |**kwargs|
+        raise "unexpected fallback lookup" unless kwargs == { recordable_id: "folder-recordable-id" }
+        parent_recording
+      end
+
+      assert_equal parent_recording, @controller.send(:parent_recording_from_params)
+    end
+  end
+
   def test_parent_recording_label_falls_back_to_type_and_id
     parent_recording = ParentRecording.new("parent-42", Recordable.new(nil, nil), "Folder")
 

@@ -11,23 +11,29 @@
     variant: :h1
   ) %>
 
-  <div class="flex flex-col gap-4">
-    <div>
-      <strong>Order Name:</strong> <%= @order_display_name %>
-    </div>
-    <div>
-      <strong>Order ID:</strong> <%= @single_order.id %>
-    </div>
-    <div>
-      <strong>Created At:</strong> <%= @single_order.created_at %>
-    </div>
-    <div>
-      <strong>Updated At:</strong> <%= @single_order.updated_at %>
-    </div>
-    <!-- Add more order details as needed -->
-  </div>
+  <% detail_rows = [
+    { label: "Order Name", value: @order_display_name },
+    { label: "Order ID", value: @single_order.id },
+    { label: "Created At", value: @single_order.created_at },
+    { label: "Updated At", value: @single_order.updated_at }
+  ] %>
+
+  <%= render FlatPack::Table::Component.new(data: detail_rows) do |table| %>
+    <% table.column(title: "Field", html: ->(row) { row[:label] }) %>
+    <% table.column(title: "Value", html: ->(row) { row[:value].to_s }) %>
+  <% end %>
 
   <div class="flex items-center justify-end mt-6">
-    <%= link_to "Edit", edit_recording_studio_order_path(@single_order.id, parent_recording_id: @parent_recording.id, group_key: @type_row.group_key, recordable_type: @type_row.recordable_type), class: "btn btn-primary" %>
+    <%= render FlatPack::Button::Component.new(
+      text: "Edit",
+      style: :primary,
+      size: :md,
+      url: edit_recording_studio_order_path(
+        @single_order.id,
+        parent_recording_id: @parent_recording.id,
+        group_key: @type_row.group_key,
+        recordable_type: @type_row.recordable_type
+      )
+    ) %>
   </div>
 </div>

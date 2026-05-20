@@ -1,0 +1,109 @@
+/* FlatPack Application Stylesheet */
+
+/* Base layer for component styles */
+@layer components {
+  /* FlatPack components use Tailwind utilities and CSS variables */
+  /* All styling is done via Tailwind classes in component templates */
+  
+  .fp-card-hover-subtle {
+    transition: background-color var(--transition-fast);
+    cursor: pointer;
+  }
+
+  .fp-card-hover-subtle:hover {
+    background-color: var(--card-hover-subtle-background-color);
+  }
+
+  .fp-card-hover-strong {
+    transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+    cursor: pointer;
+  }
+
+  .fp-card-hover-strong:hover {
+    box-shadow: var(--card-hover-strong-shadow);
+    border-color: var(--card-hover-strong-border-color);
+  }
+
+  /* Decorative gradient helpers mapped to theme tokens */
+  .fp-gradient-1 {
+    background-image: var(--gradient-1);
+  }
+
+  .fp-gradient-2 {
+    background-image: var(--gradient-2);
+  }
+
+  .fp-gradient-3 {
+    background-image: var(--gradient-3);
+  }
+
+  .fp-gradient-4 {
+    background-image: var(--gradient-4);
+  }
+
+  .fp-scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .fp-scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* Sidebar layout: width driven by CSS via data attribute set before first paint.
+   * The inline FOUC-prevention script sets data-flat-pack-sidebar-collapsed on
+   * the sidebar wrapper before <aside> is parsed. JS then toggles this attribute
+   * for user interactions, letting CSS transitions handle the animation.
+   * !important overrides Tailwind's w-64 / md:w-auto utilities.
+   */
+  @media (min-width: 768px) {
+    [data-flat-pack-sidebar-collapsed="true"] {
+      width: 4rem !important;
+    }
+
+    [data-flat-pack-sidebar-collapsed="true"] > aside {
+      width: 4rem !important;
+    }
+
+    [data-flat-pack-sidebar-collapsed="false"] {
+      width: 16rem !important;
+    }
+
+    [data-flat-pack-sidebar-collapsed="false"] > aside {
+      width: 16rem !important;
+    }
+  }
+
+  [data-flat-pack-sidebar-collapsed="true"] [data-flat-pack--sidebar-layout-target="scrollContainer"] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  [data-flat-pack-sidebar-collapsed="true"] [data-flat-pack--sidebar-layout-target="scrollContainer"]::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  [data-flat-pack-sidebar-collapsed="true"] .flex-1.min-h-0.overflow-y-auto.overscroll-y-contain::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .fp-card-hover-strong:hover {
+      box-shadow: var(--card-hover-strong-shadow-dark);
+    }
+  }
+
+}
+
+@keyframes fp-skeleton-shimmer {
+  to {
+    transform: translateX(180%);
+  }
+}
+

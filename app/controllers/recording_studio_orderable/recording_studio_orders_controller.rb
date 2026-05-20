@@ -172,7 +172,20 @@ module RecordingStudioOrderable
     end
 
     def parent_recording_from_params
-      RecordingStudio::Recording.find(params.fetch(:parent_recording_id))
+      parent_recording_id = params.fetch(:parent_recording_id).to_s
+
+      RecordingStudio::Recording.find(parent_recording_id)
+    rescue ActiveRecord::RecordNotFound => not_found
+      if RecordingStudio::Recording.respond_to?(:find_by!)
+        return RecordingStudio::Recording.find_by!(recordable_id: parent_recording_id)
+      end
+
+      if RecordingStudio::Recording.respond_to?(:where)
+        fallback_recording = RecordingStudio::Recording.where(recordable_id: parent_recording_id).first
+        return fallback_recording if fallback_recording.present?
+      end
+
+      raise not_found
     end
 
     def group_key_from_params(parent_recording)
