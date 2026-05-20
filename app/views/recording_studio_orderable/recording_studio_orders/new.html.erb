@@ -4,6 +4,18 @@
     back_href: "javascript:window.history.back()",
     class: "mb-2"
   ) do |breadcrumb| %>
+    <% breadcrumb_text = params[:recordable_type].presence || @parent_recording_label %>
+    <% breadcrumb_href = if params[:recordable_type].present?
+                           recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id)
+                         else
+                           recording_studio_orders_path(parent_recording_id: @parent_recording.id)
+                         end %>
+    <% if breadcrumb_text.present? %>
+      <% breadcrumb.item(
+        text: breadcrumb_text,
+        href: breadcrumb_href
+      ) %>
+    <% end %>
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
