@@ -20,6 +20,7 @@
     <%= render FlatPack::Badge::Component.new(text: "Groups define allowed child types", style: :info, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Owner scope is optional", style: :warning, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Mutations persist new snapshots", style: :success, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Core-backed wrappers are labeled", style: :default, size: :sm) %>
   </div>
 
   <div>
@@ -32,7 +33,7 @@
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_studio_order_group",
-      subtitle: "Class macro that declares a named order group and the recordable types it accepts.",
+      subtitle: "Addon API: class macro that declares a named order group and the recordable types it accepts.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -49,7 +50,7 @@ end</code></pre>
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_orders and named_recording_orders",
-      subtitle: "Reads existing order records from the parent's current recording, optionally scoped by owner.",
+      subtitle: "Addon wrapper: reads order snapshots from the parent's child recordings and returns RecordingStudioOrder models.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -62,7 +63,7 @@ folder.named_recording_orders(:pages, owner: current_user)</code></pre>
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_order_for and named_recording_order_for",
-      subtitle: "Fetches one order for a group, or one named order tied to a specific recording id.",
+      subtitle: "Addon wrapper: resolves one scoped order model from matching snapshot recordings.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -75,7 +76,7 @@ folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "find_or_create_recording_order!",
-      subtitle: "Creates an order when missing, otherwise returns the current order for the same group and owner scope.",
+      subtitle: "Addon orchestration: finds existing order, otherwise creates one using RecordingStudio::Recording#record.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -92,7 +93,7 @@ folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "children_for_order_group and ordered_children_for",
-      subtitle: "Returns eligible children for a group, then returns those same children in explicit order.",
+      subtitle: "children_for_order_group is a core-backed convenience filter; ordered_children_for is addon-specific explicit ordering.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -114,7 +115,7 @@ folder.ordered_children_for(:pages, owner: current_user)</code></pre>
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_order_recordings and named_recording_order_recordings",
-      subtitle: "Returns Recording rows that store order snapshots for a group or named order key.",
+      subtitle: "Addon wrapper: returns Recording snapshot rows for order records.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -127,7 +128,7 @@ folder_recording.named_recording_order_recordings(:pages, owner: current_user)</
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_orders and named_recording_orders",
-      subtitle: "Returns RecordingStudioOrder models extracted from the matching snapshot recordings.",
+      subtitle: "Addon wrapper: maps matching snapshot recordings to RecordingStudioOrder models.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -140,7 +141,7 @@ folder_recording.named_recording_orders(:pages, owner: current_user)</code></pre
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_order_for and named_recording_order_for",
-      subtitle: "Fetches one resolved RecordingStudioOrder model for the requested scope.",
+      subtitle: "Addon wrapper: resolves one scoped RecordingStudioOrder model.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -153,7 +154,7 @@ folder_recording.named_recording_order_for("order-recording-uuid", :pages, owner
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_order_recording_for and named_recording_order_recording_for",
-      subtitle: "Fetches the underlying Recording snapshot row rather than the order model wrapper.",
+      subtitle: "Addon wrapper: fetches the underlying Recording snapshot row rather than the order model wrapper.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -166,7 +167,7 @@ folder_recording.named_recording_order_recording_for("order-recording-uuid", :pa
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "find_or_create_recording_order! and ordered_children_for",
-      subtitle: "Creates the scoped order when absent and reads children in stored order in one API surface.",
+      subtitle: "Addon APIs: create path is core-backed by record snapshots, and ordered_children_for applies addon explicit order ids.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -188,7 +189,7 @@ folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "include_child! and remove_child!",
-      subtitle: "Appends or removes one child recording id, then persists a revised order snapshot.",
+      subtitle: "Addon mutation API: appends or removes one child id, then persists via RecordingStudio::Recording#revise.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -201,7 +202,7 @@ page_order.remove_child!(page_archived_recording, actor: current_user)</code></p
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "move_before! and move_after!",
-      subtitle: "Moves one child relative to another child while preserving the rest of the order.",
+      subtitle: "Addon mutation API: relative moves with snapshot persistence.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -214,7 +215,7 @@ page_order.move_after!(moving: page_one_recording, after: page_two_recording, ac
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "move_to_start!, move_to_end!, and move_to_position!",
-      subtitle: "Places a child at an absolute position in the order and writes a new snapshot.",
+      subtitle: "Addon mutation API: absolute placement helpers that write a new order snapshot.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -228,7 +229,7 @@ page_order.move_to_position!(moving: page_three_recording, position: 1, actor: c
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "reorder! and cleanup_missing_children!",
-      subtitle: "Replaces the full ordered id set, or normalizes it to remove stale and invalid child ids.",
+      subtitle: "Addon mutation API: full replace or cleanup of ordered ids, then persist a revised snapshot.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -289,6 +290,23 @@ folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
 )</code></pre>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div>
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Core vs addon",
+      subtitle: "RecordingStudio provides snapshot primitives; this addon adds explicit order semantics on top.",
+      variant: :h3,
+      class: "mb-0 pb-0"
+    ) %>
+
+    <div>
+      <ul class="space-y-3 text-sm leading-6">
+        <li>Core RecordingStudio handles recording snapshots and revisions.</li>
+        <li>This addon adds group-scoped ordered ids and mutation helpers for explicit list ordering.</li>
+        <li>Wrapper methods in this page are convenience APIs around those core snapshot and query primitives.</li>
+      </ul>
     </div>
   </div>
 </div>
