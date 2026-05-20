@@ -21,18 +21,24 @@
         actions = []
 
         if parent_recording_id.present?
-          actions << link_to(
-            "View",
-            recording_studio_order_path(row.recordable_type, parent_recording_id: parent_recording_id),
-            class: "font-medium underline"
+          actions << render(
+            FlatPack::Button::Component.new(
+              text: "View",
+              style: :secondary,
+              size: :sm,
+              url: recording_studio_order_path(row.recordable_type, parent_recording_id: parent_recording_id)
+            )
           )
         end
 
         if parent_recording_id.present? && row.group_key.present?
-          actions << link_to(
-            "Add",
-            new_recording_studio_order_path(parent_recording_id: parent_recording_id, group_key: row.group_key),
-            class: "font-medium underline"
+          actions << render(
+            FlatPack::Button::Component.new(
+              text: "Add",
+              style: :primary,
+              size: :sm,
+              url: new_recording_studio_order_path(parent_recording_id: parent_recording_id, group_key: row.group_key)
+            )
           )
         end
 
