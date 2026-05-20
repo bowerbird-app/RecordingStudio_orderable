@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 /* Include dummy app views for Tailwind CSS */
-@source "../../views/**/*.erb";
+@source "./app/views/**/*.erb";
 
 /* Include RecordingStudio engine views for Tailwind CSS */
-@source "../../vendor/bundle/**/recording_studio/app/views/**/*.erb";
+@source "./vendor/bundle/**/recording_studio/app/views/**/*.erb";
 
 
 /* Tailwind CSS - Scan FlatPack components for classes */
-@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
+@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
 
 /* Extend Tailwind theme with FlatPack design tokens */
 @theme {
@@ -69,5 +69,5 @@
 }
 
 /* Include the engine's views in the Tailwind build */
-@source "../../../../../app/views/**/*.erb";
+@source "../../app/views/**/*.erb";
 
