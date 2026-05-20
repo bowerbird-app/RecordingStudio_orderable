@@ -26,16 +26,28 @@ module RecordingStudioOrderable
 
     def current_recording_studio_orderable_owner
       hook = RecordingStudioOrderable.configuration.current_owner_resolver
-      return hook.call(self) if hook.respond_to?(:call)
+      if hook.respond_to?(:call)
+        owner = hook.call(self)
+        return owner if owner.present?
+      end
 
       resolver = recording_studio_actor_resolver
-      resolver.call if resolver.respond_to?(:call)
+      owner = resolver.call if resolver.respond_to?(:call)
+      return owner if owner.present?
+
+      controller_current_user
     end
 
     def recording_studio_actor_resolver
       return unless defined?(RecordingStudio)
 
       RecordingStudio.configuration&.actor
+    end
+
+    def controller_current_user
+      return unless respond_to?(:current_user, true)
+
+      send(:current_user)
     end
 
     def ensure_recording_studio_actor_present!

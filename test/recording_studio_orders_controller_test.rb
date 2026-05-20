@@ -191,6 +191,30 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
   end
 
+  def test_current_owner_resolver_falls_back_to_current_user_when_actor_is_missing
+    RecordingStudioOrderable.configuration.current_owner_resolver = nil
+    owner = Struct.new(:id).new("user-1")
+    fake_configuration = Struct.new(:actor).new(nil)
+
+    @controller.define_singleton_method(:current_user) { owner }
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      assert_equal owner, @controller.send(:current_recording_studio_orderable_owner)
+    end
+  end
+
+  def test_current_owner_resolver_falls_back_when_configured_hook_returns_nil
+    owner = Struct.new(:id).new("user-2")
+    fake_configuration = Struct.new(:actor).new(nil)
+
+    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { nil }
+    @controller.define_singleton_method(:current_user) { owner }
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      assert_equal owner, @controller.send(:current_recording_studio_orderable_owner)
+    end
+  end
+
   def test_safe_local_redirect_target_accepts_local_path_and_rejects_external_url
     assert_equal "/orders", @controller.send(:safe_local_redirect_target, "/orders")
     assert_nil @controller.send(:safe_local_redirect_target, "https://example.com/orders")
