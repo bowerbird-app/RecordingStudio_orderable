@@ -1,0 +1,48 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id),
+    class: "mb-2"
+  ) do |breadcrumb| %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Edit Custom Order",
+    subtitle: "Review ordered records for #{@source_order_name}",
+    variant: :h1
+  ) %>
+
+  <div
+    data-controller="page-order-form"
+    data-action="table:reordered->page-order-form#sync"
+    class="flex flex-col gap-4"
+  >
+    <%= render FlatPack::Table::Component.new(
+      data: @ordered_record_rows,
+      draggable_rows: true,
+      row_id: ->(row) { row.recording_id }
+    ) do |table| %>
+      <% table.column(title: "", html: ->(_row) {
+        content_tag(:span, "::::", aria: { hidden: true }, class: "inline-flex cursor-grab text-(--surface-muted-content-color)")
+      }) %>
+      <% table.column(title: "Position", html: ->(row) { content_tag(:span, row.position, data: { page_order_position: true }) }) %>
+      <% table.column(title: "Type", html: ->(row) { row.recordable_type }) %>
+      <% table.column(title: "Name", html: ->(row) { row.display_name }) %>
+      <% table.column(title: "Recording ID", html: ->(row) { row.recording_id }) %>
+    <% end %>
+
+    <%= form_with url: recording_studio_order_path(
+      @source_order_recording.id,
+      parent_recording_id: @parent_recording.id,
+      group_key: @group_key,
+      recordable_type: params[:recordable_type]
+    ), method: :patch,
+                data: { page_order_form_target: "form" },
+                class: "flex items-center gap-3" do |form| %>
+      <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
+      <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
+      <span data-page-order-form-target="status" class="hidden text-sm text-(--surface-muted-content-color)"></span>
+      <span class="text-sm text-(--surface-muted-content-color)">Drag to reorder. Changes are saved automatically.</span>
+    <% end %>
+  </div>
+</div>

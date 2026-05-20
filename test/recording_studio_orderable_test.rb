@@ -164,6 +164,20 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes view_source, "Save a new order list for this recording."
   end
 
+  def test_engine_edit_order_list_page_shows_ordered_records_table
+    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/edit.html.erb", __dir__)
+    view_source = File.read(view_path)
+
+    assert_includes view_source, "Edit Custom Order"
+    assert_includes view_source, "FlatPack::Table::Component"
+    assert_includes view_source, "draggable_rows: true"
+    assert_includes view_source, "table:reordered->page-order-form#sync"
+    assert_includes view_source, "Position"
+    assert_includes view_source, "Recording ID"
+    refute_includes view_source, 'render "order_form"'
+    refute_includes view_source, "recording_studio_order[name]"
+  end
+
   def test_dummy_sidebar_uses_host_app_sign_out_route
     sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
     sidebar_source = File.read(sidebar_path)

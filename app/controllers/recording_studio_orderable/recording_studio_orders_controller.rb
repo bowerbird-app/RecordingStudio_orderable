@@ -4,17 +4,25 @@ module RecordingStudioOrderable
   class RecordingStudioOrdersController < ApplicationController
     TypeRow = Struct.new(:recordable_type, :group_key, :custom_orders_count, :parent_recording_id, keyword_init: true)
     NamedOrderRow = Struct.new(:recording_id, :name, keyword_init: true)
+    OrderedRecordRow = Struct.new(:position, :recording_id, :recordable_type, :display_name, keyword_init: true)
 
     before_action :ensure_current_recording_studio_orderable_owner!
     before_action :load_index_context, only: :index
     before_action :load_show_context, only: :show
-    before_action :load_form_context, only: :new
+    before_action :load_form_context, only: %i[new edit update]
+    before_action :load_edit_context, only: :edit
     before_action :authorize_parent_recording_from_params!, only: :create
-    before_action :redirect_edit_placeholder, only: :edit
 
     def index; end
 
-    def show; end
+    def show
+      if @single_order
+        @order_display_name = order_display_name(@single_order.recordable)
+        render :show_order
+      else
+        render :show
+      end
+    end
 
     def new; end
 
@@ -29,7 +37,48 @@ module RecordingStudioOrderable
       handle_create_failure(e)
     end
 
-    def edit; end
+    def update
+      wants_json = json_request?
+      source_order_recording = source_order_recording_for_edit
+      raise ActiveRecord::RecordNotFound if source_order_recording.blank?
+
+      updated_order = source_order_recording.recordable.move_to_position!(
+        moving: moving_recording_id_from_params,
+        position: target_position_from_params,
+        actor: current_recording_studio_orderable_owner,
+        metadata: { source: "recording_studio_orderable.recording_studio_orders#update" }
+      )
+
+      updated_recording = latest_order_recording(updated_order)
+      redirect_target = edit_recording_studio_order_path(
+        updated_recording&.id || source_order_recording.id,
+        parent_recording_id: @parent_recording.id,
+        group_key: @group_key,
+        recordable_type: params[:recordable_type]
+      )
+
+      if wants_json
+        render json: { redirect_url: redirect_target }
+      else
+        redirect_to redirect_target, notice: "Saved order."
+      end
+    rescue ActiveRecord::RecordNotFound
+      if wants_json
+        render json: { error: "Named list not found." }, status: :not_found
+      else
+        redirect_to root_path, alert: "Named list not found."
+      end
+    rescue RecordingStudioOrderable::RecordingOrderManager::ConfigurationError, ArgumentError
+      if wants_json
+        render json: { error: "Unable to save order." }, status: :unprocessable_entity
+      else
+        redirect_to root_path, alert: "Unable to save order."
+      end
+    end
+
+    def edit
+      render :edit
+    end
 
     private
 
@@ -51,24 +100,43 @@ module RecordingStudioOrderable
       @parent_recording = load_parent_recording_context!
       return if performed?
 
-      @type_row = type_row_for!(@parent_recording, params.fetch(:id))
-      @named_order_rows = named_order_rows_for(@parent_recording, @type_row.group_key)
+      id = params.fetch(:id)
+      # Try to find by type first, fallback to order by UUID
+      type_row = recording_type_rows(@parent_recording).find { |row| row.recordable_type == id.to_s }
+      if type_row
+        @type_row = type_row
+        @named_order_rows = named_order_rows_for(@parent_recording, @type_row.group_key)
+        @single_order = nil
+      else
+        # Try to find a single order by UUID
+        group_keys = recording_type_rows(@parent_recording).map(&:group_key)
+        found = nil
+        found_type_row = nil
+        group_keys.each do |gk|
+          candidate = RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(@parent_recording, id, gk, owner: current_recording_studio_orderable_owner)
+          if candidate
+            found = candidate
+            found_type_row = recording_type_rows(@parent_recording).find { |row| row.group_key == gk }
+            break
+          end
+        end
+        if found && found_type_row
+          @type_row = found_type_row
+          @named_order_rows = [
+            RecordingStudioOrderable::RecordingStudioOrdersController::NamedOrderRow.new(
+              recording_id: found.id,
+              name: order_display_name(found.recordable)
+            )
+          ]
+          @single_order = found
+        else
+          raise ActiveRecord::RecordNotFound, "Order or type not found"
+        end
+      end
     rescue ActiveRecord::RecordNotFound,
            RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
            ActionController::ParameterMissing,
            ArgumentError => e
-      handle_browse_failure(e)
-    end
-
-    def redirect_edit_placeholder
-      parent_recording = load_parent_recording_context!
-      return if performed?
-
-      redirect_to recording_studio_order_path(
-        params.fetch(:recordable_type),
-        parent_recording_id: parent_recording.id
-      ), alert: "Editing recording studio orders is not implemented yet."
-    rescue ActiveRecord::RecordNotFound, ActionController::ParameterMissing => e
       handle_browse_failure(e)
     end
 
@@ -86,10 +154,21 @@ module RecordingStudioOrderable
       return if performed?
 
       @group_key = group_key_from_params(@parent_recording)
-      @redirect_to = safe_local_redirect_target(params[:redirect_to])
+      @redirect_to = form_redirect_target(@parent_recording)
       @source_order_recording_id = source_order_recording_id_from_params
     rescue ActiveRecord::RecordNotFound, RecordingStudioOrderable::RecordingOrderManager::ConfigurationError => e
       handle_form_context_failure(e)
+    end
+
+    def load_edit_context
+      @source_order_recording = source_order_recording_for_edit
+      if @source_order_recording.blank?
+        redirect_to root_path, alert: "Parent recording not found."
+        return
+      end
+
+      @source_order_name = order_display_name(@source_order_recording.recordable)
+      @ordered_record_rows = ordered_record_rows_for_edit(@source_order_recording.recordable)
     end
 
     def parent_recording_from_params
@@ -101,7 +180,74 @@ module RecordingStudioOrderable
     end
 
     def source_order_recording_id_from_params
-      params[:source_order_recording_id].to_s.strip.presence
+      explicit_source_id = params[:source_order_recording_id].to_s.strip.presence
+      return explicit_source_id if explicit_source_id.present?
+
+      params[:id].to_s.strip.presence
+    end
+
+    def source_order_recording_for_edit
+      return if @source_order_recording_id.blank?
+
+      RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
+        @parent_recording,
+        @source_order_recording_id,
+        @group_key,
+        owner: current_recording_studio_orderable_owner
+      )
+    end
+
+    def ordered_record_rows_for_edit(order_record)
+      Array(order_record&.ordered_child_recordings(owner: current_recording_studio_orderable_owner)).each_with_index.map do |recording, index|
+        OrderedRecordRow.new(
+          position: index + 1,
+          recording_id: recording.id,
+          recordable_type: recording.recordable_type,
+          display_name: recordable_display_name(recording.recordable)
+        )
+      end
+    end
+
+    def recordable_display_name(recordable)
+      return "Untitled record" if recordable.blank?
+
+      recordable.try(:name).presence ||
+        recordable.try(:title).presence ||
+        "#{recordable.class.name} #{recordable.try(:id) || ""}".strip
+    end
+
+    def form_redirect_target(parent_recording)
+      explicit_target = safe_local_redirect_target(params[:redirect_to])
+      return explicit_target if explicit_target.present?
+
+      recordable_type = params[:recordable_type].to_s.strip
+      return if recordable_type.blank?
+
+      recording_studio_order_path(recordable_type, parent_recording_id: parent_recording.id)
+    rescue ActionController::UrlGenerationError
+      nil
+    end
+
+    def moving_recording_id_from_params
+      params.fetch(:moving_recording_id).to_s.strip.tap do |recording_id|
+        raise ArgumentError, "moving recording id is required" if recording_id.blank?
+      end
+    end
+
+    def target_position_from_params
+      Integer(params.fetch(:target_position))
+    end
+
+    def latest_order_recording(order_record)
+      Array(order_record.recordings).compact.max_by do |recording|
+        [recording.updated_at, recording.created_at, recording.id.to_s]
+      end
+    end
+
+    def json_request?
+      params[:format].to_s == "json" || request&.format&.json?
+    rescue StandardError
+      false
     end
 
     def create_named_recording_order
@@ -134,11 +280,30 @@ module RecordingStudioOrderable
     end
 
     def create_redirect_target(order)
+      base_target = safe_local_redirect_target(params[:redirect_to]) || default_create_redirect_target
+
       append_query_param(
-        safe_local_redirect_target(params[:redirect_to]),
+        base_target,
         :selected_order_recording_id,
         selected_order_recording_id(order)
       )
+    end
+
+    def default_create_redirect_target
+      parent_recording = parent_recording_from_params
+      group_definition = RecordingStudioOrderable::RecordingOrderManager.resolve_group_definition!(
+        parent_recording,
+        params.fetch(:group_key)
+      )
+      recordable_type = Array(group_definition.fetch(:allows)).first
+      return if recordable_type.blank?
+
+      recording_studio_order_path(recordable_type, parent_recording_id: parent_recording.id)
+    rescue ActiveRecord::RecordNotFound,
+           RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
+           ActionController::ParameterMissing,
+           KeyError
+      nil
     end
 
     def selected_order_recording_id(order)
