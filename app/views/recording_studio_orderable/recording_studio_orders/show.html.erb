@@ -12,7 +12,7 @@
     variant: :h1
   ) %>
 
-  <div class="flex items-center justify-end">
+  <div class="flex items-center justify-start">
     <%= render FlatPack::Button::Component.new(
       text: "Add",
       style: :primary,
@@ -24,26 +24,19 @@
   <%= render FlatPack::Table::Component.new(data: @named_order_rows) do |table| %>
     <% table.column(title: "Name", html: ->(row) { row.name }) %>
     <% table.column(title: "Actions", html: ->(row) {
-      safe_join([
-        link_to(
-          "View",
-          recording_studio_order_path(
-            row.recording_id,
-            parent_recording_id: @parent_recording.id
-          ),
-          class: "font-medium underline mr-2"
-        ),
-        link_to(
-          "Edit",
-          edit_recording_studio_order_path(
+      render(
+        FlatPack::Button::Component.new(
+          text: "Edit",
+          style: :secondary,
+          size: :sm,
+          url: edit_recording_studio_order_path(
             row.recording_id,
             parent_recording_id: @parent_recording.id,
             group_key: @type_row.group_key,
             recordable_type: @type_row.recordable_type
-          ),
-          class: "font-medium underline"
+          )
         )
-      ], " ")
+      )
     }) %>
   <% end %>
 </div>
