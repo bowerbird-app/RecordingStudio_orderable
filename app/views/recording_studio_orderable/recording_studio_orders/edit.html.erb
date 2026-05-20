@@ -4,11 +4,17 @@
     back_href: recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id),
     class: "mb-2"
   ) do |breadcrumb| %>
+    <% if params[:recordable_type].present? %>
+      <% breadcrumb.item(
+        text: params[:recordable_type],
+        href: recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id)
+      ) %>
+    <% end %>
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Edit Custom Order",
-    subtitle: "Review ordered records for #{@source_order_name}",
+    title: "Custom Order for #{@source_order_name}",
+    subtitle: "Drag to reorder. Changes are saved automatically.",
     variant: :h1
   ) %>
 
@@ -42,7 +48,6 @@
       <%= form.hidden_field :moving_recording_id, value: "", data: { page_order_form_target: "movingInput" } %>
       <%= form.hidden_field :target_position, value: "", data: { page_order_form_target: "positionInput" } %>
       <span data-page-order-form-target="status" class="hidden text-sm text-(--surface-muted-content-color)"></span>
-      <span class="text-sm text-(--surface-muted-content-color)">Drag to reorder. Changes are saved automatically.</span>
     <% end %>
   </div>
 </div>
