@@ -113,25 +113,26 @@ module RecordingStudioOrderable
         found = nil
         found_type_row = nil
         group_keys.each do |gk|
-          candidate = RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(@parent_recording, id, gk, owner: current_recording_studio_orderable_owner)
-          if candidate
-            found = candidate
-            found_type_row = recording_type_rows(@parent_recording).find { |row| row.group_key == gk }
-            break
-          end
+          candidate = RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
+            @parent_recording, id, gk, owner: current_recording_studio_orderable_owner
+          )
+          next unless candidate
+
+          found = candidate
+          found_type_row = recording_type_rows(@parent_recording).find { |row| row.group_key == gk }
+          break
         end
-        if found && found_type_row
-          @type_row = found_type_row
-          @named_order_rows = [
-            RecordingStudioOrderable::RecordingStudioOrdersController::NamedOrderRow.new(
-              recording_id: found.id,
-              name: order_display_name(found.recordable)
-            )
-          ]
-          @single_order = found
-        else
-          raise ActiveRecord::RecordNotFound, "Order or type not found"
-        end
+        raise ActiveRecord::RecordNotFound, "Order or type not found" unless found && found_type_row
+
+        @type_row = found_type_row
+        @named_order_rows = [
+          RecordingStudioOrderable::RecordingStudioOrdersController::NamedOrderRow.new(
+            recording_id: found.id,
+            name: order_display_name(found.recordable)
+          )
+        ]
+        @single_order = found
+
       end
     rescue ActiveRecord::RecordNotFound,
            RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
@@ -175,7 +176,7 @@ module RecordingStudioOrderable
       parent_recording_id = params.fetch(:parent_recording_id).to_s
 
       RecordingStudio::Recording.find(parent_recording_id)
-    rescue ActiveRecord::RecordNotFound => not_found
+    rescue ActiveRecord::RecordNotFound => e
       if RecordingStudio::Recording.respond_to?(:find_by!)
         return RecordingStudio::Recording.find_by!(recordable_id: parent_recording_id)
       end
@@ -185,7 +186,7 @@ module RecordingStudioOrderable
         return fallback_recording if fallback_recording.present?
       end
 
-      raise not_found
+      raise e
     end
 
     def group_key_from_params(parent_recording)
@@ -226,7 +227,7 @@ module RecordingStudioOrderable
 
       recordable.try(:name).presence ||
         recordable.try(:title).presence ||
-        "#{recordable.class.name} #{recordable.try(:id) || ""}".strip
+        "#{recordable.class.name} #{recordable.try(:id) || ''}".strip
     end
 
     def form_redirect_target(parent_recording)
@@ -363,14 +364,22 @@ module RecordingStudioOrderable
     end
 
     def global_recording_type_rows
-      orderable_parent_recordings.group_by(&:recordable_type).map do |recordable_type, parent_recordings|
-        representative_parent = parent_recordings.min_by { |recording| recording.id.to_s }
+      rows_by_type = Hash.new { |hash, key| hash[key] = [] }
+
+      orderable_parent_recordings.each do |parent_recording|
+        recording_type_rows(parent_recording).each do |row|
+          rows_by_type[row.recordable_type] << row
+        end
+      end
+
+      rows_by_type.map do |recordable_type, rows|
+        representative_row = rows.min_by { |row| row.parent_recording_id.to_s }
 
         TypeRow.new(
           recordable_type: recordable_type,
-          group_key: default_group_key_for(representative_parent),
-          custom_orders_count: parent_recordings.sum { |parent_recording| named_order_count_for(parent_recording) },
-          parent_recording_id: representative_parent.id
+          group_key: representative_row.group_key,
+          custom_orders_count: rows.sum(&:custom_orders_count),
+          parent_recording_id: representative_row.parent_recording_id
         )
       end.sort_by(&:recordable_type)
     end
@@ -434,9 +443,14 @@ module RecordingStudioOrderable
 
     def order_group_definitions_for(parent_recording, strict: true)
       recordable_class = parent_recording.recordable&.class || parent_recording.recordable_type.to_s.safe_constantize
-      raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError, "Unable to resolve recordable class" unless recordable_class
+      unless recordable_class
+        raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
+              "Unable to resolve recordable class"
+      end
 
-      return recordable_class.recording_studio_order_group_definitions if recordable_class.respond_to?(:recording_studio_order_group_definitions)
+      if recordable_class.respond_to?(:recording_studio_order_group_definitions)
+        return recordable_class.recording_studio_order_group_definitions
+      end
 
       recordable_class.recording_studio_order_group_definition
       recordable_class.recording_studio_order_group_definitions
