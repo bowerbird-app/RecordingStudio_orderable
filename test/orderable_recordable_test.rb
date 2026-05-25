@@ -54,6 +54,12 @@ class OrderableRecordableTest < Minitest::Test
       :created
     end
 
+    def find_recording_order_by_id(order_recording_id, group_key: nil,
+                                   owner: RecordingStudioOrderable::RecordingOrderManager::OWNER_GUARDRAIL_UNSET)
+      @calls << [:find_recording_order_by_id, order_recording_id, group_key, owner]
+      :found_order
+    end
+
     def children_for_order_group(group_key = nil)
       @calls << [:children_for_order_group, group_key]
       [:child]
@@ -115,6 +121,7 @@ class OrderableRecordableTest < Minitest::Test
 
     assert_equal [:order], @instance.recording_orders(owner: owner, group: "Page", orderable_name: "Main list")
     assert_equal :recording_order, @instance.default_recording_order(:pages, owner: owner)
+    assert_equal :found_order, @instance.find_recording_order_by_id("order-1", group_key: :pages, owner: owner)
     assert_equal :created, @instance.find_or_create_recording_order!(:pages, owner: owner)
     assert_equal [:child], @instance.children_for_order_group(:pages)
     assert_equal [:ordered_child], @instance.ordered_children_for(:pages, owner: owner)
@@ -123,6 +130,7 @@ class OrderableRecordableTest < Minitest::Test
       [
         [:recording_orders, owner, "Page", "Main list", false],
         [:default_recording_order, :pages, owner],
+        [:find_recording_order_by_id, "order-1", :pages, owner],
         %i[find_or_create_recording_order pages],
         %i[children_for_order_group pages],
         [:ordered_children_for, :pages, owner]
@@ -138,6 +146,7 @@ class OrderableRecordableTest < Minitest::Test
 
     assert_equal ["newer"], @instance.recording_orders
     assert_equal "newer", @instance.default_recording_order(:pages)
+    assert_equal "newer", @instance.find_recording_order_by_id("order-1", group_key: :pages)
     assert_equal "newer", @instance.find_or_create_recording_order!(:pages)
     assert_equal ["newer"], @instance.children_for_order_group(:pages)
     assert_equal ["newer"], @instance.ordered_children_for(:pages)
@@ -155,6 +164,7 @@ class OrderableRecordableTest < Minitest::Test
     Struct.new(:id, :created_at, :updated_at).new(label, timestamp, timestamp).tap do |recording|
       recording.define_singleton_method(:recording_orders) { |**| [id] }
       recording.define_singleton_method(:default_recording_order) { |*, **| id }
+      recording.define_singleton_method(:find_recording_order_by_id) { |*, **| id }
       recording.define_singleton_method(:find_or_create_recording_order!) { |*, **| id }
       recording.define_singleton_method(:children_for_order_group) { |*| [id] }
       recording.define_singleton_method(:ordered_children_for) { |*, **| [id] }

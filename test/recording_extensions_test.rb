@@ -84,6 +84,21 @@ class RecordingExtensionsTest < Minitest::Test
     end
   end
 
+  def test_find_recording_order_by_id_delegates_to_manager
+    RecordingStudioOrderable::RecordingOrderManager.stub(
+      :find_recording_order_by_id,
+      lambda do |recording, order_recording_id, group_key:, owner:|
+        assert_same @recording, recording
+        assert_equal "order-123", order_recording_id
+        assert_equal :pages, group_key
+        assert_same @owner, owner
+        :order
+      end
+    ) do
+      assert_equal :order, @recording.find_recording_order_by_id("order-123", group_key: :pages, owner: @owner)
+    end
+  end
+
   def test_find_or_create_recording_order_delegates_to_manager
     RecordingStudioOrderable::RecordingOrderManager.stub(
       :find_or_create_recording_order!,

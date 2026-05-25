@@ -30,6 +30,16 @@ module RecordingStudioOrderable
       RecordingStudioOrderable::RecordingOrderManager.default_recording_order(self, group_key, owner: owner)
     end
 
+    def find_recording_order_by_id(order_recording_id, group_key: nil,
+                                   owner: RecordingStudioOrderable::RecordingOrderManager::OWNER_GUARDRAIL_UNSET)
+      RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(
+        self,
+        order_recording_id,
+        group_key: group_key,
+        owner: owner
+      )
+    end
+
     def find_or_create_recording_order!(group_key = nil, **)
       RecordingStudioOrderable::RecordingOrderManager.find_or_create_recording_order!(self, group_key, **)
     end

@@ -117,6 +117,52 @@ class RecordingOrderManagerTest < Minitest::Test
     assert_equal @scoped_order, order
   end
 
+  def test_find_recording_order_by_id_returns_matching_order
+    order = RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(
+      @parent_recording,
+      "order-1",
+      group_key: :pages,
+      owner: nil
+    )
+
+    assert_equal @order, order
+  end
+
+  def test_find_recording_order_by_id_raises_when_id_is_missing
+    error = assert_raises(ActiveRecord::RecordNotFound) do
+      RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(
+        @parent_recording,
+        "missing-order-id"
+      )
+    end
+
+    assert_includes error.message, "RecordingStudioOrder not found"
+  end
+
+  def test_find_recording_order_by_id_raises_when_owner_guardrail_does_not_match
+    @parent_recording.child_recordings << @scoped_order_recording
+    different_owner = FakeOwner.new("user-2")
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(
+        @parent_recording,
+        "order-2",
+        owner: different_owner
+      )
+    end
+  end
+
+  def test_find_recording_order_by_id_without_owner_guardrail_can_find_scoped_order
+    @parent_recording.child_recordings << @scoped_order_recording
+
+    order = RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(
+      @parent_recording,
+      "order-2"
+    )
+
+    assert_equal @scoped_order, order
+  end
+
   def test_recording_orders_can_be_filtered_to_named_orders_for_scope
     second_named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
       "pages",

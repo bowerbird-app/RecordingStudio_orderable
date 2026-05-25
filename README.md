@@ -15,8 +15,9 @@ It keeps `RecordingStudio::Recording` lightweight by storing order state on an e
   end
   ```
 - Recording-level APIs:
-  - `recording_orders(owner: nil, group: nil, orderable_name: nil)`
+  - `recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)`
   - `default_recording_order(group_key, owner: nil)`
+  - `find_recording_order_by_id(order_recording_id, group_key: nil, owner: optional_guardrail)`
   - `find_or_create_recording_order!(group_key, owner: nil)`
   - `children_for_order_group`
   - `ordered_children_for(group_key, owner: nil)`

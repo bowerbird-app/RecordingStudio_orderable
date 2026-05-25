@@ -711,15 +711,22 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
         ]
       end
     end.new("Primary")
-    source_order_recording = Struct.new(:id, :recordable).new("order-recording-1", source_order)
-
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
         @controller.send(:load_form_context)
       end
-      RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings,
-                                                           [source_order_recording]) do
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :find_recording_order_by_id,
+        lambda do |recording, order_recording_id, group_key:, **kwargs|
+          owner_value = kwargs.fetch(:owner)
+          assert_same parent_recording, recording
+          assert_equal "order-recording-1", order_recording_id
+          assert_equal "pages", group_key
+          assert_same owner, owner_value
+          source_order
+        end
+      ) do
         @controller.send(:load_edit_context)
       end
     end
@@ -753,7 +760,10 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
         @controller.send(:load_form_context)
       end
-      RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings, []) do
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :find_recording_order_by_id,
+        ->(*_args, **_kwargs) { raise ActiveRecord::RecordNotFound, "missing" }
+      ) do
         @controller.send(:load_edit_context)
       end
     end
@@ -848,7 +858,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
       updated_order
     end
-    source_order_recording = Struct.new(:id, :recordable).new("order-recording-1", source_order)
     @controller.instance_variable_set(:@parent_recording, parent_recording)
     @controller.instance_variable_set(:@group_key, "pages")
     @controller.instance_variable_set(:@source_order_recording_id, "order-recording-1")
@@ -856,8 +865,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
-        RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings,
-                                                             [source_order_recording]) do
+        RecordingStudioOrderable::RecordingOrderManager.stub(:find_recording_order_by_id, source_order) do
           @controller.update
         end
       end
@@ -897,7 +905,10 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
-        RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings, []) do
+        RecordingStudioOrderable::RecordingOrderManager.stub(
+          :find_recording_order_by_id,
+          ->(*_args, **_kwargs) { raise ActiveRecord::RecordNotFound, "missing" }
+        ) do
           @controller.update
         end
       end

@@ -6,6 +6,7 @@ module RecordingStudioOrderable
   class RecordingOrderManager
     class ConfigurationError < StandardError; end
     class DuplicateOrderError < StandardError; end
+    OWNER_GUARDRAIL_UNSET = Object.new.freeze
 
     class << self
       def recording_order_recordings(parent_recording, group_key = nil, owner: nil, named_only: false,
@@ -42,6 +43,33 @@ module RecordingStudioOrderable
 
       def default_recording_order(parent_recording, group_key = nil, owner: nil)
         recording_order_recording_for(parent_recording, group_key, owner: owner)&.recordable
+      end
+
+      def find_recording_order_by_id(parent_recording, order_recording_id, group_key: nil,
+                                     owner: OWNER_GUARDRAIL_UNSET)
+        normalized_order_recording_id = normalize_recording_id(order_recording_id)
+        raise ActiveRecord::RecordNotFound, "Order recording id is required" if normalized_order_recording_id.blank?
+
+        resolved_group_key = group_key.to_s.presence ? resolve_group_key!(parent_recording, group_key) : nil
+        owner_type, owner_id = owner_attributes(owner)
+        owner_guardrail_set = !owner.equal?(OWNER_GUARDRAIL_UNSET)
+
+        matching_recording = Array(parent_recording.child_recordings).find do |recording|
+          order_recording_matches_id_lookup?(
+            recording,
+            normalized_order_recording_id: normalized_order_recording_id,
+            resolved_group_key: resolved_group_key,
+            owner_guardrail_set: owner_guardrail_set,
+            owner_type: owner_type,
+            owner_id: owner_id
+          )
+        end
+
+        order_record = matching_recording&.recordable
+        return order_record if order_record
+
+        raise ActiveRecord::RecordNotFound,
+              "RecordingStudioOrder not found for order recording id=#{normalized_order_recording_id.inspect}"
       end
 
       def find_or_create_recording_order!(parent_recording, group_key = nil, owner: nil, actor: nil, metadata: {},
@@ -270,10 +298,14 @@ module RecordingStudioOrderable
       def source_order_ids_for(parent_recording, group_key, owner, source_order_recording_id)
         return if source_order_recording_id.blank?
 
-        matching_order_recordings(parent_recording, group_key: group_key, owner: owner)
-          .find { |recording| recording.id.to_s == source_order_recording_id.to_s }
-          &.recordable
-          &.ordered_recording_ids
+        find_recording_order_by_id(
+          parent_recording,
+          source_order_recording_id,
+          group_key: group_key,
+          owner: owner
+        ).ordered_recording_ids
+      rescue ActiveRecord::RecordNotFound
+        nil
       end
 
       def order_name(order_record)
@@ -314,6 +346,19 @@ module RecordingStudioOrderable
           .select { |definition| Array(definition[:allows]).include?(group_or_type) }
           .map { |definition| definition[:group_key] }
           .uniq
+      end
+
+      def order_recording_matches_id_lookup?(recording, normalized_order_recording_id:, resolved_group_key:,
+                                             owner_guardrail_set:, owner_type:, owner_id:)
+        return false unless recording.recordable_type == "RecordingStudio::RecordingStudioOrder"
+        return false unless recording.id.to_s == normalized_order_recording_id
+
+        order_record = recording.recordable
+        return false unless order_record
+        return false if resolved_group_key && order_record.group_key != resolved_group_key
+        return true unless owner_guardrail_set
+
+        order_record.owner_type == owner_type && order_record.owner_id.to_s == owner_id.to_s
       end
 
       private

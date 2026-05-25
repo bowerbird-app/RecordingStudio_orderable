@@ -41,10 +41,10 @@ module RecordingStudioOrderable
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def update
       wants_json = json_request?
-      source_order_recording = source_order_recording_for_edit
-      raise ActiveRecord::RecordNotFound if source_order_recording.blank?
+      source_order = source_order_for_edit
+      raise ActiveRecord::RecordNotFound if source_order.blank?
 
-      updated_order = source_order_recording.recordable.move_to_position!(
+      updated_order = source_order.move_to_position!(
         moving: moving_recording_id_from_params,
         position: target_position_from_params,
         actor: current_recording_studio_orderable_owner,
@@ -53,7 +53,7 @@ module RecordingStudioOrderable
 
       updated_recording = latest_order_recording(updated_order)
       redirect_target = edit_recording_studio_order_path(
-        updated_recording&.id || source_order_recording.id,
+        updated_recording&.id || @source_order_recording_id,
         parent_recording_id: @parent_recording.id,
         group_key: @group_key,
         recordable_type: params[:recordable_type]
@@ -165,14 +165,12 @@ module RecordingStudioOrderable
     end
 
     def load_edit_context
-      @source_order_recording = source_order_recording_for_edit
-      if @source_order_recording.blank?
-        redirect_to root_path, alert: "Parent recording not found."
-        return
-      end
+      @source_order = source_order_for_edit
 
-      @source_order_name = order_display_name(@source_order_recording.recordable)
-      @ordered_record_rows = ordered_record_rows_for_edit(@source_order_recording.recordable)
+      @source_order_name = order_display_name(@source_order)
+      @ordered_record_rows = ordered_record_rows_for_edit(@source_order)
+    rescue ActiveRecord::RecordNotFound
+      redirect_to root_path, alert: "Parent recording not found."
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -205,10 +203,15 @@ module RecordingStudioOrderable
       params[:id].to_s.strip.presence
     end
 
-    def source_order_recording_for_edit
+    def source_order_for_edit
       return if @source_order_recording_id.blank?
 
-      named_order_recording_for(@parent_recording, @group_key, @source_order_recording_id)
+      RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(
+        @parent_recording,
+        @source_order_recording_id,
+        group_key: @group_key,
+        owner: current_recording_studio_orderable_owner
+      )
     end
 
     # rubocop:disable Metrics/MethodLength

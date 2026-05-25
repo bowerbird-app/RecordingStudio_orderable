@@ -28,12 +28,14 @@ class HomeController < ApplicationController
     folder_recording = RecordingStudio::Recording.find(params[:id])
     raise ActiveRecord::RecordNotFound unless folder_recording.recordable_type == "Folder"
 
-    selected_order_recording = Array(
-      folder_recording.recording_order_recordings(:pages, owner: current_user, named_only: true)
-    ).find { |recording| recording.id.to_s == params.fetch(:selected_order_recording_id).to_s }
-    raise ActiveRecord::RecordNotFound unless selected_order_recording
+    selected_order_recording_id = params.fetch(:selected_order_recording_id).to_s
+    selected_order = folder_recording.find_recording_order_by_id(
+      selected_order_recording_id,
+      group_key: :pages,
+      owner: current_user
+    )
 
-    updated_order = selected_order_recording.recordable.move_to_position!(
+    updated_order = selected_order.move_to_position!(
       moving: moving_recording_id_from_params,
       position: target_position_from_params,
       actor: current_user,
@@ -46,14 +48,14 @@ class HomeController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to page_order_demo_path(updated_recording&.id || selected_order_recording.id), notice: SUCCESS_MESSAGE
+        redirect_to page_order_demo_path(updated_recording&.id || selected_order_recording_id), notice: SUCCESS_MESSAGE
       end
       format.json do
         if send_custom_event_param?
           render json: {
             event_name: CUSTOM_EVENT_NAME,
             event_detail: success_event_detail(
-              selected_order_recording_id: selected_order_recording.id,
+              selected_order_recording_id: selected_order_recording_id,
               moving_recording_id: moving_recording_id_from_params,
               target_position: target_position_from_params,
               updated_recording_id: updated_recording&.id
@@ -61,7 +63,7 @@ class HomeController < ApplicationController
           }
         else
           render json: {
-            redirect_url: page_order_demo_path(updated_recording&.id || selected_order_recording.id)
+            redirect_url: page_order_demo_path(updated_recording&.id || selected_order_recording_id)
           }
         end
       end

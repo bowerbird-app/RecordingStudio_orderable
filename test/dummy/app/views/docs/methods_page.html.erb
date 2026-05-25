@@ -118,6 +118,37 @@ folder.recording_orders(owner: current_user, group: :pages, named_only: true)
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
+      title: "find_recording_order_by_id",
+      subtitle: "Addon wrapper: finds one RecordingStudioOrder by order recording UUID and raises ActiveRecord::RecordNotFound when missing.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <%= render_options_table.call([
+      { variable: "order_recording_id", accepts: "String UUID", example: "find_recording_order_by_id(\"order-recording-uuid\", ...)" },
+      {
+        variable: "group_key",
+        accepts: "Symbol or String (optional guardrail)",
+        example: "group_key: :pages",
+        why: "Constrain lookup to one configured group when needed."
+      },
+      {
+        variable: "owner",
+        accepts: "Actor object or nil (optional guardrail)",
+        example: "owner: current_user",
+        why: "Constrain lookup to one owner scope when needed."
+      }
+    ]) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.find_recording_order_by_id("order-recording-uuid", group_key: :pages, owner: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+folder.find_recording_order_by_id("missing-order-recording", group_key: :pages, owner: current_user)
+# => raises ActiveRecord::RecordNotFound</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
       title: "find_or_create_recording_order!",
       subtitle: "Addon orchestration: finds existing order, otherwise creates one using RecordingStudio::Recording#record.",
       variant: :h4,
@@ -261,6 +292,37 @@ folder_recording.recording_orders(owner: current_user, group: :pages, named_only
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
+      title: "find_recording_order_by_id",
+      subtitle: "Addon wrapper: resolves one RecordingStudioOrder model by order recording UUID with optional group/owner guardrails.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <%= render_options_table.call([
+      { variable: "order_recording_id", accepts: "String UUID", example: "find_recording_order_by_id(\"order-recording-uuid\", ...)" },
+      {
+        variable: "group_key",
+        accepts: "Symbol or String (optional guardrail)",
+        example: "group_key: :pages",
+        why: "Limit lookup to one order group when needed."
+      },
+      {
+        variable: "owner",
+        accepts: "Actor object or nil (optional guardrail)",
+        example: "owner: current_user",
+        why: "Limit lookup to one owner scope when needed."
+      }
+    ]) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.find_recording_order_by_id("order-recording-uuid", group_key: :pages, owner: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+folder_recording.find_recording_order_by_id("missing-order-recording", group_key: :pages, owner: current_user)
+# => raises ActiveRecord::RecordNotFound</code></pre>
+      </div>
+    </div>
+
+    <%= render FlatPack::PageTitle::Component.new(
       title: "recording_order_recording_for",
       subtitle: "Addon wrapper: fetches the underlying Recording snapshot row (or nil) rather than the order model wrapper.",
       variant: :h4,
@@ -273,11 +335,7 @@ folder_recording.recording_orders(owner: current_user, group: :pages, named_only
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recording_for(:pages, owner: current_user)
-# => #&lt;RecordingStudio::Recording id: "default-order-recording"&gt; or nil
-
-folder_recording.recording_order_recordings(:pages, owner: current_user, named_only: true)
-  .find { |recording| recording.id.to_s == "order-recording-uuid" }
-# => #&lt;RecordingStudio::Recording id: "order-recording-uuid"&gt; or nil</code></pre>
+# => #&lt;RecordingStudio::Recording id: "default-order-recording"&gt; or nil</code></pre>
       </div>
     </div>
 

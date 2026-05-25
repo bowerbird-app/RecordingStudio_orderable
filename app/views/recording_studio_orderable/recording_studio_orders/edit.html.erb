@@ -42,7 +42,7 @@
     <% end %>
 
     <%= form_with url: recording_studio_order_path(
-      @source_order_recording.id,
+      @source_order_recording_id,
       parent_recording_id: @parent_recording.id,
       group_key: @group_key,
       recordable_type: params[:recordable_type]
