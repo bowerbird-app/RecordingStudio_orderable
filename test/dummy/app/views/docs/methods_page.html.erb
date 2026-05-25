@@ -150,7 +150,7 @@ folder.find_recording_order_by_id("missing-order-recording", group_key: :pages, 
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "find_or_create_recording_order!",
-      subtitle: "Addon orchestration: finds existing order, otherwise creates one using RecordingStudio::Recording#record.",
+      subtitle: "Addon bootstrap: ensures the default unnamed order exists for the parent/group/owner scope, returning the existing one or creating the initial order snapshot.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
