@@ -172,8 +172,10 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes view_source, "FlatPack::Table::Component"
     assert_includes view_source, "draggable_rows: true"
     assert_includes view_source, "table:reordered->page-order-form#sync"
-    assert_includes view_source, "Position"
-    assert_includes view_source, "Recording ID"
+    assert_includes view_source, "Name"
+    refute_includes view_source, 'title: "Position"'
+    refute_includes view_source, 'title: "Type"'
+    refute_includes view_source, 'title: "Recording ID"'
     refute_includes view_source, 'render "order_form"'
     refute_includes view_source, "recording_studio_order[name]"
   end

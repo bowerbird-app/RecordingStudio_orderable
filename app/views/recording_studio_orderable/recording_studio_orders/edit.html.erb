@@ -23,18 +23,23 @@
     data-action="table:reordered->page-order-form#sync"
     class="flex flex-col gap-4"
   >
+    <style>
+      .recording-studio-order-edit-table thead th:nth-child(2),
+      .recording-studio-order-edit-table tbody td:nth-child(2) {
+        width: 100%;
+      }
+    </style>
+
     <%= render FlatPack::Table::Component.new(
       data: @ordered_record_rows,
       draggable_rows: true,
-      row_id: ->(row) { row.recording_id }
+      row_id: ->(row) { row.recording_id },
+      class: "recording-studio-order-edit-table"
     ) do |table| %>
       <% table.column(title: "", html: ->(_row) {
         content_tag(:span, "::::", aria: { hidden: true }, class: "inline-flex cursor-grab text-(--surface-muted-content-color)")
       }) %>
-      <% table.column(title: "Position", html: ->(row) { content_tag(:span, row.position, data: { page_order_position: true }) }) %>
-      <% table.column(title: "Type", html: ->(row) { row.recordable_type }) %>
       <% table.column(title: "Name", html: ->(row) { row.display_name }) %>
-      <% table.column(title: "Recording ID", html: ->(row) { row.recording_id }) %>
     <% end %>
 
     <%= form_with url: recording_studio_order_path(

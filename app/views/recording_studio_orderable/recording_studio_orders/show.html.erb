@@ -7,8 +7,8 @@
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
-    title: "#{@type_row.recordable_type} Orders",
-    subtitle: "Custom orders for #{@parent_recording_label}",
+    title: "Custom Order",
+    subtitle: "Custom orders for #{@type_row.recordable_type}",
     variant: :h1
   ) %>
 
@@ -21,7 +21,14 @@
     ) %>
   </div>
 
-  <%= render FlatPack::Table::Component.new(data: @named_order_rows) do |table| %>
+  <style>
+    .recording-studio-orders-table thead th:first-child,
+    .recording-studio-orders-table tbody td:first-child {
+      width: 100%;
+    }
+  </style>
+
+  <%= render FlatPack::Table::Component.new(data: @named_order_rows, class: "recording-studio-orders-table") do |table| %>
     <% table.column(title: "Name", html: ->(row) { row.name }) %>
     <% table.column(title: "Actions", html: ->(row) {
       render(
