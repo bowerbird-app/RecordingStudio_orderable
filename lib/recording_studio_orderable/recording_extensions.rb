@@ -2,20 +2,24 @@
 
 module RecordingStudioOrderable
   module RecordingExtensions
-    def recording_order_recordings(group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(self, group_key, owner: owner)
+    def recording_order_recordings(group_key = nil, owner: nil, named_only: false, orderable_name: nil)
+      RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(
+        self,
+        group_key,
+        owner: owner,
+        named_only: named_only,
+        orderable_name: orderable_name
+      )
     end
 
-    def recording_orders(owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.recording_orders(self, owner: owner)
-    end
-
-    def named_recording_order_recordings(group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recordings(self, group_key, owner: owner)
-    end
-
-    def named_recording_orders(group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.named_recording_orders(self, group_key, owner: owner)
+    def recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)
+      RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+        self,
+        owner: owner,
+        group: group,
+        orderable_name: orderable_name,
+        named_only: named_only
+      )
     end
 
     def recording_order_recording_for(group_key = nil, owner: nil)
@@ -24,24 +28,6 @@ module RecordingStudioOrderable
 
     def recording_order_for(group_key = nil, owner: nil)
       RecordingStudioOrderable::RecordingOrderManager.recording_order_for(self, group_key, owner: owner)
-    end
-
-    def named_recording_order_recording_for(order_recording_id, group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
-        self,
-        order_recording_id,
-        group_key,
-        owner: owner
-      )
-    end
-
-    def named_recording_order_for(order_recording_id, group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.named_recording_order_for(
-        self,
-        order_recording_id,
-        group_key,
-        owner: owner
-      )
     end
 
     def find_or_create_recording_order!(group_key = nil, **)

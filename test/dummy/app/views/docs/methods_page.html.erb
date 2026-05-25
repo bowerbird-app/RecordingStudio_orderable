@@ -23,6 +23,15 @@
     <%= render FlatPack::Badge::Component.new(text: "Core-backed wrappers are labeled", style: :default, size: :sm) %>
   </div>
 
+  <% render_options_table = lambda do |rows|
+       render FlatPack::Table::Component.new(data: rows, class: "mt-4") do |table|
+         table.column(title: "Variable", html: ->(row) { row[:variable] })
+         table.column(title: "Accepts", html: ->(row) { row[:accepts] })
+         table.column(title: "Example", html: ->(row) { row[:example] })
+         table.column(title: "Why", html: ->(row) { row[:why] || "" })
+       end
+     end %>
+
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "OrderableRecordable",
@@ -37,6 +46,10 @@
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group key", accepts: "Symbol", example: "recording_studio_order_group :pages" },
+      { variable: "allows", accepts: "Array<Class>", example: "allows: [Page, Section]" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">class Folder &lt; ApplicationRecord
@@ -44,33 +57,68 @@
 
   recording_studio_order_group :pages, allows: [Page]
   recording_studio_order_group :sections, allows: [Section]
-end</code></pre>
+end
+# => { "pages" => { group_key: "pages", allows: ["Page"] }, "sections" => { group_key: "sections", allows: ["Section"] } }</code></pre>
       </div>
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_orders and named_recording_orders",
+      title: "recording_orders",
       subtitle: "Addon wrapper: reads order snapshots from the parent's child recordings and returns RecordingStudioOrder models.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "group", accepts: "Symbol or String", example: "group: :pages / group: \"Page\"" },
+      {
+        variable: "orderable_name",
+        accepts: "String",
+        example: "orderable_name: \"Primary list\"",
+        why: "Target one specific named list by exact name."
+      },
+      {
+        variable: "named_only",
+        accepts: "true, false",
+        example: "named_only: true",
+        why: "Exclude the default unnamed order and return only explicitly named lists."
+      }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.recording_orders(owner: current_user)
-folder.named_recording_orders(:pages, owner: current_user)</code></pre>
+# => [#&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;, ...]
+
+folder.recording_orders(owner: current_user, group: "Page")
+# => [#&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;]
+
+folder.recording_orders(owner: current_user, group: :pages, orderable_name: "Primary list")
+# => [#&lt;RecordingStudio::RecordingStudioOrder name: "Primary list"&gt;]
+
+folder.recording_orders(owner: current_user, group: :pages, named_only: true)
+# => [#&lt;RecordingStudio::RecordingStudioOrder name: "Primary list"&gt;, ...]</code></pre>
       </div>
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_order_for and named_recording_order_for",
+      title: "recording_order_for",
       subtitle: "Addon wrapper: resolves one scoped order model from matching snapshot recordings.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "recording_order_for(:pages, ...)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "return", accepts: "RecordingStudioOrder or nil", example: "# => #<RecordingStudio::RecordingStudioOrder ...>" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.recording_order_for(:pages, owner: current_user)
-folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_user)</code></pre>
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt; or nil
+
+folder.recording_orders(owner: current_user, group: :pages, named_only: true)
+  .find { |order| order.recordings.any? { |recording| recording.id.to_s == "order-recording-uuid" } }
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "order-model-uuid"&gt; or nil</code></pre>
       </div>
     </div>
 
@@ -80,6 +128,12 @@ folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: ":pages" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "actor", accepts: "Actor object", example: "actor: current_user" },
+      { variable: "metadata", accepts: "Hash", example: "metadata: { source: \"ui\" }" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.find_or_create_recording_order!(
@@ -87,7 +141,8 @@ folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_
   owner: current_user,
   actor: current_user,
   metadata: { source: "ui" }
-)</code></pre>
+)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
       </div>
     </div>
 
@@ -97,10 +152,18 @@ folder.named_recording_order_for("order-recording-uuid", :pages, owner: current_
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "children_for_order_group(:pages)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "ordered_children_for(:pages, owner: current_user)" },
+      { variable: "return", accepts: "Array<RecordingStudio::Recording>", example: "[#<RecordingStudio::Recording ...>, ...]" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.children_for_order_group(:pages)
-folder.ordered_children_for(:pages, owner: current_user)</code></pre>
+# => [#&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]
+
+folder.ordered_children_for(:pages, owner: current_user)
+# => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
       </div>
     </div>
   </div>
@@ -114,54 +177,119 @@ folder.ordered_children_for(:pages, owner: current_user)</code></pre>
     ) %>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_order_recordings and named_recording_order_recordings",
+      title: "recording_order_recordings",
       subtitle: "Addon wrapper: returns Recording snapshot rows for order records.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "recording_order_recordings(:pages, ...)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      {
+        variable: "named_only",
+        accepts: "true, false",
+        example: "named_only: true",
+        why: "Use when listing selectable custom orders; hides the default unnamed order record."
+      },
+      {
+        variable: "orderable_name",
+        accepts: "String or nil",
+        example: "orderable_name: \"Primary list\"",
+        why: "Fetch recordings for one named order only."
+      }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recordings(:pages, owner: current_user)
-folder_recording.named_recording_order_recordings(:pages, owner: current_user)</code></pre>
+# => [#&lt;RecordingStudio::Recording id: "default-order-recording"&gt;]
+
+folder_recording.recording_order_recordings(:pages, owner: current_user, named_only: true)
+# => [#&lt;RecordingStudio::Recording id: "named-order-recording"&gt;, ...]
+
+folder_recording.recording_order_recordings(:pages, owner: current_user, orderable_name: "Primary list")
+# => [#&lt;RecordingStudio::Recording id: "primary-list-recording"&gt;]</code></pre>
       </div>
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_orders and named_recording_orders",
+      title: "recording_orders",
       subtitle: "Addon wrapper: maps matching snapshot recordings to RecordingStudioOrder models.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "group", accepts: "Symbol or String", example: "group: :pages / group: \"Page\"" },
+      {
+        variable: "orderable_name",
+        accepts: "String",
+        example: "orderable_name: \"Primary list\"",
+        why: "Limit the result set to one named list."
+      },
+      {
+        variable: "named_only",
+        accepts: "true, false",
+        example: "named_only: true",
+        why: "Return named lists only; skip the default unnamed order."
+      }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_orders(owner: current_user)
-folder_recording.named_recording_orders(:pages, owner: current_user)</code></pre>
+# => [#&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;, ...]
+
+folder_recording.recording_orders(owner: current_user, group: "Page")
+# => [#&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;]
+
+folder_recording.recording_orders(owner: current_user, group: :pages, orderable_name: "Primary list")
+# => [#&lt;RecordingStudio::RecordingStudioOrder name: "Primary list"&gt;]
+
+folder_recording.recording_orders(owner: current_user, group: :pages, named_only: true)
+# => [#&lt;RecordingStudio::RecordingStudioOrder name: "Primary list"&gt;, ...]</code></pre>
       </div>
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_order_for and named_recording_order_for",
+      title: "recording_order_for",
       subtitle: "Addon wrapper: resolves one scoped RecordingStudioOrder model.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "recording_order_for(:pages, ...)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "return", accepts: "RecordingStudioOrder or nil", example: "# => #<RecordingStudio::RecordingStudioOrder ...>" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_for(:pages, owner: current_user)
-folder_recording.named_recording_order_for("order-recording-uuid", :pages, owner: current_user)</code></pre>
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt; or nil
+
+folder_recording.recording_orders(owner: current_user, group: :pages, named_only: true)
+  .find { |order| order.recordings.any? { |recording| recording.id.to_s == "order-recording-uuid" } }
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "order-model-uuid"&gt; or nil</code></pre>
       </div>
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_order_recording_for and named_recording_order_recording_for",
+      title: "recording_order_recording_for",
       subtitle: "Addon wrapper: fetches the underlying Recording snapshot row rather than the order model wrapper.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "recording_order_recording_for(:pages, ...)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "return", accepts: "RecordingStudio::Recording or nil", example: "# => #<RecordingStudio::Recording ...>" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recording_for(:pages, owner: current_user)
-folder_recording.named_recording_order_recording_for("order-recording-uuid", :pages, owner: current_user)</code></pre>
+# => #&lt;RecordingStudio::Recording id: "default-order-recording"&gt; or nil
+
+folder_recording.recording_order_recordings(:pages, owner: current_user, named_only: true)
+  .find { |recording| recording.id.to_s == "order-recording-uuid" }
+# => #&lt;RecordingStudio::Recording id: "order-recording-uuid"&gt; or nil</code></pre>
       </div>
     </div>
 
@@ -171,10 +299,18 @@ folder_recording.named_recording_order_recording_for("order-recording-uuid", :pa
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "find_or_create_recording_order!(:pages, ...)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
+      { variable: "return", accepts: "Order model or ordered recording array", example: "# => #<RecordingStudio::RecordingStudioOrder ...>" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
-folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+folder_recording.ordered_children_for(:pages, owner: current_user)
+# => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
       </div>
     </div>
   </div>
@@ -193,10 +329,18 @@ folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "child recording", accepts: "RecordingStudio::Recording", example: "include_child!(page_three_recording, ...)" },
+      { variable: "actor", accepts: "Actor object", example: "actor: current_user" },
+      { variable: "metadata", accepts: "Hash", example: "metadata: { source: \"seed\" }" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.include_child!(page_three_recording, actor: current_user, metadata: { source: "seed" })
-page_order.remove_child!(page_archived_recording, actor: current_user)</code></pre>
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+page_order.remove_child!(page_archived_recording, actor: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
       </div>
     </div>
 
@@ -206,10 +350,18 @@ page_order.remove_child!(page_archived_recording, actor: current_user)</code></p
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "moving", accepts: "RecordingStudio::Recording", example: "moving: page_three_recording" },
+      { variable: "before/after", accepts: "RecordingStudio::Recording", example: "before: page_one_recording" },
+      { variable: "actor", accepts: "Actor object", example: "actor: current_user" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.move_before!(moving: page_three_recording, before: page_one_recording, actor: current_user)
-page_order.move_after!(moving: page_one_recording, after: page_two_recording, actor: current_user)</code></pre>
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+page_order.move_after!(moving: page_one_recording, after: page_two_recording, actor: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
       </div>
     </div>
 
@@ -219,11 +371,21 @@ page_order.move_after!(moving: page_one_recording, after: page_two_recording, ac
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "moving", accepts: "RecordingStudio::Recording", example: "moving: page_two_recording" },
+      { variable: "position", accepts: "Integer", example: "position: 1" },
+      { variable: "actor", accepts: "Actor object", example: "actor: current_user" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.move_to_start!(moving: page_two_recording, actor: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
 page_order.move_to_end!(moving: page_one_recording, actor: current_user)
-page_order.move_to_position!(moving: page_three_recording, position: 1, actor: current_user)</code></pre>
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+page_order.move_to_position!(moving: page_three_recording, position: 1, actor: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
       </div>
     </div>
 
@@ -233,6 +395,11 @@ page_order.move_to_position!(moving: page_three_recording, position: 1, actor: c
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
+    <%= render_options_table.call([
+      { variable: "ordered_recording_ids", accepts: "Array<String>", example: "ordered_recording_ids: [page_two_recording.id, ...]" },
+      { variable: "actor", accepts: "Actor object", example: "actor: current_user" },
+      { variable: "metadata", accepts: "Hash", example: "metadata: { source: \"bulk_edit\" }" }
+    ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.reorder!(
@@ -240,8 +407,10 @@ page_order.move_to_position!(moving: page_three_recording, position: 1, actor: c
   actor: current_user,
   metadata: { source: "bulk_edit" }
 )
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
 
-page_order.cleanup_missing_children!(actor: current_user)</code></pre>
+page_order.cleanup_missing_children!(actor: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
         <p class="mt-3 text-xs leading-5 text-(--flatpack-color-muted)">
           Note: trash, access, and device session helpers are provided by RecordingStudio addon gems, not core.
         </p>
@@ -257,14 +426,24 @@ page_order.cleanup_missing_children!(actor: current_user)</code></pre>
       class: "mb-0 pb-0"
     ) %>
 
+    <%= render_options_table.call([
+      { variable: "folder_recording", accepts: "RecordingStudio::Recording", example: "folder.current_recording" },
+      { variable: "group key", accepts: "Symbol", example: ":pages" },
+      { variable: "owner", accepts: "Actor object", example: "owner: current_user" }
+    ]) %>
+
     <div>
       <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
         <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
         <div class="p-4">
           <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording = folder.current_recording
-page_order = folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
+# => #&lt;RecordingStudio::Recording id: "folder-recording-uuid"&gt;
 
-folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
+page_order = folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
+
+folder_recording.ordered_children_for(:pages, owner: current_user)
+# => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
         </div>
       </div>
     </div>
@@ -278,6 +457,12 @@ folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
       class: "mb-0 pb-0"
     ) %>
 
+    <%= render_options_table.call([
+      { variable: "moving", accepts: "RecordingStudio::Recording", example: "moving: page_two_recording" },
+      { variable: "after", accepts: "RecordingStudio::Recording", example: "after: page_one_recording" },
+      { variable: "actor / metadata", accepts: "Actor object / Hash", example: "actor: current_user, metadata: { source: \"drag_drop\" }" }
+    ]) %>
+
     <div>
       <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
         <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
@@ -287,7 +472,8 @@ folder_recording.ordered_children_for(:pages, owner: current_user)</code></pre>
   after: page_one_recording,
   actor: current_user,
   metadata: { source: "drag_drop" }
-)</code></pre>
+)
+# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
         </div>
       </div>
     </div>

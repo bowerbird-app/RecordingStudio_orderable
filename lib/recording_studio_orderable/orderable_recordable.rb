@@ -42,20 +42,17 @@ module RecordingStudioOrderable
       end
     end
 
-    def recording_orders(owner: nil)
-      current_recording&.recording_orders(owner: owner) || []
-    end
-
-    def named_recording_orders(group_key = nil, owner: nil)
-      current_recording&.named_recording_orders(group_key, owner: owner) || []
+    def recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)
+      current_recording&.recording_orders(
+        owner: owner,
+        group: group,
+        orderable_name: orderable_name,
+        named_only: named_only
+      ) || []
     end
 
     def recording_order_for(group_key = nil, owner: nil)
       current_recording&.recording_order_for(group_key, owner: owner)
-    end
-
-    def named_recording_order_for(order_recording_id, group_key = nil, owner: nil)
-      current_recording&.named_recording_order_for(order_recording_id, group_key, owner: owner)
     end
 
     def find_or_create_recording_order!(group_key = nil, **)

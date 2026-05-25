@@ -39,8 +39,8 @@ class OrderableRecordableTest < Minitest::Test
       @calls = []
     end
 
-    def recording_orders(owner: nil)
-      @calls << [:recording_orders, owner]
+    def recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)
+      @calls << [:recording_orders, owner, group, orderable_name, named_only]
       [:order]
     end
 
@@ -113,7 +113,7 @@ class OrderableRecordableTest < Minitest::Test
     owner = Struct.new(:id).new("owner-1")
     @instance.recordings = [@delegate_recording]
 
-    assert_equal [:order], @instance.recording_orders(owner: owner)
+    assert_equal [:order], @instance.recording_orders(owner: owner, group: "Page", orderable_name: "Main list")
     assert_equal :recording_order, @instance.recording_order_for(:pages, owner: owner)
     assert_equal :created, @instance.find_or_create_recording_order!(:pages, owner: owner)
     assert_equal [:child], @instance.children_for_order_group(:pages)
@@ -121,7 +121,7 @@ class OrderableRecordableTest < Minitest::Test
 
     assert_equal(
       [
-        [:recording_orders, owner],
+        [:recording_orders, owner, "Page", "Main list", false],
         [:recording_order_for, :pages, owner],
         %i[find_or_create_recording_order pages],
         %i[children_for_order_group pages],

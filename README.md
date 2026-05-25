@@ -15,11 +15,9 @@ It keeps `RecordingStudio::Recording` lightweight by storing order state on an e
   end
   ```
 - Recording-level APIs:
-  - `recording_orders(owner: nil)`
+  - `recording_orders(owner: nil, group: nil, orderable_name: nil)`
   - `recording_order_for(group_key, owner: nil)`
   - `find_or_create_recording_order!(group_key, owner: nil)`
-  - `named_recording_orders(group_key, owner: nil)`
-  - `named_recording_order_recording_for(order_recording_id, group_key, owner: nil)`
   - `children_for_order_group`
   - `ordered_children_for(group_key, owner: nil)`
 - `RecordingStudio::RecordingStudioOrder` mutation helpers:
@@ -70,6 +68,12 @@ Interactive reorder UIs do not have to submit the full visible UUID list. The du
 `group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.
 
 Named lists build on top of that owner scope. The unnamed/default order remains singleton per `(parent_recording, group_key, owner_type, owner_id)`, while additional named lists can coexist for the same owner and group. Duplicate names are allowed, so host apps should select named lists by their `RecordingStudio::Recording` id rather than by `name`.
+
+`recording_orders` can now also narrow results with optional filters:
+
+- `group:` accepts either a group key (`:pages`) or an allowed recordable type string (`"Page"`) when that type maps to exactly one configured group.
+- `orderable_name:` matches a specific named list by exact order name.
+- Named-only list queries can be composed with `recording_orders(..., named_only: true)`.
 
 The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Parent-recording authorization is host-controlled. Authentication now defaults to Recording Studio actor resolution (`RecordingStudio.configuration.actor`), and owner resolution can also default to that same actor resolver unless overridden.
 

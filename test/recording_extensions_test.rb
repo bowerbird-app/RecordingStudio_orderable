@@ -12,10 +12,12 @@ class RecordingExtensionsTest < Minitest::Test
   def test_recording_order_recordings_delegates_to_manager
     RecordingStudioOrderable::RecordingOrderManager.stub(
       :recording_order_recordings,
-      lambda do |recording, group_key, owner:|
+      lambda do |recording, group_key, owner:, named_only:, orderable_name:|
         assert_same @recording, recording
         assert_equal :pages, group_key
         assert_same @owner, owner
+        assert_equal false, named_only
+        assert_nil orderable_name
         [:recording]
       end
     ) do
@@ -24,12 +26,33 @@ class RecordingExtensionsTest < Minitest::Test
   end
 
   def test_recording_orders_delegates_to_manager
-    RecordingStudioOrderable::RecordingOrderManager.stub(:recording_orders, lambda do |recording, owner:|
+    RecordingStudioOrderable::RecordingOrderManager.stub(:recording_orders, lambda do |recording, owner:, group:,
+                                                                                         orderable_name:, named_only:|
       assert_same @recording, recording
       assert_same @owner, owner
+      assert_nil group
+      assert_nil orderable_name
+      assert_equal false, named_only
       [:order]
     end) do
       assert_equal [:order], @recording.recording_orders(owner: @owner)
+    end
+  end
+
+  def test_recording_orders_delegates_optional_group_and_name_filters
+    RecordingStudioOrderable::RecordingOrderManager.stub(:recording_orders, lambda do |recording, owner:, group:,
+                                                                                         orderable_name:, named_only:|
+      assert_same @recording, recording
+      assert_same @owner, owner
+      assert_equal "Page", group
+      assert_equal "Named list", orderable_name
+      assert_equal false, named_only
+      [:filtered_order]
+    end) do
+      assert_equal(
+        [:filtered_order],
+        @recording.recording_orders(owner: @owner, group: "Page", orderable_name: "Named list")
+      )
     end
   end
 

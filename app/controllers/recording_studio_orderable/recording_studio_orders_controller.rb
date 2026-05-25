@@ -117,9 +117,7 @@ module RecordingStudioOrderable
         found = nil
         found_type_row = nil
         group_keys.each do |gk|
-          candidate = RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
-            @parent_recording, id, gk, owner: current_recording_studio_orderable_owner
-          )
+          candidate = named_order_recording_for(@parent_recording, gk, id)
           next unless candidate
 
           found = candidate
@@ -210,12 +208,7 @@ module RecordingStudioOrderable
     def source_order_recording_for_edit
       return if @source_order_recording_id.blank?
 
-      RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
-        @parent_recording,
-        @source_order_recording_id,
-        @group_key,
-        owner: current_recording_studio_orderable_owner
-      )
+      named_order_recording_for(@parent_recording, @group_key, @source_order_recording_id)
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -442,16 +435,30 @@ module RecordingStudioOrderable
     end
 
     def named_order_rows_for(parent_recording, group_key)
-      RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recordings(
+      named_order_recordings_for(parent_recording, group_key).map do |recording|
+        build_named_order_row(recording)
+      end
+    end
+
+    def named_order_recording_for(parent_recording, group_key, order_recording_id)
+      named_order_recordings_for(parent_recording, group_key)
+        .find { |recording| recording.id.to_s == order_recording_id.to_s }
+    end
+
+    def named_order_recordings_for(parent_recording, group_key)
+      RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(
         parent_recording,
         group_key,
-        owner: current_recording_studio_orderable_owner
-      ).map do |recording|
-        NamedOrderRow.new(
-          recording_id: recording.id,
-          name: order_display_name(recording.recordable)
-        )
-      end
+        owner: current_recording_studio_orderable_owner,
+        named_only: true
+      )
+    end
+
+    def build_named_order_row(recording)
+      NamedOrderRow.new(
+        recording_id: recording.id,
+        name: order_display_name(recording.recordable)
+      )
     end
 
     def default_group_key_for(parent_recording)

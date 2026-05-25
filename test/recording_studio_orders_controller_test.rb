@@ -12,8 +12,10 @@ def test_load_show_context_sets_single_order_and_renders_show_order
 
   with_temporary_recording_class do |recording_class|
     recording_class.define_singleton_method(:find) { |_id| parent_recording }
-    RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recording_for,
-                                                         named_order_recording) do
+    RecordingStudioOrderable::RecordingOrderManager.stub(
+      :recording_order_recordings,
+      [named_order_recording]
+    ) do
       @controller.send(:load_show_context)
       assert_equal "order-1", @controller.instance_variable_get(:@single_order).id
       assert_equal "Homepage", @controller.send(:order_display_name, order_recordable)
@@ -528,9 +530,11 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
       RecordingStudioOrderable::RecordingOrderManager.stub(
-        :named_recording_order_recordings,
-        lambda do |_recording, group_key, owner:|
+        :recording_order_recordings,
+        lambda do |_recording, group_key, owner:, named_only:, orderable_name: nil|
           assert_nil owner
+          assert_equal true, named_only
+          assert_nil orderable_name
           group_key == "pages" ? [Struct.new(:id, :recordable).new("order-1", Struct.new(:name).new("Alpha"))] : []
         end
       ) do
@@ -569,9 +573,11 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
         [parent_recording_one, parent_recording_two, non_orderable_recording]
       end
       RecordingStudioOrderable::RecordingOrderManager.stub(
-        :named_recording_order_recordings,
-        lambda do |recording, _group_key, owner:|
+        :recording_order_recordings,
+        lambda do |recording, _group_key, owner:, named_only:, orderable_name: nil|
           assert_nil owner
+          assert_equal true, named_only
+          assert_nil orderable_name
           if recording.id == "parent-1"
             [Struct.new(:id, :recordable).new("order-1",
                                               Struct.new(:name).new("Alpha"))]
@@ -604,7 +610,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
-      RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recordings,
+      RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings,
                                                            [named_order_recording]) do
         @controller.send(:load_show_context)
       end
@@ -712,8 +718,8 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
         @controller.send(:load_form_context)
       end
-      RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recording_for,
-                                                           source_order_recording) do
+      RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings,
+                                                           [source_order_recording]) do
         @controller.send(:load_edit_context)
       end
     end
@@ -747,7 +753,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
         @controller.send(:load_form_context)
       end
-      RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recording_for, nil) do
+      RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings, []) do
         @controller.send(:load_edit_context)
       end
     end
@@ -850,8 +856,8 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
-        RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recording_for,
-                                                             source_order_recording) do
+        RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings,
+                                                             [source_order_recording]) do
           @controller.update
         end
       end
@@ -891,7 +897,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     with_temporary_recording_class do |recording_class|
       recording_class.define_singleton_method(:find) { |_id| parent_recording }
       RecordingStudioOrderable::RecordingOrderManager.stub(:resolve_group_key!, "pages") do
-        RecordingStudioOrderable::RecordingOrderManager.stub(:named_recording_order_recording_for, nil) do
+        RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_recordings, []) do
           @controller.update
         end
       end

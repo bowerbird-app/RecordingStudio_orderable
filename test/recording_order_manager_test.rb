@@ -4,10 +4,14 @@ require "test_helper"
 
 class RecordingOrderManagerTest < Minitest::Test
   class FakeFolder
-    def self.recording_studio_order_group_definition(name = nil)
-      groups = {
+    def self.recording_studio_order_group_definitions
+      {
         "pages" => { group_key: "pages", allows: ["Page"] }
       }
+    end
+
+    def self.recording_studio_order_group_definition(name = nil)
+      groups = recording_studio_order_group_definitions
       groups.fetch(name.to_s.presence || "pages")
     end
   end
@@ -113,7 +117,7 @@ class RecordingOrderManagerTest < Minitest::Test
     assert_equal @scoped_order, order
   end
 
-  def test_named_recording_orders_return_only_named_orders_for_scope
+  def test_recording_orders_can_be_filtered_to_named_orders_for_scope
     second_named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
       "pages",
       "RecordingOrderManagerTest::FakeOwner",
@@ -144,16 +148,19 @@ class RecordingOrderManagerTest < Minitest::Test
       Time.utc(2024, 1, 7)
     )
 
-    orders = RecordingStudioOrderable::RecordingOrderManager.named_recording_orders(
+    orders = RecordingStudioOrderable::RecordingOrderManager.recording_orders(
       @parent_recording,
-      :pages,
-      owner: @owner
-    )
+      owner: @owner,
+      group: :pages
+    ).reject do |order|
+      order_name = order.respond_to?(:name) ? order.name : nil
+      [nil, ""].include?(order_name)
+    end
 
     assert_equal [named_order, second_named_order], orders
   end
 
-  def test_named_recording_order_recording_for_returns_only_owned_named_order_recordings
+  def test_recording_order_recordings_named_only_returns_only_owned_named_order_recordings
     named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
       "pages",
       "RecordingOrderManagerTest::FakeOwner",
@@ -165,14 +172,56 @@ class RecordingOrderManagerTest < Minitest::Test
                                               Time.utc(2024, 1, 6), Time.utc(2024, 1, 6))
     @parent_recording.child_recordings << named_order_recording
 
-    match = RecordingStudioOrderable::RecordingOrderManager.named_recording_order_recording_for(
+    match = RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(
       @parent_recording,
-      "order-3",
       :pages,
-      owner: @owner
-    )
+      owner: @owner,
+      named_only: true
+    ).find { |recording| recording.id == "order-3" }
 
     assert_equal named_order_recording, match
+  end
+
+  def test_recording_orders_named_only_matches_where_not_nil_or_empty_semantics
+    whitespace_named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-2"],
+      "   "
+    )
+    empty_named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-1"],
+      ""
+    )
+
+    @parent_recording.child_recordings << FakeRecording.new(
+      "order-whitespace",
+      "RecordingStudio::RecordingStudioOrder",
+      whitespace_named_order,
+      Time.utc(2024, 1, 8),
+      Time.utc(2024, 1, 8)
+    )
+    @parent_recording.child_recordings << FakeRecording.new(
+      "order-empty",
+      "RecordingStudio::RecordingStudioOrder",
+      empty_named_order,
+      Time.utc(2024, 1, 9),
+      Time.utc(2024, 1, 9)
+    )
+
+    orders = RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+      @parent_recording,
+      owner: @owner,
+      group: :pages,
+      named_only: true
+    )
+
+    assert_includes orders, whitespace_named_order
+    refute_includes orders, empty_named_order
   end
 
   def test_create_named_recording_order_builds_a_named_order_without_collapsing_to_the_default_scope
@@ -257,6 +306,167 @@ class RecordingOrderManagerTest < Minitest::Test
                    @parent_recording,
                    owner: @owner
                  )
+  end
+
+  def test_recording_orders_filters_by_group_key
+    sections_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "sections",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-1"],
+      nil
+    )
+    sections_order_recording = FakeRecording.new(
+      "order-sections",
+      "RecordingStudio::RecordingStudioOrder",
+      sections_order,
+      Time.utc(2024, 1, 6),
+      Time.utc(2024, 1, 6)
+    )
+
+    @parent_recording.child_recordings << @scoped_order_recording
+    @parent_recording.child_recordings << sections_order_recording
+
+    orders = RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+      @parent_recording,
+      owner: @owner,
+      group: :pages
+    )
+
+    assert_equal [@scoped_order], orders
+  end
+
+  def test_recording_orders_filters_by_group_type_alias
+    @parent_recording.child_recordings << @scoped_order_recording
+
+    orders = RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+      @parent_recording,
+      owner: @owner,
+      group: "Page"
+    )
+
+    assert_equal [@scoped_order], orders
+  end
+
+  def test_recording_orders_filters_by_orderable_name
+    named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
+      "pages",
+      "RecordingOrderManagerTest::FakeOwner",
+      "user-1",
+      ["page-2"],
+      "Primary list"
+    )
+    @parent_recording.child_recordings << FakeRecording.new(
+      "order-named",
+      "RecordingStudio::RecordingStudioOrder",
+      named_order,
+      Time.utc(2024, 1, 6),
+      Time.utc(2024, 1, 6)
+    )
+
+    orders = RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+      @parent_recording,
+      owner: @owner,
+      group: :pages,
+      orderable_name: "Primary list"
+    )
+
+    assert_equal [named_order], orders
+  end
+
+  def test_recording_orders_raises_for_ambiguous_group_type_alias
+    ambiguous_folder_class = Class.new do
+      def self.recording_studio_order_group_definitions
+        {
+          "pages" => { group_key: "pages", allows: ["Page"] },
+          "draft_pages" => { group_key: "draft_pages", allows: ["Page"] }
+        }
+      end
+
+      def self.recording_studio_order_group_definition(name = nil)
+        groups = recording_studio_order_group_definitions
+        key = name.to_s.presence || "pages"
+        definition = groups[key]
+        raise KeyError, key if definition.nil?
+
+        definition
+      rescue KeyError
+        raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
+              "Unknown order group #{key.inspect}. Available groups: #{groups.keys.join(', ')}"
+      end
+    end
+    parent_recording = FakeParentRecording.new("folder-ambiguous", ambiguous_folder_class.new, [])
+
+    error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::ConfigurationError) do
+      RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+        parent_recording,
+        owner: @owner,
+        group: "Page"
+      )
+    end
+
+    assert_includes error.message, "Ambiguous group filter"
+  end
+
+  def test_matching_order_recordings_accepts_equivalent_group_key_and_group_filters
+    @parent_recording.child_recordings << @scoped_order_recording
+
+    matches = RecordingStudioOrderable::RecordingOrderManager.matching_order_recordings(
+      @parent_recording,
+      group_key: :pages,
+      group: "Page",
+      owner: @owner
+    )
+
+    assert_equal [@scoped_order_recording], matches
+  end
+
+  def test_matching_order_recordings_raises_for_conflicting_group_filters
+    multi_group_folder_class = Class.new do
+      def self.recording_studio_order_group_definitions
+        {
+          "pages" => { group_key: "pages", allows: ["Page"] },
+          "sections" => { group_key: "sections", allows: ["Section"] }
+        }
+      end
+
+      def self.recording_studio_order_group_definition(name = nil)
+        groups = recording_studio_order_group_definitions
+        key = name.to_s.presence || "pages"
+        definition = groups[key]
+        raise KeyError, key if definition.nil?
+
+        definition
+      rescue KeyError
+        raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
+              "Unknown order group #{key.inspect}. Available groups: #{groups.keys.join(', ')}"
+      end
+    end
+    parent_recording = FakeParentRecording.new("folder-multi-group", multi_group_folder_class.new, [])
+
+    error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::ConfigurationError) do
+      RecordingStudioOrderable::RecordingOrderManager.matching_order_recordings(
+        parent_recording,
+        group_key: :pages,
+        group: "Section",
+        owner: @owner
+      )
+    end
+
+    assert_includes error.message, "Conflicting group filters"
+  end
+
+  def test_recording_orders_raises_for_unknown_group_filter
+    error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::ConfigurationError) do
+      RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+        @parent_recording,
+        owner: @owner,
+        group: "UnknownType"
+      )
+    end
+
+    assert_includes error.message, "Unknown group filter"
+    assert_includes error.message, "pages"
   end
 
   def test_find_or_create_recording_order_returns_existing_order

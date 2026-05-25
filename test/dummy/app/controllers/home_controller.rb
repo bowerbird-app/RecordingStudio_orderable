@@ -28,11 +28,9 @@ class HomeController < ApplicationController
     folder_recording = RecordingStudio::Recording.find(params[:id])
     raise ActiveRecord::RecordNotFound unless folder_recording.recordable_type == "Folder"
 
-    selected_order_recording = folder_recording.named_recording_order_recording_for(
-      params.fetch(:selected_order_recording_id),
-      :pages,
-      owner: current_user
-    )
+    selected_order_recording = Array(
+      folder_recording.recording_order_recordings(:pages, owner: current_user, named_only: true)
+    ).find { |recording| recording.id.to_s == params.fetch(:selected_order_recording_id).to_s }
     raise ActiveRecord::RecordNotFound unless selected_order_recording
 
     updated_order = selected_order_recording.recordable.move_to_position!(
@@ -134,7 +132,9 @@ class HomeController < ApplicationController
   def named_page_order_recordings
     return [] unless @folder_recording
 
-    Array(@folder_recording.reload.named_recording_order_recordings(:pages, owner: current_user)).map(&:reload)
+    Array(
+      @folder_recording.reload.recording_order_recordings(:pages, owner: current_user, named_only: true)
+    ).map(&:reload)
   end
 
   def selected_page_order_recording
