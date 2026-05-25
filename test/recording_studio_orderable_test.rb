@@ -151,7 +151,8 @@ class RecordingStudioOrderableTest < Minitest::Test
   end
 
   def test_engine_new_order_list_page_uses_back_only_breadcrumb
-    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/new.html.erb", __dir__)
+    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/new.html.erb",
+                                 __dir__)
     view_source = File.read(view_path)
 
     assert_includes view_source, "FlatPack::Breadcrumb::Component"
@@ -165,7 +166,8 @@ class RecordingStudioOrderableTest < Minitest::Test
   end
 
   def test_engine_edit_order_list_page_shows_ordered_records_table
-    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/edit.html.erb", __dir__)
+    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/edit.html.erb",
+                                 __dir__)
     view_source = File.read(view_path)
 
     assert_includes view_source, 'title: "Reorder"'

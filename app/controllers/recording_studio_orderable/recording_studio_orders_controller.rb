@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module RecordingStudioOrderable
+  # rubocop:disable Metrics/ClassLength
   class RecordingStudioOrdersController < ApplicationController
     TypeRow = Struct.new(:recordable_type, :group_key, :custom_orders_count, :parent_recording_id, keyword_init: true)
     NamedOrderRow = Struct.new(:recording_id, :name, keyword_init: true)
@@ -37,6 +38,7 @@ module RecordingStudioOrderable
       handle_create_failure(e)
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def update
       wants_json = json_request?
       source_order_recording = source_order_recording_for_edit
@@ -75,6 +77,7 @@ module RecordingStudioOrderable
         redirect_to root_path, alert: "Unable to save order."
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     def edit
       render :edit
@@ -96,6 +99,7 @@ module RecordingStudioOrderable
       handle_browse_failure(e)
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def load_show_context
       @parent_recording = load_parent_recording_context!
       return if performed?
@@ -140,6 +144,7 @@ module RecordingStudioOrderable
            ArgumentError => e
       handle_browse_failure(e)
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     def load_parent_recording_context!
       parent_recording = parent_recording_from_params
@@ -172,6 +177,7 @@ module RecordingStudioOrderable
       @ordered_record_rows = ordered_record_rows_for_edit(@source_order_recording.recordable)
     end
 
+    # rubocop:disable Metrics/MethodLength
     def parent_recording_from_params
       parent_recording_id = params.fetch(:parent_recording_id).to_s
 
@@ -188,6 +194,7 @@ module RecordingStudioOrderable
 
       raise e
     end
+    # rubocop:enable Metrics/MethodLength
 
     def group_key_from_params(parent_recording)
       RecordingStudioOrderable::RecordingOrderManager.resolve_group_key!(parent_recording, params.fetch(:group_key))
@@ -211,8 +218,13 @@ module RecordingStudioOrderable
       )
     end
 
+    # rubocop:disable Metrics/MethodLength
     def ordered_record_rows_for_edit(order_record)
-      Array(order_record&.ordered_child_recordings(owner: current_recording_studio_orderable_owner)).each_with_index.map do |recording, index|
+      recordings = Array(
+        order_record&.ordered_child_recordings(owner: current_recording_studio_orderable_owner)
+      )
+
+      recordings.each_with_index.map do |recording, index|
         OrderedRecordRow.new(
           position: index + 1,
           recording_id: recording.id,
@@ -221,6 +233,7 @@ module RecordingStudioOrderable
         )
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
     def recordable_display_name(recordable)
       return "Untitled record" if recordable.blank?
@@ -303,6 +316,7 @@ module RecordingStudioOrderable
       )
     end
 
+    # rubocop:disable Metrics/MethodLength
     def default_create_redirect_target
       parent_recording = parent_recording_from_params
       group_definition = RecordingStudioOrderable::RecordingOrderManager.resolve_group_definition!(
@@ -319,6 +333,7 @@ module RecordingStudioOrderable
            KeyError
       nil
     end
+    # rubocop:enable Metrics/MethodLength
 
     def selected_order_recording_id(order)
       order.recordings.max_by { |recording| [recording.created_at, recording.id.to_s] }&.id
@@ -360,9 +375,10 @@ module RecordingStudioOrderable
     def recording_type_rows(parent_recording)
       order_group_definitions_for(parent_recording).values.flat_map do |definition|
         build_type_rows(definition, parent_recording)
-      end.uniq { |row| row.recordable_type }.sort_by(&:recordable_type)
+      end.uniq(&:recordable_type).sort_by(&:recordable_type)
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def global_recording_type_rows
       rows_by_type = Hash.new { |hash, key| hash[key] = [] }
 
@@ -383,6 +399,7 @@ module RecordingStudioOrderable
         )
       end.sort_by(&:recordable_type)
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     def orderable_parent_recordings
       parent_recordings = if RecordingStudio::Recording.respond_to?(:where)
@@ -441,6 +458,7 @@ module RecordingStudioOrderable
       order_group_definitions_for(parent_recording, strict: false).values.first&.fetch(:group_key, nil)
     end
 
+    # rubocop:disable Metrics/MethodLength
     def order_group_definitions_for(parent_recording, strict: true)
       recordable_class = parent_recording.recordable&.class || parent_recording.recordable_type.to_s.safe_constantize
       unless recordable_class
@@ -459,6 +477,7 @@ module RecordingStudioOrderable
 
       raise
     end
+    # rubocop:enable Metrics/MethodLength
 
     def order_display_name(order_record)
       return "Untitled order" unless order_record.respond_to?(:name)
@@ -466,4 +485,5 @@ module RecordingStudioOrderable
       order_record.name.to_s.strip.presence || "Untitled order"
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

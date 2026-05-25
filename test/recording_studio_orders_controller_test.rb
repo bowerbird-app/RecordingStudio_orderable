@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 def test_load_show_context_sets_single_order_and_renders_show_order
   RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
   @controller.params_hash = { parent_recording_id: "parent-1", id: "order-1" }
@@ -259,7 +261,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     owner = Struct.new(:id).new("user-2")
     fake_configuration = Struct.new(:actor).new(nil)
 
-    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { nil }
+    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) {}
     @controller.define_singleton_method(:current_user) { owner }
 
     RecordingStudio.stub(:configuration, fake_configuration) do
@@ -345,7 +347,12 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       @controller.create
     end
 
-    assert_equal "/recording_studio_orders/Page?parent_recording_id=parent-1&selected_order_recording_id=order-recording-1",
+    expected_redirect = [
+      "/recording_studio_orders/Page?parent_recording_id=parent-1",
+      "selected_order_recording_id=order-recording-1"
+    ].join("&")
+
+    assert_equal expected_redirect,
                  @controller.redirected_to
     assert_equal "Created order.", @controller.flash_payload[:notice]
   end
@@ -399,8 +406,8 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
                        "notes" => { group_key: "notes" }
                      }) do
       @controller.stub(:named_order_rows_for, lambda { |_parent, group_key|
-                         group_key == "pages" ? [1, 2] : [3]
-                       }) do
+        group_key == "pages" ? [1, 2] : [3]
+      }) do
         assert_equal 3, @controller.send(:named_order_count_for, parent_recording)
       end
     end
@@ -812,8 +819,12 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     @controller.define_singleton_method(:recording_studio_order_path) do |recordable_type, parent_recording_id:|
       "/recording_studio_orders/#{recordable_type}?parent_recording_id=#{parent_recording_id}"
     end
-    @controller.define_singleton_method(:edit_recording_studio_order_path) do |id, parent_recording_id:, group_key:, recordable_type:|
-      "/recording_studio_orders/#{id}/edit?parent_recording_id=#{parent_recording_id}&group_key=#{group_key}&recordable_type=#{recordable_type}"
+    @controller.define_singleton_method(:edit_recording_studio_order_path) do |id,
+                                                                               parent_recording_id:,
+                                                                               group_key:,
+                                                                               recordable_type:|
+      "/recording_studio_orders/#{id}/edit?parent_recording_id=#{parent_recording_id}" \
+        "&group_key=#{group_key}&recordable_type=#{recordable_type}"
     end
     parent_recording = build_parent_recording_with_groups({
                                                             "pages" => { group_key: "pages", allows: ["Page"] }
@@ -823,7 +834,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     source_order = Struct.new(:moved_to).new(nil)
     source_order.define_singleton_method(:move_to_position!) do |moving:, position:, actor:, metadata:|
       raise "unexpected move id" unless moving == "child-2"
-      raise "unexpected position" unless position == 0
+      raise "unexpected position" unless position.zero?
       raise "unexpected actor" unless actor.id == "owner-1"
       unless metadata[:source] == "recording_studio_orderable.recording_studio_orders#update"
         raise "unexpected metadata"
@@ -846,7 +857,13 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       end
     end
 
-    assert_equal "/recording_studio_orders/order-recording-2/edit?parent_recording_id=parent-1&group_key=pages&recordable_type=Page",
+    expected_redirect = [
+      "/recording_studio_orders/order-recording-2/edit?parent_recording_id=parent-1",
+      "group_key=pages",
+      "recordable_type=Page"
+    ].join("&")
+
+    assert_equal expected_redirect,
                  @controller.redirected_to
     assert_equal "Saved order.", @controller.flash_payload[:notice]
   end
