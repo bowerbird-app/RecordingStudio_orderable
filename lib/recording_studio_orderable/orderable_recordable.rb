@@ -51,8 +51,8 @@ module RecordingStudioOrderable
       ) || []
     end
 
-    def recording_order_for(group_key = nil, owner: nil)
-      current_recording&.recording_order_for(group_key, owner: owner)
+    def default_recording_order(group_key = nil, owner: nil)
+      current_recording&.default_recording_order(group_key, owner: owner)
     end
 
     def find_or_create_recording_order!(group_key = nil, **)

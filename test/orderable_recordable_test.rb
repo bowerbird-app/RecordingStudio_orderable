@@ -44,8 +44,8 @@ class OrderableRecordableTest < Minitest::Test
       [:order]
     end
 
-    def recording_order_for(group_key = nil, owner: nil)
-      @calls << [:recording_order_for, group_key, owner]
+    def default_recording_order(group_key = nil, owner: nil)
+      @calls << [:default_recording_order, group_key, owner]
       :recording_order
     end
 
@@ -114,7 +114,7 @@ class OrderableRecordableTest < Minitest::Test
     @instance.recordings = [@delegate_recording]
 
     assert_equal [:order], @instance.recording_orders(owner: owner, group: "Page", orderable_name: "Main list")
-    assert_equal :recording_order, @instance.recording_order_for(:pages, owner: owner)
+    assert_equal :recording_order, @instance.default_recording_order(:pages, owner: owner)
     assert_equal :created, @instance.find_or_create_recording_order!(:pages, owner: owner)
     assert_equal [:child], @instance.children_for_order_group(:pages)
     assert_equal [:ordered_child], @instance.ordered_children_for(:pages, owner: owner)
@@ -122,7 +122,7 @@ class OrderableRecordableTest < Minitest::Test
     assert_equal(
       [
         [:recording_orders, owner, "Page", "Main list", false],
-        [:recording_order_for, :pages, owner],
+        [:default_recording_order, :pages, owner],
         %i[find_or_create_recording_order pages],
         %i[children_for_order_group pages],
         [:ordered_children_for, :pages, owner]
@@ -137,7 +137,7 @@ class OrderableRecordableTest < Minitest::Test
     @instance.recordings = [older_recording, newer_recording]
 
     assert_equal ["newer"], @instance.recording_orders
-    assert_equal "newer", @instance.recording_order_for(:pages)
+    assert_equal "newer", @instance.default_recording_order(:pages)
     assert_equal "newer", @instance.find_or_create_recording_order!(:pages)
     assert_equal ["newer"], @instance.children_for_order_group(:pages)
     assert_equal ["newer"], @instance.ordered_children_for(:pages)
@@ -154,7 +154,7 @@ class OrderableRecordableTest < Minitest::Test
   def build_recording_snapshot(label, timestamp)
     Struct.new(:id, :created_at, :updated_at).new(label, timestamp, timestamp).tap do |recording|
       recording.define_singleton_method(:recording_orders) { |**| [id] }
-      recording.define_singleton_method(:recording_order_for) { |*, **| id }
+      recording.define_singleton_method(:default_recording_order) { |*, **| id }
       recording.define_singleton_method(:find_or_create_recording_order!) { |*, **| id }
       recording.define_singleton_method(:children_for_order_group) { |*| [id] }
       recording.define_singleton_method(:ordered_children_for) { |*, **| [id] }

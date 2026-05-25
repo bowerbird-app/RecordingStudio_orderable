@@ -86,7 +86,7 @@ class RecordingOrderManagerTest < Minitest::Test
   def test_recording_order_for_can_resolve_owner_scoped_orders
     @parent_recording.child_recordings << @scoped_order_recording
 
-    order = RecordingStudioOrderable::RecordingOrderManager.recording_order_for(
+    order = RecordingStudioOrderable::RecordingOrderManager.default_recording_order(
       @parent_recording,
       :pages,
       owner: @owner
@@ -108,7 +108,7 @@ class RecordingOrderManagerTest < Minitest::Test
     @parent_recording.child_recordings << @scoped_order_recording
     @parent_recording.child_recordings << named_order_recording
 
-    order = RecordingStudioOrderable::RecordingOrderManager.recording_order_for(
+    order = RecordingStudioOrderable::RecordingOrderManager.default_recording_order(
       @parent_recording,
       :pages,
       owner: @owner
@@ -281,7 +281,7 @@ class RecordingOrderManagerTest < Minitest::Test
     @parent_recording.child_recordings << duplicate_recording
 
     error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::DuplicateOrderError) do
-      RecordingStudioOrderable::RecordingOrderManager.recording_order_for(@parent_recording, :pages)
+      RecordingStudioOrderable::RecordingOrderManager.default_recording_order(@parent_recording, :pages)
     end
 
     assert_includes error.message, "Multiple RecordingStudioOrder children exist"
@@ -528,7 +528,7 @@ class RecordingOrderManagerTest < Minitest::Test
     end
 
     RecordingStudioOrderable::RecordingOrderManager.stub(
-      :recording_order_for,
+      :default_recording_order,
       lambda do |_parent_recording, _group_key = nil, owner: nil|
         lookup_count += 1
         next nil if lookup_count == 1

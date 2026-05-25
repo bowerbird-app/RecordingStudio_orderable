@@ -26,8 +26,8 @@ module RecordingStudioOrderable
       RecordingStudioOrderable::RecordingOrderManager.recording_order_recording_for(self, group_key, owner: owner)
     end
 
-    def recording_order_for(group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.recording_order_for(self, group_key, owner: owner)
+    def default_recording_order(group_key = nil, owner: nil)
+      RecordingStudioOrderable::RecordingOrderManager.default_recording_order(self, group_key, owner: owner)
     end
 
     def find_or_create_recording_order!(group_key = nil, **)

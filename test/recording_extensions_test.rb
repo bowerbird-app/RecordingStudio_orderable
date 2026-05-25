@@ -71,13 +71,16 @@ class RecordingExtensionsTest < Minitest::Test
   end
 
   def test_recording_order_for_delegates_to_manager
-    RecordingStudioOrderable::RecordingOrderManager.stub(:recording_order_for, lambda do |recording, group_key, owner:|
-      assert_same @recording, recording
-      assert_equal :pages, group_key
-      assert_same @owner, owner
-      :recording_order
-    end) do
-      assert_equal :recording_order, @recording.recording_order_for(:pages, owner: @owner)
+    RecordingStudioOrderable::RecordingOrderManager.stub(
+      :default_recording_order,
+      lambda do |recording, group_key, owner:|
+        assert_same @recording, recording
+        assert_equal :pages, group_key
+        assert_same @owner, owner
+        :recording_order
+      end
+    ) do
+      assert_equal :recording_order, @recording.default_recording_order(:pages, owner: @owner)
     end
   end
 

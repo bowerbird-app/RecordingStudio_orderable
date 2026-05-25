@@ -40,13 +40,13 @@ module RecordingStudioOrderable
         matches.first
       end
 
-      def recording_order_for(parent_recording, group_key = nil, owner: nil)
+      def default_recording_order(parent_recording, group_key = nil, owner: nil)
         recording_order_recording_for(parent_recording, group_key, owner: owner)&.recordable
       end
 
       def find_or_create_recording_order!(parent_recording, group_key = nil, owner: nil, actor: nil, metadata: {},
                                           name: nil, ordered_recording_ids: [])
-        existing_order = recording_order_for(parent_recording, group_key, owner: owner)
+        existing_order = default_recording_order(parent_recording, group_key, owner: owner)
         return existing_order if existing_order
 
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
@@ -69,7 +69,7 @@ module RecordingStudioOrderable
           parent_recording: parent_recording
         ).recordable
       rescue ActiveRecord::RecordNotUnique
-        recovered_order = recording_order_for(parent_recording, resolved_group_key, owner: owner)
+        recovered_order = default_recording_order(parent_recording, resolved_group_key, owner: owner)
         return recovered_order if recovered_order
 
         raise
@@ -123,7 +123,7 @@ module RecordingStudioOrderable
       def ordered_children_for(parent_recording, group_key = nil, owner: nil)
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
         eligible_children = eligible_children_for(parent_recording, resolved_group_key)
-        ordered_recording = recording_order_for(parent_recording, resolved_group_key, owner: owner)
+        ordered_recording = default_recording_order(parent_recording, resolved_group_key, owner: owner)
         ordered_ids = Array(ordered_recording&.ordered_recording_ids)
         eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }
 
