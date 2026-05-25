@@ -18,10 +18,11 @@ module RecordingStudioOrderable
     end
 
     def authenticate_recording_studio_orderable_request!
-      hook = RecordingStudioOrderable.configuration.authenticate_controller
-      return hook.call(self) if hook.respond_to?(:call)
-
       ensure_recording_studio_actor_present!
+      return if performed?
+
+      hook = RecordingStudioOrderable.configuration.authenticate_controller
+      hook.call(self) if hook.respond_to?(:call)
     end
 
     def current_recording_studio_orderable_owner
@@ -51,11 +52,30 @@ module RecordingStudioOrderable
     end
 
     def ensure_recording_studio_actor_present!
-      resolver = recording_studio_actor_resolver
-      actor = resolver.call if resolver.respond_to?(:call)
+      actor = resolve_recording_studio_actor
+
+      if actor.blank?
+        sync_recording_studio_actor_from_current_user
+        actor = resolve_recording_studio_actor
+      end
+
       return if actor.present?
 
       redirect_to root_path, alert: "Authentication is required."
+    end
+
+    def resolve_recording_studio_actor
+      resolver = recording_studio_actor_resolver
+      resolver.call if resolver.respond_to?(:call)
+    end
+
+    def sync_recording_studio_actor_from_current_user
+      return unless defined?(Current)
+      return unless Current.respond_to?(:actor) && Current.respond_to?(:actor=)
+      return if Current.actor.present?
+
+      owner = controller_current_user
+      Current.actor = owner if owner.present?
     end
 
     def ensure_current_recording_studio_orderable_owner!

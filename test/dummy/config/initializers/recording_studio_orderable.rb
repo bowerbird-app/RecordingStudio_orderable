@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 RecordingStudioOrderable.configure do |config|
+  # Optional additional host auth check after Recording Studio actor auth passes.
   config.authenticate_controller = lambda do |controller|
     controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
   end

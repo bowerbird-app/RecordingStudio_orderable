@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 RecordingStudioOrderable.configure do |config|
-  # Optional override: protect mounted UI with host app auth.
-  # If omitted, Orderable falls back to RecordingStudio.configuration.actor.
+  # Optional additional host auth check after Recording Studio actor authentication passes.
+  # If omitted, mounted UI authentication relies on RecordingStudio.configuration.actor.
   config.authenticate_controller = lambda do |controller|
     controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
   end

@@ -132,8 +132,11 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     RecordingStudioOrderable.configuration.authenticate_controller = lambda do |controller|
       authenticated = controller.equal?(@controller)
     end
+    fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
 
-    @controller.send(:authenticate_recording_studio_orderable_request!)
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      @controller.send(:authenticate_recording_studio_orderable_request!)
+    end
 
     assert_equal true, authenticated
   end
@@ -159,6 +162,55 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
     assert_equal "/", @controller.redirected_to
     assert_equal "Authentication is required.", @controller.flash_payload[:alert]
+  end
+
+  def test_authenticate_request_skips_configured_hook_when_actor_auth_fails
+    authenticated = false
+    RecordingStudioOrderable.configuration.authenticate_controller = lambda do |_controller|
+      authenticated = true
+    end
+    fake_configuration = Struct.new(:actor).new(nil)
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      @controller.send(:authenticate_recording_studio_orderable_request!)
+    end
+
+    assert_equal false, authenticated
+    assert_equal "/", @controller.redirected_to
+    assert_equal "Authentication is required.", @controller.flash_payload[:alert]
+  end
+
+  def test_authenticate_request_syncs_current_actor_from_current_user_when_possible
+    RecordingStudioOrderable.configuration.authenticate_controller = nil
+    owner = Struct.new(:id).new("user-1")
+    created_current_class = false
+
+    unless defined?(Current)
+      current_class = Class.new do
+        class << self
+          attr_accessor :actor
+        end
+      end
+      Object.const_set(:Current, current_class)
+      created_current_class = true
+    end
+
+    fake_configuration = Struct.new(:actor).new(-> { Current.actor })
+    original_actor = Current.actor
+
+    @controller.define_singleton_method(:current_user) { owner }
+
+    Current.actor = nil
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      @controller.send(:authenticate_recording_studio_orderable_request!)
+    end
+
+    assert_nil @controller.redirected_to
+    assert_equal owner, Current.actor
+  ensure
+    Current.actor = original_actor if defined?(Current) && Current.respond_to?(:actor=)
+    Object.send(:remove_const, :Current) if created_current_class && defined?(Current)
   end
 
   def test_current_owner_resolver_and_owner_guard_use_configured_owner
