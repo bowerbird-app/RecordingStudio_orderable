@@ -6,15 +6,14 @@
   ) do |breadcrumb| %>
     <% if params[:recordable_type].present? %>
       <% breadcrumb.item(
-        text: params[:recordable_type],
+        text: "Custom Order",
         href: recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id)
       ) %>
     <% end %>
   <% end %>
 
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Custom Order for #{@source_order_name}",
-    subtitle: "Drag to reorder. Changes are saved automatically.",
+    title: "Reorder",
     variant: :h1
   ) %>
 
