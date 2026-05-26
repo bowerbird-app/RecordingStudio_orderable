@@ -138,29 +138,29 @@ module RecordingStudioOrderable
         ).recordable
       end
 
-      def eligible_children_for(parent_recording, group_key = nil)
+      def eligible_items_for(parent_recording, group_key = nil)
         allowed_types = resolve_group_definition!(parent_recording, group_key).fetch(:allows)
-        eligible_children = Array(parent_recording.child_recordings).select do |child_recording|
-          allowed_types.include?(child_recording.recordable_type) &&
-            child_recording.recordable_type != "RecordingStudio::RecordingStudioOrder"
+        eligible_items = Array(parent_recording.child_recordings).select do |item_recording|
+          allowed_types.include?(item_recording.recordable_type) &&
+            item_recording.recordable_type != "RecordingStudio::RecordingStudioOrder"
         end
 
-        eligible_children.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }
+        eligible_items.sort_by { |item_recording| [item_recording.created_at, item_recording.id.to_s] }
       end
 
-      def ordered_children_for(parent_recording, group_key = nil, owner: nil)
+      def ordered_items_for(parent_recording, group_key = nil, owner: nil)
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
-        eligible_children = eligible_children_for(parent_recording, resolved_group_key)
+        eligible_items = eligible_items_for(parent_recording, resolved_group_key)
         ordered_recording = default_recording_order(parent_recording, resolved_group_key, owner: owner)
         ordered_ids = Array(ordered_recording&.ordered_recording_ids)
-        eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }
+        eligible_by_id = eligible_items.index_by { |item_recording| item_recording.id.to_s }
 
-        explicitly_ordered_children = ordered_ids.filter_map { |recording_id| eligible_by_id.delete(recording_id.to_s) }
-        explicitly_ordered_children + eligible_by_id.values
+        explicitly_ordered_items = ordered_ids.filter_map { |recording_id| eligible_by_id.delete(recording_id.to_s) }
+        explicitly_ordered_items + eligible_by_id.values
       end
 
       def normalize_requested_ids(parent_recording, group_key, requested_ids)
-        eligible_ids = eligible_children_for(parent_recording, group_key).map(&:id).map(&:to_s)
+        eligible_ids = eligible_items_for(parent_recording, group_key).map(&:id).map(&:to_s)
 
         Array(requested_ids)
           .filter_map { |recording_id| normalize_recording_id(recording_id) }
@@ -282,7 +282,7 @@ module RecordingStudioOrderable
       end
 
       def default_named_order_ids(parent_recording, resolved_group_key)
-        eligible_children_for(parent_recording, resolved_group_key)
+        eligible_items_for(parent_recording, resolved_group_key)
           .reverse
           .map { |recording| recording.id.to_s }
       end

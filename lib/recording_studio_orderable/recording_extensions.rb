@@ -44,12 +44,12 @@ module RecordingStudioOrderable
       RecordingStudioOrderable::RecordingOrderManager.find_or_create_recording_order!(self, group_key, **)
     end
 
-    def children_for_order_group(group_key = nil)
-      RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(self, group_key)
+    def eligible_order_items(group_key = nil)
+      RecordingStudioOrderable::RecordingOrderManager.eligible_items_for(self, group_key)
     end
 
-    def ordered_children_for(group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.ordered_children_for(self, group_key, owner: owner)
+    def ordered_items_for(group_key = nil, owner: nil)
+      RecordingStudioOrderable::RecordingOrderManager.ordered_items_for(self, group_key, owner: owner)
     end
   end
 end

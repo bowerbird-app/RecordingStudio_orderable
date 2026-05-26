@@ -17,7 +17,7 @@
   ) %>
 
   <div class="flex flex-wrap gap-2">
-    <%= render FlatPack::Badge::Component.new(text: "Groups define allowed child types", style: :info, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Groups define allowed item types", style: :info, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Owner scope is optional", style: :warning, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Mutations persist new snapshots", style: :success, size: :sm) %>
     <%= render FlatPack::Badge::Component.new(text: "Core-backed wrappers are labeled", style: :default, size: :sm) %>
@@ -64,7 +64,7 @@ end
 
     <%= render FlatPack::PageTitle::Component.new(
       title: "recording_orders",
-      subtitle: "Addon wrapper: reads order snapshots from the parent's child recordings and returns RecordingStudioOrder models.",
+      subtitle: "Addon wrapper: reads order snapshots from the parent's item recordings and returns RecordingStudioOrder models.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -173,22 +173,50 @@ folder.find_recording_order_by_id("missing-order-recording", group_key: :pages, 
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "children_for_order_group and ordered_children_for",
-      subtitle: "children_for_order_group and ordered_children_for both return arrays (possibly empty); ordered_children_for applies addon explicit ordering.",
+      title: "eligible_order_items",
+      subtitle: "Get the set of item recordings that are allowed for a group.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
     <%= render_options_table.call([
-      { variable: "group_key", accepts: "Symbol or String", example: "children_for_order_group(:pages)" },
-      { variable: "owner", accepts: "Actor object or nil", example: "ordered_children_for(:pages, owner: current_user)" }
+      { variable: "group_key", accepts: "Symbol or String", example: "eligible_order_items(:pages)" }
     ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.children_for_order_group(:pages)
-# => [#&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.eligible_order_items(:pages)
+# => [#&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
+      </div>
+    </div>
 
-folder.ordered_children_for(:pages, owner: current_user)
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "ordered_items_for",
+      subtitle: "Produce the effective display/processing order for those same eligible items.",
+      variant: :h4,
+      class: "mb-0 pb-0 mt-8"
+    ) %>
+    <%= render_options_table.call([
+      { variable: "group_key", accepts: "Symbol or String", example: "ordered_items_for(:pages, owner: current_user)" },
+      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" }
+    ]) %>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder.ordered_items_for(:pages, owner: current_user)
 # => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
+      </div>
+    </div>
+    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
+      <div class="p-4">
+        <p class="text-sm text-(--surface-muted-content-color)">An order_item is eligible only if:</p>
+        <ul class="mt-2 list-disc pl-6 text-sm text-(--surface-default-content-color)">
+          <li>Its recordable type is included in that group's allows list (from group definition).</li>
+          <li>It is not itself an order record type (RecordingStudioOrder snapshots are excluded).</li>
+        </ul>
+        <p class="mt-3 text-sm text-(--surface-muted-content-color)">So not eligible order_items include:</p>
+        <ul class="mt-2 list-disc pl-6 text-sm text-(--surface-default-content-color)">
+          <li>Any order_items whose type is not in the group's allows list.</li>
+          <li>Any order_items whose type is the order record type.</li>
+          <li>Anything not actually attached to the parent recording.</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -340,8 +368,8 @@ folder_recording.find_recording_order_by_id("missing-order-recording", group_key
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "find_or_create_recording_order! and ordered_children_for",
-      subtitle: "Addon APIs: find_or_create_recording_order! returns an order model; ordered_children_for returns an ordered array (possibly empty).",
+      title: "find_or_create_recording_order! and ordered_items_for",
+      subtitle: "Addon APIs: find_or_create_recording_order! returns an order model; ordered_items_for returns an ordered array (possibly empty).",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
@@ -354,7 +382,7 @@ folder_recording.find_recording_order_by_id("missing-order-recording", group_key
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
 # => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
 
-folder_recording.ordered_children_for(:pages, owner: current_user)
+folder_recording.ordered_items_for(:pages, owner: current_user)
 # => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
       </div>
     </div>
@@ -369,22 +397,22 @@ folder_recording.ordered_children_for(:pages, owner: current_user)
     ) %>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "include_child! and remove_child!",
-      subtitle: "Addon mutation API: appends or removes one child id, then persists via RecordingStudio::Recording#revise.",
+      title: "include_item! and remove_item!",
+      subtitle: "Addon mutation API: appends or removes one item id, then persists via RecordingStudio::Recording#revise.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
     <%= render_options_table.call([
-      { variable: "child recording", accepts: "RecordingStudio::Recording", example: "include_child!(page_three_recording, ...)" },
+      { variable: "item recording", accepts: "RecordingStudio::Recording", example: "include_item!(page_three_recording, ...)" },
       { variable: "actor", accepts: "Actor object", example: "actor: current_user" },
       { variable: "metadata", accepts: "Hash", example: "metadata: { source: \"seed\" }" }
     ]) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.include_child!(page_three_recording, actor: current_user, metadata: { source: "seed" })
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.include_item!(page_three_recording, actor: current_user, metadata: { source: "seed" })
 # => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
 
-page_order.remove_child!(page_archived_recording, actor: current_user)
+page_order.remove_item!(page_archived_recording, actor: current_user)
 # => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
       </div>
     </div>
@@ -435,7 +463,7 @@ page_order.move_to_position!(moving: page_three_recording, position: 1, actor: c
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "reorder! and cleanup_missing_children!",
+      title: "reorder! and cleanup_missing_items!",
       subtitle: "Addon mutation API: full replace or cleanup of ordered ids, then persist a revised snapshot.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
@@ -454,7 +482,7 @@ page_order.move_to_position!(moving: page_three_recording, position: 1, actor: c
 )
 # => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
 
-page_order.cleanup_missing_children!(actor: current_user)
+page_order.cleanup_missing_items!(actor: current_user)
 # => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
         <p class="mt-3 text-xs leading-5 text-(--flatpack-color-muted)">
           Note: trash, access, and device session helpers are provided by RecordingStudio addon gems, not core.
@@ -487,7 +515,7 @@ page_order.cleanup_missing_children!(actor: current_user)
 page_order = folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
 # => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
 
-folder_recording.ordered_children_for(:pages, owner: current_user)
+folder_recording.ordered_items_for(:pages, owner: current_user)
 # => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
         </div>
       </div>

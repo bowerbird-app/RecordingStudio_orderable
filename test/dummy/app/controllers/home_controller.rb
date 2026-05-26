@@ -150,7 +150,7 @@ class HomeController < ApplicationController
   def ordered_pages_for(order)
     return [] unless @folder_recording && order
 
-    eligible_pages = Array(@folder_recording.reload.children_for_order_group(:pages))
+    eligible_pages = Array(@folder_recording.reload.eligible_order_items(:pages))
     eligible_by_id = eligible_pages.index_by { |recording| recording.id.to_s }
     explicitly_ordered_pages = Array(order.ordered_recording_ids).filter_map do |recording_id|
       eligible_by_id.delete(recording_id.to_s)

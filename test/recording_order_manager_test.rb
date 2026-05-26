@@ -50,7 +50,7 @@ class RecordingOrderManagerTest < Minitest::Test
   end
 
   def test_ordered_children_ignore_stale_ids_and_append_unordered_eligible_children
-    ordered_children = RecordingStudioOrderable::RecordingOrderManager.ordered_children_for(@parent_recording, :pages)
+    ordered_children = RecordingStudioOrderable::RecordingOrderManager.ordered_items_for(@parent_recording, :pages)
 
     assert_equal [@page_two, @page_one, @page_three], ordered_children
   end
@@ -61,14 +61,14 @@ class RecordingOrderManagerTest < Minitest::Test
     @order.ordered_recording_ids = %w[page-2 page-1 page-3]
     @parent_recording.child_recordings << page_four
 
-    ordered_children = RecordingStudioOrderable::RecordingOrderManager.ordered_children_for(@parent_recording, :pages)
+    ordered_children = RecordingStudioOrderable::RecordingOrderManager.ordered_items_for(@parent_recording, :pages)
 
     assert_equal [@page_two, @page_one, @page_three, page_four], ordered_children
     assert_equal %w[page-2 page-1 page-3], @order.ordered_recording_ids
   end
 
   def test_eligible_children_are_sorted_by_created_at_then_id
-    eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(@parent_recording, :pages)
+    eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_items_for(@parent_recording, :pages)
 
     assert_equal [@page_one, @page_two, @page_three], eligible_children
   end

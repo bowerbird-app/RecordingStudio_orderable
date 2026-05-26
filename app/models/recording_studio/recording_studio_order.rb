@@ -13,29 +13,29 @@ module RecordingStudio
     validate :order_scope_must_be_unique
     validate :ordered_recording_ids_must_be_unique
     validate :ordered_recording_ids_must_be_uuids
-    validate :ordered_recording_ids_must_belong_to_eligible_children, if: -> { resolved_parent_recording.present? }
+    validate :ordered_recording_ids_must_belong_to_eligible_items, if: -> { resolved_parent_recording.present? }
 
     before_validation :normalize_name
     before_validation :normalize_ordered_recording_ids
 
     alias_attribute :order_group, :group_key
 
-    def eligible_children
-      resolved_parent_recording&.children_for_order_group(group_key) || []
+    def eligible_items
+      resolved_parent_recording&.eligible_order_items(group_key) || []
     end
 
-    def ordered_child_recordings(owner: resolved_owner)
+    def ordered_item_recordings(owner: resolved_owner)
       parent_recording = resolved_parent_recording
       return [] unless parent_recording
 
       if current_attached_order_recording(self)
-        ordered_children_for_current_order(parent_recording)
+        ordered_items_for_current_order(parent_recording)
       else
-        parent_recording.ordered_children_for(group_key, owner: owner) || []
+        parent_recording.ordered_items_for(group_key, owner: owner) || []
       end
     end
 
-    def include_child!(child_recording, actor: nil, metadata: {})
+    def include_item!(child_recording, actor: nil, metadata: {})
       updated_ids = normalized_mutation_ids
       child_recording_id = normalize_recording_id(child_recording)
       updated_ids.delete(child_recording_id)
@@ -44,7 +44,7 @@ module RecordingStudio
       persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "included")
     end
 
-    def remove_child!(child_recording, actor: nil, metadata: {})
+    def remove_item!(child_recording, actor: nil, metadata: {})
       updated_ids = normalized_mutation_ids - [normalize_recording_id(child_recording)]
       persist_updated_ids!(updated_ids, actor: actor, metadata: metadata, action: "removed")
     end
@@ -94,7 +94,7 @@ module RecordingStudio
       persist_updated_ids!(Array(ordered_recording_ids), actor: actor, metadata: metadata, action: "reordered")
     end
 
-    def cleanup_missing_children!(actor: nil, metadata: {})
+    def cleanup_missing_items!(actor: nil, metadata: {})
       persist_updated_ids!(normalized_mutation_ids, actor: actor, metadata: metadata, action: "cleaned")
     end
 
@@ -140,12 +140,12 @@ module RecordingStudio
       return normalized_mutation_ids unless parent_recording
 
       if current_attached_order_recording(self)
-        return ordered_children_for_current_order(parent_recording).filter_map do |recording|
+        return ordered_items_for_current_order(parent_recording).filter_map do |recording|
           normalize_recording_id(recording)
         end
       end
 
-      Array(parent_recording.ordered_children_for(group_key, owner: raw_owner_scope)).filter_map do |recording|
+      Array(parent_recording.ordered_items_for(group_key, owner: raw_owner_scope)).filter_map do |recording|
         normalize_recording_id(recording)
       end
     end
@@ -228,17 +228,17 @@ module RecordingStudio
       nil
     end
 
-    def ordered_children_for_current_order(parent_recording)
-      eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(
+    def ordered_items_for_current_order(parent_recording)
+      eligible_items = RecordingStudioOrderable::RecordingOrderManager.eligible_items_for(
         parent_recording,
         group_key
       )
-      eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }
-      ordered_children = normalized_ordered_recording_ids.filter_map do |recording_id|
+      eligible_by_id = eligible_items.index_by { |item_recording| item_recording.id.to_s }
+      ordered_items = normalized_ordered_recording_ids.filter_map do |recording_id|
         eligible_by_id.delete(recording_id.to_s)
       end
 
-      ordered_children + eligible_by_id.values
+      ordered_items + eligible_by_id.values
     end
 
     def move_relative!(moving:, anchor:, placement:, actor:, metadata:)
@@ -301,7 +301,7 @@ module RecordingStudio
       end
     end
 
-    def ordered_recording_ids_must_belong_to_eligible_children
+    def ordered_recording_ids_must_belong_to_eligible_items
       allowed_types = RecordingStudioOrderable::RecordingOrderManager.resolve_group_definition!(
         resolved_parent_recording,
         group_key
@@ -344,10 +344,10 @@ module RecordingStudio
       Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }
     end
 
-    alias ordered_children ordered_child_recordings
-    alias include_recording! include_child!
-    alias remove_recording! remove_child!
+    alias ordered_items ordered_item_recordings
+    alias include_recording! include_item!
+    alias remove_recording! remove_item!
     alias reorder_recordings! reorder!
-    alias cleanup! cleanup_missing_children!
+    alias cleanup! cleanup_missing_items!
   end
 end

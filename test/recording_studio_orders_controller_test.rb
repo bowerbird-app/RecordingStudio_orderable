@@ -702,7 +702,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
                                                             "pages" => { group_key: "pages", allows: ["Page"] }
                                                           })
     source_order = Struct.new(:name) do
-      def ordered_child_recordings(owner:)
+      def ordered_item_recordings(owner:)
         raise "unexpected owner" unless owner.id == "owner-1"
 
         [

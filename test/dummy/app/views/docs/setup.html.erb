@@ -12,7 +12,7 @@
 
   <%= render FlatPack::PageTitle::Component.new(
     title: "Setup",
-    subtitle: "What the host app needs before the addon can manage ordered child collections.",
+    subtitle: "What the host app needs before the addon can manage ordered item collections.",
     variant: :h1
   ) %>
 
@@ -33,7 +33,7 @@
     <div>
       <ul class="space-y-3 text-sm leading-6">
         <li>A Rails app with Recording Studio already mounted and working.</li>
-        <li>Host parent and child recordable models registered the same way as the rest of your Recording Studio setup.</li>
+        <li>Host parent and item recordable models registered the same way as the rest of your Recording Studio setup.</li>
         <li>A parent recordable that will opt into at least one named order group.</li>
       </ul>
     </div>
@@ -66,7 +66,7 @@ bin/rails db:migrate</code></pre>
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "Parent opt-in example",
-      subtitle: "Use the DSL on the parent recordable that owns the ordered children.",
+      subtitle: "Use the DSL on the parent recordable that owns the ordered items.",
       variant: :h3,
       class: "mb-0 pb-0"
     ) %>

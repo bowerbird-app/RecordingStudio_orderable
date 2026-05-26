@@ -64,12 +64,12 @@ module RecordingStudioOrderable
       current_recording&.find_or_create_recording_order!(group_key, **)
     end
 
-    def children_for_order_group(group_key = nil)
-      current_recording&.children_for_order_group(group_key) || []
+    def eligible_order_items(group_key = nil)
+      current_recording&.eligible_order_items(group_key) || []
     end
 
-    def ordered_children_for(group_key = nil, owner: nil)
-      current_recording&.ordered_children_for(group_key, owner: owner) || []
+    def ordered_items_for(group_key = nil, owner: nil)
+      current_recording&.ordered_items_for(group_key, owner: owner) || []
     end
 
     private

@@ -1,6 +1,6 @@
 # RecordingStudioOrderable
 
-RecordingStudioOrderable adds opt-in ordered child collections to Recording Studio parent recordables.
+RecordingStudioOrderable adds opt-in ordered item collections to Recording Studio parent recordables.
 
 It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingStudioOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself and is identified by a `(parent_recording, group_key, owner_type, owner_id)` scope.
 
@@ -19,19 +19,19 @@ It keeps `RecordingStudio::Recording` lightweight by storing order state on an e
   - `default_recording_order(group_key, owner: nil)`
   - `find_recording_order_by_id(order_recording_id, group_key: nil, owner: optional_guardrail)`
   - `find_or_create_recording_order!(group_key, owner: nil)`
-  - `children_for_order_group`
-  - `ordered_children_for(group_key, owner: nil)`
+  - `eligible_order_items`
+  - `ordered_items_for(group_key, owner: nil)`
 - `RecordingStudio::RecordingStudioOrder` mutation helpers:
-  - `ordered_child_recordings`
+  - `ordered_item_recordings`
   - `normalized_ordered_recording_ids`
-  - `include_child!`
-  - `remove_child!`
+  - `include_item!`
+  - `remove_item!`
   - `move_before!`
   - `move_after!`
   - `move_to_start!`
   - `move_to_end!`
   - `reorder!`
-  - `cleanup_missing_children!`
+  - `cleanup_missing_items!`
 
 ## Read behavior
 
@@ -75,6 +75,17 @@ Named lists build on top of that owner scope. The unnamed/default order remains 
 - `group:` accepts either a group key (`:pages`) or an allowed recordable type string (`"Page"`) when that type maps to exactly one configured group.
 - `orderable_name:` matches a specific named list by exact order name.
 - Named-only list queries can be composed with `recording_orders(..., named_only: true)`.
+
+`eligible_order_items` uses group-definition rules. An order_item is eligible only if:
+
+- Its recordable type is included in that group's `allows` list.
+- It is not itself an order record type (`RecordingStudio::RecordingStudioOrder` snapshots are excluded).
+
+So not eligible order_items include:
+
+- Any order_items whose type is not in the group's `allows` list.
+- Any order_items whose type is the order record type.
+- Anything not actually attached to the parent recording.
 
 The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Parent-recording authorization is host-controlled. Authentication now defaults to Recording Studio actor resolution (`RecordingStudio.configuration.actor`), and owner resolution can also default to that same actor resolver unless overridden.
 
@@ -132,7 +143,7 @@ page_three = root_recording.record(Page, parent_recording: folder_recording) { |
 page_order = folder_recording.find_or_create_recording_order!(:pages)
 page_order.reorder!(ordered_recording_ids: [page_two.id, page_one.id])
 
-folder_recording.ordered_children_for(:pages).map { |recording| recording.recordable.title }
+folder_recording.ordered_items_for(:pages).map { |recording| recording.recordable.title }
 # => ["Checklist", "Mix notes", "Auto appended"]
 ```
 

@@ -113,19 +113,19 @@ class RecordingExtensionsTest < Minitest::Test
     end
   end
 
-  def test_children_for_order_group_delegates_to_manager
-    RecordingStudioOrderable::RecordingOrderManager.stub(:eligible_children_for, lambda do |recording, group_key|
+  def test_eligible_order_items_delegates_to_manager
+    RecordingStudioOrderable::RecordingOrderManager.stub(:eligible_items_for, lambda do |recording, group_key|
       assert_same @recording, recording
       assert_equal :pages, group_key
       [:child]
     end) do
-      assert_equal [:child], @recording.children_for_order_group(:pages)
+      assert_equal [:child], @recording.eligible_order_items(:pages)
     end
   end
 
-  def test_ordered_children_for_delegates_to_manager
+  def test_ordered_items_for_delegates_to_manager
     RecordingStudioOrderable::RecordingOrderManager.stub(
-      :ordered_children_for,
+      :ordered_items_for,
       lambda do |recording, group_key, owner:|
         assert_same @recording, recording
         assert_equal :pages, group_key
@@ -133,7 +133,7 @@ class RecordingExtensionsTest < Minitest::Test
         [:ordered_child]
       end
     ) do
-      assert_equal [:ordered_child], @recording.ordered_children_for(:pages, owner: @owner)
+      assert_equal [:ordered_child], @recording.ordered_items_for(:pages, owner: @owner)
     end
   end
 end

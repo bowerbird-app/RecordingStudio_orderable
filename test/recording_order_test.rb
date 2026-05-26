@@ -26,7 +26,7 @@ class RecordingOrderTest < Minitest::Test
     parent_recording = Object.new
     captured = nil
 
-    parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, **|
+    parent_recording.define_singleton_method(:ordered_items_for) do |_group_key, **|
       [
         FakeRecording.new("page-2"),
         FakeRecording.new("page-1"),
@@ -68,7 +68,7 @@ class RecordingOrderTest < Minitest::Test
     end
 
     RecordingStudioOrderable::RecordingOrderManager.stub(
-      :eligible_children_for,
+      :eligible_items_for,
       [FakeRecording.new("page-1"), FakeRecording.new("page-2"), FakeRecording.new("page-3")]
     ) do
       order.stub(:resolved_parent_recording, parent_recording) do
@@ -178,7 +178,7 @@ class RecordingOrderTest < Minitest::Test
     captured = capture_persist(order)
 
     order.define_singleton_method(:normalized_ordered_recording_ids) { %w[page-2 page-1 page-3] }
-    order.include_child!(FakeRecording.new("page-4"), actor: :actor, metadata: { source: "test" })
+    order.include_item!(FakeRecording.new("page-4"), actor: :actor, metadata: { source: "test" })
 
     assert_equal %w[page-2 page-1 page-3 page-4], captured[:ids]
     assert_equal "included", captured[:action]
@@ -189,7 +189,7 @@ class RecordingOrderTest < Minitest::Test
     captured = capture_persist(order)
 
     order.define_singleton_method(:normalized_ordered_recording_ids) { %w[page-2 page-1 page-3] }
-    order.remove_child!("page-1", actor: :actor, metadata: { source: "test" })
+    order.remove_item!("page-1", actor: :actor, metadata: { source: "test" })
 
     assert_equal %w[page-2 page-3], captured[:ids]
     assert_equal "removed", captured[:action]
@@ -257,7 +257,7 @@ class RecordingOrderTest < Minitest::Test
 
     cleanup_capture = capture_persist(order)
     order.define_singleton_method(:normalized_ordered_recording_ids) { %w[page-2 page-1] }
-    order.cleanup_missing_children!(actor: :actor, metadata: { source: "test" })
+    order.cleanup_missing_items!(actor: :actor, metadata: { source: "test" })
 
     assert_equal %w[page-2 page-1], cleanup_capture[:ids]
     assert_equal "cleaned", cleanup_capture[:action]
@@ -498,7 +498,7 @@ class RecordingOrderTest < Minitest::Test
         end
 
         order.stub(:resolved_parent_recording, parent_recording) do
-          order.send(:ordered_recording_ids_must_belong_to_eligible_children)
+          order.send(:ordered_recording_ids_must_belong_to_eligible_items)
         end
       end
     end
@@ -537,7 +537,7 @@ class RecordingOrderTest < Minitest::Test
 
   def build_parent_recording_with_children(ids)
     Object.new.tap do |parent_recording|
-      parent_recording.define_singleton_method(:ordered_children_for) do |_group_key, **|
+      parent_recording.define_singleton_method(:ordered_items_for) do |_group_key, **|
         ids.map { |id| FakeRecording.new(id) }
       end
     end

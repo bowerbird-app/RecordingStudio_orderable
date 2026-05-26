@@ -60,13 +60,13 @@ class OrderableRecordableTest < Minitest::Test
       :found_order
     end
 
-    def children_for_order_group(group_key = nil)
-      @calls << [:children_for_order_group, group_key]
+    def eligible_order_items(group_key = nil)
+      @calls << [:eligible_order_items, group_key]
       [:child]
     end
 
-    def ordered_children_for(group_key = nil, owner: nil)
-      @calls << [:ordered_children_for, group_key, owner]
+    def ordered_items_for(group_key = nil, owner: nil)
+      @calls << [:ordered_items_for, group_key, owner]
       [:ordered_child]
     end
   end
@@ -123,8 +123,8 @@ class OrderableRecordableTest < Minitest::Test
     assert_equal :recording_order, @instance.default_recording_order(:pages, owner: owner)
     assert_equal :found_order, @instance.find_recording_order_by_id("order-1", group_key: :pages, owner: owner)
     assert_equal :created, @instance.find_or_create_recording_order!(:pages, owner: owner)
-    assert_equal [:child], @instance.children_for_order_group(:pages)
-    assert_equal [:ordered_child], @instance.ordered_children_for(:pages, owner: owner)
+    assert_equal [:child], @instance.eligible_order_items(:pages)
+    assert_equal [:ordered_child], @instance.ordered_items_for(:pages, owner: owner)
 
     assert_equal(
       [
@@ -132,8 +132,8 @@ class OrderableRecordableTest < Minitest::Test
         [:default_recording_order, :pages, owner],
         [:find_recording_order_by_id, "order-1", :pages, owner],
         %i[find_or_create_recording_order pages],
-        %i[children_for_order_group pages],
-        [:ordered_children_for, :pages, owner]
+        %i[eligible_order_items pages],
+        [:ordered_items_for, :pages, owner]
       ],
       @delegate_recording.calls
     )
@@ -148,8 +148,8 @@ class OrderableRecordableTest < Minitest::Test
     assert_equal "newer", @instance.default_recording_order(:pages)
     assert_equal "newer", @instance.find_recording_order_by_id("order-1", group_key: :pages)
     assert_equal "newer", @instance.find_or_create_recording_order!(:pages)
-    assert_equal ["newer"], @instance.children_for_order_group(:pages)
-    assert_equal ["newer"], @instance.ordered_children_for(:pages)
+    assert_equal ["newer"], @instance.eligible_order_items(:pages)
+    assert_equal ["newer"], @instance.ordered_items_for(:pages)
   end
 
   def test_instance_methods_return_empty_array_without_any_recordings
@@ -166,8 +166,8 @@ class OrderableRecordableTest < Minitest::Test
       recording.define_singleton_method(:default_recording_order) { |*, **| id }
       recording.define_singleton_method(:find_recording_order_by_id) { |*, **| id }
       recording.define_singleton_method(:find_or_create_recording_order!) { |*, **| id }
-      recording.define_singleton_method(:children_for_order_group) { |*| [id] }
-      recording.define_singleton_method(:ordered_children_for) { |*, **| [id] }
+      recording.define_singleton_method(:eligible_order_items) { |*| [id] }
+      recording.define_singleton_method(:ordered_items_for) { |*, **| [id] }
     end
   end
 end

@@ -13,7 +13,7 @@
       <img src="./assets/0.13.2/loading.gif" alt="loading"/>
     </div>
     <div id="wrapper" class="hide">
-      <div class="timestamp">Generated <abbr class="timeago" title="2026-05-25T08:06:57+00:00">2026-05-25T08:06:57+00:00</abbr></div>
+      <div class="timestamp">Generated <abbr class="timeago" title="2026-05-25T08:49:08+00:00">2026-05-25T08:49:08+00:00</abbr></div>
       <ul class="group_tabs"></ul>
 
       <div id="content">
@@ -5138,7 +5138,7 @@
               
             
 
-            <code class="ruby">        order_record&amp;.ordered_child_recordings(owner: current_recording_studio_orderable_owner)</code>
+            <code class="ruby">        order_record&amp;.ordered_item_recordings(owner: current_recording_studio_orderable_owner)</code>
           </li>
         </div>
       
@@ -9135,7 +9135,7 @@
               
             
 
-            <code class="ruby">    validate :ordered_recording_ids_must_belong_to_eligible_children, if: -&gt; { resolved_parent_recording.present? }</code>
+            <code class="ruby">    validate :ordered_recording_ids_must_belong_to_eligible_items, if: -&gt; { resolved_parent_recording.present? }</code>
           </li>
         </div>
       
@@ -9227,7 +9227,7 @@
               
             
 
-            <code class="ruby">    def eligible_children</code>
+            <code class="ruby">    def eligible_items</code>
           </li>
         </div>
       
@@ -9247,7 +9247,7 @@
               
             
 
-            <code class="ruby">      resolved_parent_recording&amp;.children_for_order_group(group_key) || []</code>
+            <code class="ruby">      resolved_parent_recording&amp;.eligible_order_items(group_key) || []</code>
           </li>
         </div>
       
@@ -9285,7 +9285,7 @@
               
             
 
-            <code class="ruby">    def ordered_child_recordings(owner: resolved_owner)</code>
+            <code class="ruby">    def ordered_item_recordings(owner: resolved_owner)</code>
           </li>
         </div>
       
@@ -9357,7 +9357,7 @@
               
             
 
-            <code class="ruby">        ordered_children_for_current_order(parent_recording)</code>
+            <code class="ruby">        ordered_items_for_current_order(parent_recording)</code>
           </li>
         </div>
       
@@ -9385,7 +9385,7 @@
               
             
 
-            <code class="ruby">        parent_recording.ordered_children_for(group_key, owner: owner) || []</code>
+            <code class="ruby">        parent_recording.ordered_items_for(group_key, owner: owner) || []</code>
           </li>
         </div>
       
@@ -9435,7 +9435,7 @@
               
             
 
-            <code class="ruby">    def include_child!(child_recording, actor: nil, metadata: {})</code>
+            <code class="ruby">    def include_item!(child_recording, actor: nil, metadata: {})</code>
           </li>
         </div>
       
@@ -9555,7 +9555,7 @@
               
             
 
-            <code class="ruby">    def remove_child!(child_recording, actor: nil, metadata: {})</code>
+            <code class="ruby">    def remove_item!(child_recording, actor: nil, metadata: {})</code>
           </li>
         </div>
       
@@ -10223,7 +10223,7 @@
               
             
 
-            <code class="ruby">    def cleanup_missing_children!(actor: nil, metadata: {})</code>
+            <code class="ruby">    def cleanup_missing_items!(actor: nil, metadata: {})</code>
           </li>
         </div>
       
@@ -10859,7 +10859,7 @@
               
             
 
-            <code class="ruby">        return ordered_children_for_current_order(parent_recording).filter_map do |recording|</code>
+            <code class="ruby">        return ordered_items_for_current_order(parent_recording).filter_map do |recording|</code>
           </li>
         </div>
       
@@ -10923,7 +10923,7 @@
               
             
 
-            <code class="ruby">      Array(parent_recording.ordered_children_for(group_key, owner: raw_owner_scope)).filter_map do |recording|</code>
+            <code class="ruby">      Array(parent_recording.ordered_items_for(group_key, owner: raw_owner_scope)).filter_map do |recording|</code>
           </li>
         </div>
       
@@ -12057,7 +12057,7 @@
               
             
 
-            <code class="ruby">    def ordered_children_for_current_order(parent_recording)</code>
+            <code class="ruby">    def ordered_items_for_current_order(parent_recording)</code>
           </li>
         </div>
       
@@ -12071,7 +12071,7 @@
               
             
 
-            <code class="ruby">      eligible_children = RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(</code>
+            <code class="ruby">      eligible_items = RecordingStudioOrderable::RecordingOrderManager.eligible_items_for(</code>
           </li>
         </div>
       
@@ -12121,7 +12121,7 @@
               
             
 
-            <code class="ruby">      eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }</code>
+            <code class="ruby">      eligible_by_id = eligible_items.index_by { |item_recording| item_recording.id.to_s }</code>
           </li>
         </div>
       
@@ -12135,7 +12135,7 @@
               
             
 
-            <code class="ruby">      ordered_children = normalized_ordered_recording_ids.filter_map do |recording_id|</code>
+            <code class="ruby">      ordered_items = normalized_ordered_recording_ids.filter_map do |recording_id|</code>
           </li>
         </div>
       
@@ -12187,7 +12187,7 @@
               
             
 
-            <code class="ruby">      ordered_children + eligible_by_id.values</code>
+            <code class="ruby">      ordered_items + eligible_by_id.values</code>
           </li>
         </div>
       
@@ -13089,7 +13089,7 @@
               
             
 
-            <code class="ruby">    def ordered_recording_ids_must_belong_to_eligible_children</code>
+            <code class="ruby">    def ordered_recording_ids_must_belong_to_eligible_items</code>
           </li>
         </div>
       
@@ -13699,7 +13699,7 @@
               
             
 
-            <code class="ruby">    alias ordered_children ordered_child_recordings</code>
+            <code class="ruby">    alias ordered_items ordered_item_recordings</code>
           </li>
         </div>
       
@@ -13713,7 +13713,7 @@
               
             
 
-            <code class="ruby">    alias include_recording! include_child!</code>
+            <code class="ruby">    alias include_recording! include_item!</code>
           </li>
         </div>
       
@@ -13727,7 +13727,7 @@
               
             
 
-            <code class="ruby">    alias remove_recording! remove_child!</code>
+            <code class="ruby">    alias remove_recording! remove_item!</code>
           </li>
         </div>
       
@@ -13755,7 +13755,7 @@
               
             
 
-            <code class="ruby">    alias cleanup! cleanup_missing_children!</code>
+            <code class="ruby">    alias cleanup! cleanup_missing_items!</code>
           </li>
         </div>
       
@@ -17696,7 +17696,7 @@
               
             
 
-            <code class="ruby">    def children_for_order_group(group_key = nil)</code>
+            <code class="ruby">    def eligible_order_items(group_key = nil)</code>
           </li>
         </div>
       
@@ -17718,7 +17718,7 @@
               
             
 
-            <code class="ruby">      current_recording&amp;.children_for_order_group(group_key) || []</code>
+            <code class="ruby">      current_recording&amp;.eligible_order_items(group_key) || []</code>
           </li>
         </div>
       
@@ -17756,7 +17756,7 @@
               
             
 
-            <code class="ruby">    def ordered_children_for(group_key = nil, owner: nil)</code>
+            <code class="ruby">    def ordered_items_for(group_key = nil, owner: nil)</code>
           </li>
         </div>
       
@@ -17778,7 +17778,7 @@
               
             
 
-            <code class="ruby">      current_recording&amp;.ordered_children_for(group_key, owner: owner) || []</code>
+            <code class="ruby">      current_recording&amp;.ordered_items_for(group_key, owner: owner) || []</code>
           </li>
         </div>
       
@@ -18681,7 +18681,7 @@
               
             
 
-            <code class="ruby">    def children_for_order_group(group_key = nil)</code>
+            <code class="ruby">    def eligible_order_items(group_key = nil)</code>
           </li>
         </div>
       
@@ -18695,7 +18695,7 @@
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.eligible_children_for(self, group_key)</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.eligible_items_for(self, group_key)</code>
           </li>
         </div>
       
@@ -18733,7 +18733,7 @@
               
             
 
-            <code class="ruby">    def ordered_children_for(group_key = nil, owner: nil)</code>
+            <code class="ruby">    def ordered_items_for(group_key = nil, owner: nil)</code>
           </li>
         </div>
       
@@ -18747,7 +18747,7 @@
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.ordered_children_for(self, group_key, owner: owner)</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.ordered_items_for(self, group_key, owner: owner)</code>
           </li>
         </div>
       
@@ -20704,7 +20704,7 @@
               
             
 
-            <code class="ruby">      def eligible_children_for(parent_recording, group_key = nil)</code>
+            <code class="ruby">      def eligible_items_for(parent_recording, group_key = nil)</code>
           </li>
         </div>
       
@@ -20732,7 +20732,7 @@
               
             
 
-            <code class="ruby">        eligible_children = Array(parent_recording.child_recordings).select do |child_recording|</code>
+            <code class="ruby">        eligible_items = Array(parent_recording.child_recordings).select do |item_recording|</code>
           </li>
         </div>
       
@@ -20746,7 +20746,7 @@
               
             
 
-            <code class="ruby">          allowed_types.include?(child_recording.recordable_type) &amp;&amp;</code>
+            <code class="ruby">          allowed_types.include?(item_recording.recordable_type) &amp;&amp;</code>
           </li>
         </div>
       
@@ -20758,7 +20758,7 @@
               
             
 
-            <code class="ruby">            child_recording.recordable_type != &quot;RecordingStudio::RecordingStudioOrder&quot;</code>
+            <code class="ruby">            item_recording.recordable_type != &quot;RecordingStudio::RecordingStudioOrder&quot;</code>
           </li>
         </div>
       
@@ -20796,7 +20796,7 @@
               
             
 
-            <code class="ruby">        eligible_children.sort_by { |child_recording| [child_recording.created_at, child_recording.id.to_s] }</code>
+            <code class="ruby">        eligible_items.sort_by { |item_recording| [item_recording.created_at, item_recording.id.to_s] }</code>
           </li>
         </div>
       
@@ -20834,7 +20834,7 @@
               
             
 
-            <code class="ruby">      def ordered_children_for(parent_recording, group_key = nil, owner: nil)</code>
+            <code class="ruby">      def ordered_items_for(parent_recording, group_key = nil, owner: nil)</code>
           </li>
         </div>
       
@@ -20862,7 +20862,7 @@
               
             
 
-            <code class="ruby">        eligible_children = eligible_children_for(parent_recording, resolved_group_key)</code>
+            <code class="ruby">        eligible_items = eligible_items_for(parent_recording, resolved_group_key)</code>
           </li>
         </div>
       
@@ -20912,7 +20912,7 @@
               
             
 
-            <code class="ruby">        eligible_by_id = eligible_children.index_by { |child_recording| child_recording.id.to_s }</code>
+            <code class="ruby">        eligible_by_id = eligible_items.index_by { |item_recording| item_recording.id.to_s }</code>
           </li>
         </div>
       
@@ -20938,7 +20938,7 @@
               
             
 
-            <code class="ruby">        explicitly_ordered_children = ordered_ids.filter_map { |recording_id| eligible_by_id.delete(recording_id.to_s) }</code>
+            <code class="ruby">        explicitly_ordered_items = ordered_ids.filter_map { |recording_id| eligible_by_id.delete(recording_id.to_s) }</code>
           </li>
         </div>
       
@@ -20952,7 +20952,7 @@
               
             
 
-            <code class="ruby">        explicitly_ordered_children + eligible_by_id.values</code>
+            <code class="ruby">        explicitly_ordered_items + eligible_by_id.values</code>
           </li>
         </div>
       
@@ -21004,7 +21004,7 @@
               
             
 
-            <code class="ruby">        eligible_ids = eligible_children_for(parent_recording, group_key).map(&amp;:id).map(&amp;:to_s)</code>
+            <code class="ruby">        eligible_ids = eligible_items_for(parent_recording, group_key).map(&amp;:id).map(&amp;:to_s)</code>
           </li>
         </div>
       
@@ -22664,7 +22664,7 @@
               
             
 
-            <code class="ruby">        eligible_children_for(parent_recording, resolved_group_key)</code>
+            <code class="ruby">        eligible_items_for(parent_recording, resolved_group_key)</code>
           </li>
         </div>
       

@@ -217,7 +217,7 @@ module RecordingStudioOrderable
     # rubocop:disable Metrics/MethodLength
     def ordered_record_rows_for_edit(order_record)
       recordings = Array(
-        order_record&.ordered_child_recordings(owner: current_recording_studio_orderable_owner)
+        order_record&.ordered_item_recordings(owner: current_recording_studio_orderable_owner)
       )
 
       recordings.each_with_index.map do |recording, index|
