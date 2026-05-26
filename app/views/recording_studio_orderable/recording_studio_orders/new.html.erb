@@ -1,28 +1,34 @@
-<div class="mx-auto flex w-full max-w-3xl flex-col px-6 py-12">
-  <%= render FlatPack::Breadcrumb::Component.new(
-    show_back: true,
-    back_href: "javascript:window.history.back()",
-    class: "mb-2"
-  ) do |breadcrumb| %>
-    <% breadcrumb_text = params[:recordable_type].presence || @parent_recording_label %>
-    <% breadcrumb_href = if params[:recordable_type].present?
-                           recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id)
-                         else
-                           recording_studio_orders_path(parent_recording_id: @parent_recording.id)
-                         end %>
-    <% if breadcrumb_text.present? %>
+<%= render FlatPack::Card::Component.new(style: :default, class: "mx-auto w-full max-w-3xl") do |card| %>
+  <% card.body do %>
+    <%= render FlatPack::Breadcrumb::Component.new(
+      class: "mb-2"
+    ) do |breadcrumb| %>
       <% breadcrumb.item(
-        text: breadcrumb_text,
-        href: breadcrumb_href
+        text: "Back",
+        href: "javascript:window.history.back()",
+        icon: "chevron-left",
+        class: "mr-3 text-slate-700 hover:text-slate-900"
       ) %>
+      <% breadcrumb_text = params[:recordable_type].presence || @parent_recording_label %>
+      <% breadcrumb_href = if params[:recordable_type].present?
+                             recording_studio_order_path(params[:recordable_type], parent_recording_id: @parent_recording.id)
+                           else
+                             recording_studio_orders_path(parent_recording_id: @parent_recording.id)
+                           end %>
+      <% if breadcrumb_text.present? %>
+        <% breadcrumb.item(
+          text: breadcrumb_text,
+          href: breadcrumb_href
+        ) %>
+      <% end %>
     <% end %>
+
+    <%= render FlatPack::PageTitle::Component.new(
+      title: "Create Custom Order",
+      subtitle: "Create a custom order for #{@parent_recording_label}",
+      variant: :h1
+    ) %>
+
+    <%= render "order_form" %>
   <% end %>
-
-  <%= render FlatPack::PageTitle::Component.new(
-    title: "Create Custom Order",
-    subtitle: "Create a custom order for #{@parent_recording_label}",
-    variant: :h1
-  ) %>
-
-  <%= render "order_form" %>
-</div>
+<% end %>
