@@ -53,7 +53,8 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     assert_includes view_source, "Order Demo Examples"
     assert_includes view_source, "Ordered List"
-    assert_includes view_source, "Add new"
+    assert_includes view_source, "-- Add New Order --"
+    refute_includes view_source, "Add new"
     assert_includes view_source, "FlatPack::Select::Component"
     assert_includes view_source, "hidden_field_tag :demo, @demo_variant"
     assert_includes view_source, 'turbo_frame_tag "page_order_demo"'
@@ -116,6 +117,9 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes home_controller_source, "DEFAULT_DEMO_VARIANT = \"custom_event\""
     assert_includes home_controller_source, "load_demo_variant"
     assert_includes home_controller_source, "page_order_demo_path"
+    assert_includes home_controller_source, "ADD_NEW_ORDER_OPTION_VALUE"
+    assert_includes home_controller_source, "add_new_order_option_selected?"
+    assert_includes home_controller_source, "new_page_order_path"
     refute_includes home_controller_source, "ListRow"
     refute_includes home_controller_source, "@list_rows"
     assert_includes home_controller_source, 'CUSTOM_EVENT_NAME = "recordingstudio:order:updated"'

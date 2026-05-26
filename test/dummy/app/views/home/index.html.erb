@@ -40,7 +40,12 @@
                             label: recording.recordable.name.presence || "Untitled list",
                             value: recording.id
                           }
-                        },
+                        } + [
+                          {
+                            label: "-- Add New Order --",
+                            value: HomeController::ADD_NEW_ORDER_OPTION_VALUE
+                          }
+                        ],
                         value: @page_order_recording&.id,
                         label: "Ordered List",
                         class: "min-w-72 flex-1",
@@ -51,18 +56,6 @@
                       ) %>
                     <% end %>
                   <% end %>
-
-                  <%= render FlatPack::Button::Component.new(
-                    text: "Add new",
-                    style: :primary,
-                    size: :md,
-                    url: recording_studio_orderable.new_recording_studio_order_path(
-                      parent_recording_id: @folder_recording.id,
-                      group_key: :pages,
-                      source_order_recording_id: @page_order_recording&.id,
-                      redirect_to: root_path(demo: @demo_variant)
-                    )
-                  ) %>
                 </div>
 
                 <% if @page_order_recordings.blank? %>

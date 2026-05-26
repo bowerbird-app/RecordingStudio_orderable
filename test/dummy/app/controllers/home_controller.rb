@@ -3,12 +3,18 @@ class HomeController < ApplicationController
   CUSTOM_EVENT_NAME = "recordingstudio:order:updated"
   DEFAULT_DEMO_VARIANT = "custom_event"
   SUCCESS_MESSAGE = "Saved page order."
+  ADD_NEW_ORDER_OPTION_VALUE = "__add_new_order__"
 
   before_action :load_workspace_context, only: :index
   before_action :load_demo_variant, only: %i[index update_page_order]
 
   def index
     @page_order_recordings = named_page_order_recordings
+
+    if add_new_order_option_selected?
+      redirect_to new_page_order_path and return
+    end
+
     @page_order_recording = selected_page_order_recording
     @page_order = @page_order_recording&.recordable
     @stored_page_order_ids = Array(@page_order&.ordered_recording_ids)
@@ -150,6 +156,21 @@ class HomeController < ApplicationController
     requested_id = params[:selected_order_recording_id].to_s.strip.presence
     selected_recording = @page_order_recordings.find { |recording| recording.id.to_s == requested_id } if requested_id.present?
     selected_recording || @page_order_recordings.first
+  end
+
+  def add_new_order_option_selected?
+    params[:selected_order_recording_id].to_s.strip == ADD_NEW_ORDER_OPTION_VALUE
+  end
+
+  def new_page_order_path
+    source_order_recording_id = selected_page_order_recording&.id
+
+    recording_studio_orderable.new_recording_studio_order_path(
+      parent_recording_id: @folder_recording.id,
+      group_key: :pages,
+      source_order_recording_id: source_order_recording_id,
+      redirect_to: root_path(demo: @demo_variant)
+    )
   end
 
   def ordered_pages_for(order)
