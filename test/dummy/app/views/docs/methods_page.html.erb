@@ -41,28 +41,6 @@
     ) %>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_studio_order_group",
-      subtitle: "Addon API: class macro that declares a named order group and the recordable types it accepts.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "group key", accepts: "Symbol", example: "recording_studio_order_group :pages" },
-      { variable: "allows", accepts: "Array<Class>", example: "allows: [Page, Section]" }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">class Folder &lt; ApplicationRecord
-  include RecordingStudioOrderable::OrderableRecordable
-
-  recording_studio_order_group :pages, allows: [Page]
-  recording_studio_order_group :sections, allows: [Section]
-end
-# => { "pages" => { group_key: "pages", allows: ["Page"] }, "sections" => { group_key: "sections", allows: ["Section"] } }</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
       title: "recording_orders",
       subtitle: "Addon wrapper: reads order snapshots from the parent's item recordings and returns RecordingStudioOrder models.",
       variant: :h4,
