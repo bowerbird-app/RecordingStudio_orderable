@@ -41,6 +41,7 @@ class DocumentationSurfaceTest < Minitest::Test
     assert_includes dummy_routes_source, 'get "docs/config", to: "docs#configuration", as: :docs_config'
     assert_includes dummy_routes_source, 'get "docs/methods", to: "docs#methods_page", as: :docs_methods'
     assert_includes dummy_routes_source, 'get "docs/views", to: "docs#views_page", as: :docs_views'
+    assert_includes dummy_routes_source, 'get "events", to: "events#index", as: :events'
   end
 
   def test_dummy_sidebar_links_to_dummy_documentation_pages
@@ -51,10 +52,12 @@ class DocumentationSurfaceTest < Minitest::Test
     assert_includes sidebar_source, 'label: "Config"'
     assert_includes sidebar_source, 'label: "Methods"'
     assert_includes sidebar_source, 'label: "Views"'
+    assert_includes sidebar_source, 'label: "Order Events"'
     assert_includes sidebar_source, "docs_setup_path"
     assert_includes sidebar_source, "docs_config_path"
     assert_includes sidebar_source, "docs_methods_path"
     assert_includes sidebar_source, "docs_views_path"
+    assert_includes sidebar_source, "events_path"
   end
 
   def test_dummy_docs_views_use_flatpack_headers_without_cards
@@ -73,5 +76,15 @@ class DocumentationSurfaceTest < Minitest::Test
       assert_includes view_source, expected_content
       refute_includes view_source, "FlatPack::Card::Component"
     end
+  end
+
+  def test_dummy_events_view_uses_flatpack_surface_components
+    events_view_path = File.expand_path("dummy/app/views/events/index.html.erb", __dir__)
+    view_source = File.read(events_view_path)
+
+    assert_includes view_source, "FlatPack::Breadcrumb::Component"
+    assert_includes view_source, "FlatPack::PageTitle::Component"
+    assert_includes view_source, "FlatPack::Table::Component"
+    assert_includes view_source, "Order events"
   end
 end

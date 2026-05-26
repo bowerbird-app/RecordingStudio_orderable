@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   get "docs/config", to: "docs#configuration", as: :docs_config
   get "docs/methods", to: "docs#methods_page", as: :docs_methods
   get "docs/views", to: "docs#views_page", as: :docs_views
+  get "events", to: "events#index", as: :events
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -51,10 +51,16 @@
           href: main_app.docs_views_path,
           icon: :rectangle_stack
         ) %>
+
+        <%= render FlatPack::Sidebar::Item::Component.new(
+          label: "Order Events",
+          href: main_app.events_path,
+          icon: :clipboard_document_list
+        ) %>
       </div>
-      <div class="h-px bg-[var(--sidebar-divider-color)] mx-4 my-2"></div>
+      <div class="h-px bg-(--sidebar-divider-color) mx-4 my-2"></div>
       <div class="">
-        <p class="text-xs font-semibold uppercase tracking-wider text-[var(--sidebar-item-text-color)] opacity-50 truncate block pl-4">Mounted Paths</p>
+        <p class="text-xs font-semibold uppercase tracking-wider text-(--sidebar-item-text-color) opacity-50 truncate block pl-4">Mounted Paths</p>
 
         <%= render FlatPack::Sidebar::Item::Component.new(
           label: "Recording Studio Orders",

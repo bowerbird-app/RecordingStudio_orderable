@@ -1,0 +1,27 @@
+<div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-12">
+  <%= render FlatPack::Breadcrumb::Component.new(
+    show_back: true,
+    back_href: "javascript:window.history.back()",
+    show_home: true,
+    home_url: root_path,
+    class: "mb-2"
+  ) do |breadcrumb| %>
+    <% breadcrumb.item(text: "Dummy app") %>
+    <% breadcrumb.item(text: "Order events") %>
+  <% end %>
+
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Order events",
+    subtitle: "Newest-first view of RecordingStudio events for quick verification while testing order changes.",
+    variant: :h1
+  ) %>
+
+  <%= render FlatPack::Table::Component.new(data: @events, class: "mt-4") do |table| %>
+    <% table.column(title: "Occurred at", html: ->(row) { row[:occurred_at]&.strftime("%Y-%m-%d %H:%M:%S") || "-" }) %>
+    <% table.column(title: "Action", html: ->(row) { row[:action] }) %>
+    <% table.column(title: "Recording", html: ->(row) { row[:recording_id] }) %>
+    <% table.column(title: "Recordable", html: ->(row) { row[:recordable].presence || "-" }) %>
+    <% table.column(title: "Actor", html: ->(row) { row[:actor].presence || "-" }) %>
+    <% table.column(title: "Metadata", html: ->(row) { row[:metadata] }) %>
+  <% end %>
+</div>
