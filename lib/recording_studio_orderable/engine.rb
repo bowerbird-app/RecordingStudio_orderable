@@ -31,6 +31,15 @@ module RecordingStudioOrderable
 
         RecordingStudio.register_recordable_type("RecordingStudio::RecordingStudioOrder")
 
+        if RecordingStudio.respond_to?(:register_capability)
+          begin
+            RecordingStudio.register_capability(:recording_studio_orderable, RecordingStudioOrderable::RecordingExtensions)
+            next
+          rescue NoMethodError
+            # Fall through for older or partially loaded RecordingStudio versions.
+          end
+        end
+
         next unless defined?(RecordingStudio::Recording)
 
         unless RecordingStudio::Recording.included_modules.include?(RecordingStudioOrderable::RecordingExtensions)

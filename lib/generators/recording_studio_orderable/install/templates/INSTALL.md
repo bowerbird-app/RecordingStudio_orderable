@@ -3,7 +3,8 @@ RecordingStudioOrderable install complete.
 Next steps:
 
 1. Review `config/initializers/recording_studio_orderable.rb`.
-  Make sure it defines `authorize_parent_recording` for your host app. `authenticate_controller` and `current_owner_resolver` are optional overrides.
+  Authorization is handled by `recording_studio_accessible`.
+  Make sure your host app configures `RecordingStudioAccessible` policies/authorizers for mounted pages.
 2. Run `rails generate recording_studio_orderable:migrations`.
   If your app already has duplicate unnamed orders for the same parent/group/owner scope, the migration will recover them by renaming older duplicates before adding the unique index.
 3. Opt parent recordables into order groups, for example:

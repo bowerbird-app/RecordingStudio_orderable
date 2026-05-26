@@ -394,6 +394,29 @@ class RecordingOrderManagerTest < Minitest::Test
     assert_equal [@scoped_order], orders
   end
 
+  def test_recording_orders_uses_recording_studio_type_name_normalization_for_group_aliases
+    @parent_recording.child_recordings << @scoped_order_recording
+
+    type_name_resolver = lambda do |value|
+      case value
+      when "LegacyPageAlias"
+        "Page"
+      else
+        value
+      end
+    end
+
+    RecordingStudio.stub(:recordable_type_name, type_name_resolver) do
+      orders = RecordingStudioOrderable::RecordingOrderManager.recording_orders(
+        @parent_recording,
+        owner: @owner,
+        group: "LegacyPageAlias"
+      )
+
+      assert_equal [@scoped_order], orders
+    end
+  end
+
   def test_recording_orders_filters_by_orderable_name
     named_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids, :name).new(
       "pages",

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 def test_load_show_context_sets_single_order_and_renders_show_order
-  RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
   @controller.params_hash = { parent_recording_id: "parent-1", id: "order-1" }
   parent_recording = build_parent_recording_with_groups({
                                                           "pages" => { group_key: "pages", allows: ["Page"] }
@@ -64,31 +63,32 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
     @controller = ControllerDouble.new
     @parent_recording = ParentRecording.new("parent-1", Recordable.new("Folder", nil), "Folder")
+    @default_owner = Struct.new(:id).new("owner-1")
+    default_owner = @default_owner
+    @controller.define_singleton_method(:current_user) { default_owner }
+    @controller.define_singleton_method(:recording_studio_accessible_authorized?) { |_parent_recording| true }
   end
 
   def teardown
     RecordingStudioOrderable.instance_variable_set(:@configuration, @original_configuration)
   end
 
-  def test_load_form_context_denies_access_without_authorization_hook
+  def test_load_form_context_denies_access_when_accessible_authorization_rejects
     @controller.params_hash = { parent_recording_id: "parent-1", group_key: "pages" }
     parent_recording = @parent_recording
 
-    with_temporary_recording_class do |recording_class|
-      recording_class.define_singleton_method(:find) { |_id| parent_recording }
-      @controller.send(:load_form_context)
+    with_accessible_authorized(false) do
+      with_temporary_recording_class do |recording_class|
+        recording_class.define_singleton_method(:find) { |_id| parent_recording }
+        @controller.send(:load_form_context)
+      end
     end
 
     assert_equal "/", @controller.redirected_to
     assert_equal "You are not allowed to access that recording order.", @controller.flash_payload[:alert]
   end
 
-  def test_load_form_context_sets_context_when_authorization_hook_allows_access
-    hook_arguments = nil
-    RecordingStudioOrderable.configuration.authorize_parent_recording = lambda do |controller, parent_recording|
-      hook_arguments = [controller, parent_recording]
-      true
-    end
+  def test_load_form_context_sets_context_when_accessible_authorization_allows_access
     @controller.params_hash = {
       parent_recording_id: "parent-1",
       group_key: "pages",
@@ -105,7 +105,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
 
     assert_nil @controller.redirected_to
-    assert_equal [@controller, @parent_recording], hook_arguments
     assert_equal @parent_recording, @controller.instance_variable_get(:@parent_recording)
     assert_equal "pages", @controller.instance_variable_get(:@group_key)
     assert_equal "Folder Folder", @controller.instance_variable_get(:@parent_recording_label)
@@ -114,7 +113,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_form_context_keeps_redirect_nil_when_no_redirect_or_recordable_type
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = {
       parent_recording_id: "parent-1",
       group_key: "pages"
@@ -131,22 +129,18 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     assert_nil @controller.instance_variable_get(:@redirect_to)
   end
 
-  def test_authenticate_request_calls_configured_hook
-    authenticated = false
-    RecordingStudioOrderable.configuration.authenticate_controller = lambda do |controller|
-      authenticated = controller.equal?(@controller)
-    end
+  def test_authenticate_request_passes_when_recording_studio_actor_is_present
     fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
 
     RecordingStudio.stub(:configuration, fake_configuration) do
       @controller.send(:authenticate_recording_studio_orderable_request!)
     end
 
-    assert_equal true, authenticated
+    assert_nil @controller.redirected_to
   end
 
-  def test_authenticate_request_falls_back_to_recording_studio_actor_when_hook_is_unset
-    RecordingStudioOrderable.configuration.authenticate_controller = nil
+  def test_authenticate_request_falls_back_to_recording_studio_actor_when_current_user_is_missing
+    @controller.define_singleton_method(:current_user) { nil }
     fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
 
     RecordingStudio.stub(:configuration, fake_configuration) do
@@ -157,7 +151,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_authenticate_request_redirects_when_recording_studio_actor_is_missing
-    RecordingStudioOrderable.configuration.authenticate_controller = nil
+    @controller.define_singleton_method(:current_user) { nil }
     fake_configuration = Struct.new(:actor).new(nil)
 
     RecordingStudio.stub(:configuration, fake_configuration) do
@@ -168,24 +162,20 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     assert_equal "Authentication is required.", @controller.flash_payload[:alert]
   end
 
-  def test_authenticate_request_skips_configured_hook_when_actor_auth_fails
-    authenticated = false
-    RecordingStudioOrderable.configuration.authenticate_controller = lambda do |_controller|
-      authenticated = true
-    end
+  def test_authenticate_request_redirects_when_actor_resolver_is_missing_even_with_current_user
+    owner = Struct.new(:id).new("user-2")
+    @controller.define_singleton_method(:current_user) { owner }
     fake_configuration = Struct.new(:actor).new(nil)
 
     RecordingStudio.stub(:configuration, fake_configuration) do
       @controller.send(:authenticate_recording_studio_orderable_request!)
     end
 
-    assert_equal false, authenticated
     assert_equal "/", @controller.redirected_to
     assert_equal "Authentication is required.", @controller.flash_payload[:alert]
   end
 
   def test_authenticate_request_syncs_current_actor_from_current_user_when_possible
-    RecordingStudioOrderable.configuration.authenticate_controller = nil
     owner = Struct.new(:id).new("user-1")
     created_current_class = false
 
@@ -217,19 +207,54 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     Object.send(:remove_const, :Current) if created_current_class && defined?(Current)
   end
 
-  def test_current_owner_resolver_and_owner_guard_use_configured_owner
-    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { :owner }
+  def test_recording_studio_accessible_authorized_uses_accessible_api
+    owner = Struct.new(:id).new("actor-1")
+    fake_configuration = Struct.new(:actor).new(-> { owner })
+    captured = nil
 
-    assert_equal :owner, @controller.send(:current_recording_studio_orderable_owner)
+    with_real_accessible_authorization do
+      with_recording_studio_accessible_authorized_stub(lambda do |**kwargs|
+        captured = kwargs
+        true
+      end) do
+        RecordingStudio.stub(:configuration, fake_configuration) do
+          assert_equal true, @controller.send(:recording_studio_accessible_authorized?, @parent_recording)
+        end
+      end
+    end
 
-    @controller.send(:ensure_current_recording_studio_orderable_owner!)
+    assert_equal owner, captured[:actor]
+    assert_equal @parent_recording, captured[:recording]
+    assert_equal :admin, captured[:role]
+  end
+
+  def test_recording_studio_accessible_authorized_returns_false_when_accessible_raises
+    owner = Struct.new(:id).new("actor-1")
+    fake_configuration = Struct.new(:actor).new(-> { owner })
+
+    with_real_accessible_authorization do
+      with_recording_studio_accessible_authorized_stub(lambda do |_kwargs = nil, **_opts|
+        raise "boom"
+      end) do
+        RecordingStudio.stub(:configuration, fake_configuration) do
+          assert_equal false, @controller.send(:recording_studio_accessible_authorized?, @parent_recording)
+        end
+      end
+    end
+  end
+
+  def test_current_owner_returns_recording_studio_actor_and_owner_guard_uses_it
+    fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
+
+    RecordingStudio.stub(:configuration, fake_configuration) do
+      assert_equal :actor_owner, @controller.send(:current_recording_studio_orderable_owner)
+      @controller.send(:ensure_current_recording_studio_orderable_owner!)
+    end
 
     assert_nil @controller.redirected_to
   end
 
-  def test_current_owner_resolver_falls_back_to_recording_studio_actor
-    RecordingStudioOrderable.configuration.current_owner_resolver = nil
-
+  def test_current_owner_falls_back_to_recording_studio_actor
     fake_configuration = Struct.new(:actor).new(-> { :actor_owner })
 
     RecordingStudio.stub(:configuration, fake_configuration) do
@@ -237,9 +262,8 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
   end
 
-  def test_current_owner_resolver_returns_nil_when_recording_studio_actor_missing
-    RecordingStudioOrderable.configuration.current_owner_resolver = nil
-
+  def test_current_owner_returns_nil_when_recording_studio_actor_and_current_user_missing
+    @controller.define_singleton_method(:current_user) { nil }
     fake_configuration = Struct.new(:actor).new(nil)
 
     RecordingStudio.stub(:configuration, fake_configuration) do
@@ -247,8 +271,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
   end
 
-  def test_current_owner_resolver_falls_back_to_current_user_when_actor_is_missing
-    RecordingStudioOrderable.configuration.current_owner_resolver = nil
+  def test_current_owner_falls_back_to_current_user_when_actor_is_missing
     owner = Struct.new(:id).new("user-1")
     fake_configuration = Struct.new(:actor).new(nil)
 
@@ -259,11 +282,10 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
   end
 
-  def test_current_owner_resolver_falls_back_when_configured_hook_returns_nil
+  def test_current_owner_returns_current_user_when_actor_resolver_is_missing
     owner = Struct.new(:id).new("user-2")
     fake_configuration = Struct.new(:actor).new(nil)
 
-    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) {}
     @controller.define_singleton_method(:current_user) { owner }
 
     RecordingStudio.stub(:configuration, fake_configuration) do
@@ -382,7 +404,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_form_context_uses_generic_alert_for_configuration_failures
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = { parent_recording_id: "parent-1", group_key: "pages" }
     parent_recording = @parent_recording
 
@@ -485,8 +506,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   def test_create_named_recording_order_passes_expected_context_to_manager
     owner = Struct.new(:id).new("owner-1")
     captured = nil
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
-    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { owner }
+    @controller.define_singleton_method(:current_user) { owner }
     @controller.params_hash = {
       parent_recording_id: "parent-1",
       group_key: "pages",
@@ -520,7 +540,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_index_context_builds_type_rows_from_group_definitions
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = { parent_recording_id: "parent-1" }
     parent_recording = build_parent_recording_with_groups({
                                                             "pages" => { group_key: "pages", allows: ["Page"] },
@@ -532,7 +551,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       RecordingStudioOrderable::RecordingOrderManager.stub(
         :recording_order_recordings,
         lambda do |_recording, group_key, owner:, named_only:, orderable_name: nil|
-          assert_nil owner
+          assert_equal @default_owner, owner
           assert_equal true, named_only
           assert_nil orderable_name
           group_key == "pages" ? [Struct.new(:id, :recordable).new("order-1", Struct.new(:name).new("Alpha"))] : []
@@ -575,7 +594,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
       RecordingStudioOrderable::RecordingOrderManager.stub(
         :recording_order_recordings,
         lambda do |recording, _group_key, owner:, named_only:, orderable_name: nil|
-          assert_nil owner
+          assert_equal @default_owner, owner
           assert_equal true, named_only
           assert_nil orderable_name
           if recording.id == "parent-1"
@@ -601,7 +620,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_show_context_sets_type_row_and_named_order_rows
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = { parent_recording_id: "parent-1", id: "Page" }
     parent_recording = build_parent_recording_with_groups({
                                                             "pages" => { group_key: "pages", allows: ["Page"] }
@@ -641,7 +659,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_show_context_uses_generic_alert_for_unknown_type
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = { parent_recording_id: "parent-1", id: "Unknown" }
     parent_recording = build_parent_recording_with_groups({
                                                             "pages" => { group_key: "pages", allows: ["Page"] }
@@ -657,7 +674,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_form_context_uses_edit_route_defaults_for_source_and_redirect
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = {
       id: "order-recording-1",
       parent_recording_id: "parent-1",
@@ -687,8 +703,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
   def test_load_edit_context_sets_source_order_and_ordered_record_rows
     owner = Struct.new(:id).new("owner-1")
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
-    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { owner }
+    @controller.define_singleton_method(:current_user) { owner }
     @controller.params_hash = {
       id: "order-recording-1",
       parent_recording_id: "parent-1",
@@ -741,7 +756,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_edit_context_redirects_when_source_order_recording_is_missing
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = {
       id: "order-recording-1",
       parent_recording_id: "parent-1",
@@ -789,7 +803,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_load_form_context_redirects_with_alert_when_group_is_invalid
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = {
       id: "order-recording-1",
       parent_recording_id: "parent-1",
@@ -822,8 +835,7 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
 
   def test_update_redirects_to_edit_after_drag_move
     owner = Struct.new(:id).new("owner-1")
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
-    RecordingStudioOrderable.configuration.current_owner_resolver = ->(_controller) { owner }
+    @controller.define_singleton_method(:current_user) { owner }
     @controller.params_hash = {
       id: "order-recording-1",
       parent_recording_id: "parent-1",
@@ -883,7 +895,6 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   end
 
   def test_update_redirects_to_root_when_named_list_missing
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { true }
     @controller.params_hash = {
       id: "order-recording-1",
       parent_recording_id: "parent-1",
@@ -1005,10 +1016,12 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
     end
   end
 
-  def test_authorize_parent_recording_denies_when_hook_returns_false
-    RecordingStudioOrderable.configuration.authorize_parent_recording = ->(_controller, _parent_recording) { false }
+  def test_authorize_parent_recording_denies_when_accessible_authorization_returns_false
+    result = nil
 
-    result = @controller.send(:authorize_parent_recording!, @parent_recording)
+    with_accessible_authorized(false) do
+      result = @controller.send(:authorize_parent_recording!, @parent_recording)
+    end
 
     assert_equal({ alert: "You are not allowed to access that recording order." }, result)
     assert_equal "/", @controller.redirected_to
@@ -1050,5 +1063,50 @@ class RecordingStudioOrdersControllerTest < Minitest::Test
   ensure
     RecordingStudio.send(:remove_const, :Recording) if RecordingStudio.const_defined?(:Recording, false)
     RecordingStudio.const_set(:Recording, original_constant) if had_constant
+  end
+
+  def with_accessible_authorized(value)
+    original_method = @controller.method(:recording_studio_accessible_authorized?)
+    @controller.define_singleton_method(:recording_studio_accessible_authorized?) { |_parent_recording| value }
+    yield
+  ensure
+    @controller.define_singleton_method(:recording_studio_accessible_authorized?) do |parent_recording|
+      original_method.call(parent_recording)
+    end
+  end
+
+  def with_real_accessible_authorization
+    @controller.singleton_class.send(:remove_method, :recording_studio_accessible_authorized?)
+    yield
+  ensure
+    @controller.define_singleton_method(:recording_studio_accessible_authorized?) { |_parent_recording| true }
+  end
+
+  def with_recording_studio_accessible_authorized_stub(callable)
+    created_constant = false
+    unless defined?(RecordingStudioAccessible)
+      Object.const_set(:RecordingStudioAccessible, Module.new)
+      created_constant = true
+    end
+
+    original_method = if RecordingStudioAccessible.respond_to?(:authorized?)
+                        RecordingStudioAccessible.method(:authorized?)
+                      end
+
+    RecordingStudioAccessible.define_singleton_method(:authorized?) do |_kwargs = nil, **kwargs|
+      callable.call(**kwargs)
+    end
+
+    yield
+  ensure
+    if original_method
+      RecordingStudioAccessible.define_singleton_method(:authorized?) do |_kwargs = nil, **kwargs|
+        original_method.call(**kwargs)
+      end
+    elsif defined?(RecordingStudioAccessible)
+      RecordingStudioAccessible.singleton_class.send(:remove_method, :authorized?)
+    end
+
+    Object.send(:remove_const, :RecordingStudioAccessible) if created_constant && defined?(RecordingStudioAccessible)
   end
 end

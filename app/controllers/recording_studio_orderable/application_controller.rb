@@ -19,19 +19,9 @@ module RecordingStudioOrderable
 
     def authenticate_recording_studio_orderable_request!
       ensure_recording_studio_actor_present!
-      return if performed?
-
-      hook = RecordingStudioOrderable.configuration.authenticate_controller
-      hook.call(self) if hook.respond_to?(:call)
     end
 
     def current_recording_studio_orderable_owner
-      hook = RecordingStudioOrderable.configuration.current_owner_resolver
-      if hook.respond_to?(:call)
-        owner = hook.call(self)
-        return owner if owner.present?
-      end
-
       resolver = recording_studio_actor_resolver
       owner = resolver.call if resolver.respond_to?(:call)
       return owner if owner.present?
@@ -85,16 +75,21 @@ module RecordingStudioOrderable
     end
 
     def authorize_parent_recording!(parent_recording)
-      hook = RecordingStudioOrderable.configuration.authorize_parent_recording
-      unless hook.respond_to?(:call)
-        redirect_parent_recording_access_denied
-        return
-      end
+      return redirect_parent_recording_access_denied unless recording_studio_accessible_authorized?(parent_recording)
 
-      result = hook.call(self, parent_recording)
-      return if result || performed?
+      nil if performed?
+    end
 
-      redirect_parent_recording_access_denied
+    def recording_studio_accessible_authorized?(parent_recording)
+      return false unless defined?(RecordingStudioAccessible)
+      return false unless RecordingStudioAccessible.respond_to?(:authorized?)
+
+      actor = current_recording_studio_orderable_owner
+      return false unless actor.present? && parent_recording.present?
+
+      RecordingStudioAccessible.authorized?(actor: actor, recording: parent_recording, role: :admin)
+    rescue StandardError
+      false
     end
 
     def safe_local_redirect_target(target)

@@ -13,9 +13,8 @@ class EngineTest < Minitest::Test
   end
 
   def test_load_config_merges_x_configuration
-    current_owner_resolver = ->(_controller) { :owner }
     xcfg = Struct.new(:recording_studio_orderable).new(
-      { log_order_events: true, current_owner_resolver: current_owner_resolver }
+      { log_order_events: true, event_action_prefix: "custom_order" }
     )
     app_config = Struct.new(:x).new(xcfg)
     app = Struct.new(:config, :config_for_result) do
@@ -27,7 +26,7 @@ class EngineTest < Minitest::Test
     find_initializer("recording_studio_orderable.load_config").block.call(app)
 
     assert_equal true, RecordingStudioOrderable.configuration.log_order_events
-    assert_same current_owner_resolver, RecordingStudioOrderable.configuration.current_owner_resolver
+    assert_equal "custom_order", RecordingStudioOrderable.configuration.event_action_prefix
   end
 
   def test_load_config_reads_yaml_when_available
@@ -88,6 +87,30 @@ class EngineTest < Minitest::Test
     to_prepare_blocks = []
     config_stub = Object.new
     register_calls = []
+    capability_calls = []
+
+    config_stub.define_singleton_method(:to_prepare) do |&block|
+      to_prepare_blocks << block
+    end
+
+    RecordingStudioOrderable::Engine.stub(:config, config_stub) do
+      find_initializer("recording_studio_orderable.integrate_recording_studio").block.call
+    end
+
+    RecordingStudio.stub(:register_recordable_type, ->(type) { register_calls << type }) do
+      RecordingStudio.stub(:register_capability, ->(*args) { capability_calls << args }) do
+        to_prepare_blocks.first.call
+      end
+    end
+
+    assert_equal ["RecordingStudio::RecordingStudioOrder"], register_calls
+    assert_equal [[:recording_studio_orderable, RecordingStudioOrderable::RecordingExtensions]], capability_calls
+  end
+
+  def test_integrate_recording_studio_falls_back_to_extension_inclusion_without_capability_api
+    to_prepare_blocks = []
+    config_stub = Object.new
+    register_calls = []
     include_calls = []
 
     config_stub.define_singleton_method(:to_prepare) do |&block|
@@ -99,10 +122,12 @@ class EngineTest < Minitest::Test
     end
 
     RecordingStudio.stub(:register_recordable_type, ->(type) { register_calls << type }) do
-      with_temporary_recording_class do |recording_class|
-        recording_class.stub(:included_modules, []) do
-          recording_class.stub(:include, ->(mod) { include_calls << mod }) do
-            to_prepare_blocks.first.call
+      RecordingStudio.stub(:register_capability, ->(_name, _mod) { raise NoMethodError, "missing" }) do
+        with_temporary_recording_class do |recording_class|
+          recording_class.stub(:included_modules, []) do
+            recording_class.stub(:include, ->(mod) { include_calls << mod }) do
+              to_prepare_blocks.first.call
+            end
           end
         end
       end

@@ -87,20 +87,17 @@ So not eligible order_items include:
 - Any order_items whose type is the order record type.
 - Anything not actually attached to the parent recording.
 
-The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Parent-recording authorization is host-controlled. Authentication now defaults to Recording Studio actor resolution (`RecordingStudio.configuration.actor`), and owner resolution can also default to that same actor resolver unless overridden.
+The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Parent-recording authorization is delegated to `RecordingStudioAccessible.authorized?` with the resolved Recording Studio actor and `role: :admin`.
 
 ```ruby
 RecordingStudioOrderable.configure do |config|
-  # Optional additional host auth check after Recording Studio actor auth passes.
-  config.authenticate_controller = ->(controller) { controller.authenticate_user! }
-  config.current_owner_resolver = ->(_controller) { RecordingStudio.configuration.actor&.call }
-  config.authorize_parent_recording = lambda do |controller, parent_recording|
-    controller.current_user.present? && parent_recording.present?
-  end
+  # Authorization is handled by RecordingStudioAccessible.
+  config.log_order_events = false
 end
 ```
 
-`authorize_parent_recording` should enforce your real host-app policy for the resolved `RecordingStudio::Recording`, not just the presence of a logged-in user. Invalid engine configuration now raises a boot-time error instead of being ignored silently.
+Ensure your host app has `recording_studio_accessible` installed and configured so mounted page authorization resolves correctly.
+Legacy `RecordingStudioOrderable` auth hooks (`authenticate_controller`, `current_owner_resolver`, and `authorize_parent_recording`) have been removed.
 
 Default unnamed orders are also enforced as singleton records at the database layer per `(parent_recording, group_key, owner_type, owner_id)` scope. Named lists remain unrestricted by `name` and should still be addressed by their `RecordingStudio::Recording` id.
 
@@ -125,7 +122,7 @@ end
    bin/rails db:migrate
    ```
   If older unnamed orders already exist for the same parent/group/owner scope, the migration preserves the newest one as the default and renames the older duplicates so the unique index can be added safely.
-4. Configure `authorize_parent_recording` in the generated initializer before exposing the mounted UI. `current_owner_resolver` is optional and only needed if you want behavior different from the default `RecordingStudio.configuration.actor` fallback. `authenticate_controller` is optional and runs as an additional host-auth check after the Recording Studio actor-based authentication passes.
+4. Install and configure `recording_studio_accessible` in your host app. Mounted UI authorization now uses `RecordingStudioAccessible.authorized?` with the resolved Recording Studio actor.
 5. Register host recordable types with Recording Studio as usual.
 6. Opt parent recordables into one or more order groups.
 

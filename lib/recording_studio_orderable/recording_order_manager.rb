@@ -139,10 +139,12 @@ module RecordingStudioOrderable
       end
 
       def eligible_items_for(parent_recording, group_key = nil)
-        allowed_types = resolve_group_definition!(parent_recording, group_key).fetch(:allows)
+        allowed_types = normalize_recordable_type_names(resolve_group_definition!(parent_recording,
+                                                                                  group_key).fetch(:allows))
+        order_record_type = normalize_recordable_type_name("RecordingStudio::RecordingStudioOrder")
         eligible_items = Array(parent_recording.child_recordings).select do |item_recording|
-          allowed_types.include?(item_recording.recordable_type) &&
-            item_recording.recordable_type != "RecordingStudio::RecordingStudioOrder"
+          item_type = normalize_recordable_type_name(item_recording.recordable_type)
+          allowed_types.include?(item_type) && item_type != order_record_type
         end
 
         eligible_items.sort_by { |item_recording| [item_recording.created_at, item_recording.id.to_s] }
@@ -341,11 +343,32 @@ module RecordingStudioOrderable
       end
 
       def matching_group_keys_for(definitions, group_or_type)
-        definitions
-          .values
-          .select { |definition| Array(definition[:allows]).include?(group_or_type) }
-          .map { |definition| definition[:group_key] }
-          .uniq
+        normalized_group_or_type = normalize_recordable_type_name(group_or_type)
+
+        definitions.values.each_with_object([]) do |definition, group_keys|
+          next unless normalize_recordable_type_names(definition[:allows]).include?(normalized_group_or_type)
+
+          group_keys << definition[:group_key]
+        end.uniq
+      end
+
+      def normalize_recordable_type_names(values)
+        Array(values).map { |value| normalize_recordable_type_name(value) }.compact.uniq
+      end
+
+      def normalize_recordable_type_name(value)
+        return if value.nil?
+
+        if defined?(RecordingStudio) && RecordingStudio.respond_to?(:recordable_type_name)
+          normalized = RecordingStudio.recordable_type_name(value)
+          return normalized.to_s if normalized.to_s.present?
+        end
+
+        return value.name if value.is_a?(Class)
+
+        value.to_s.presence
+      rescue StandardError
+        value.is_a?(Class) ? value.name : value.to_s.presence
       end
 
       def order_recording_matches_id_lookup?(recording, normalized_order_recording_id:, resolved_group_key:,

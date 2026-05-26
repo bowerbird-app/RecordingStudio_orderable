@@ -234,7 +234,11 @@ module RecordingStudioOrderable
     def recordable_display_name(recordable)
       return "Untitled record" if recordable.blank?
 
-      recordable.try(:name).presence ||
+      resolved_name = recording_studio_recordable_name(recordable)
+      resolved_name = nil if generic_recordable_name?(recordable, resolved_name)
+
+      resolved_name.presence ||
+        recordable.try(:name).presence ||
         recordable.try(:title).presence ||
         "#{recordable.class.name} #{recordable.try(:id) || ''}".strip
     end
@@ -341,10 +345,22 @@ module RecordingStudioOrderable
 
     def parent_recording_label(parent_recording)
       recordable = parent_recording.recordable
-      friendly_name = recordable.try(:name).presence || recordable.try(:title).presence
-      return "#{parent_recording.recordable_type} #{friendly_name}" if friendly_name.present?
+      friendly_name = resolved_parent_recording_name(recordable)
+      type_label = resolved_parent_recording_type_label(parent_recording, recordable)
+      return "#{type_label} #{friendly_name}" if friendly_name.present?
 
       "#{parent_recording.recordable_type} #{parent_recording.id}"
+    end
+
+    def resolved_parent_recording_name(recordable)
+      friendly_name = recording_studio_recordable_name(recordable)
+      friendly_name = nil if generic_recordable_name?(recordable, friendly_name)
+      friendly_name.presence || recordable.try(:name).presence || recordable.try(:title).presence
+    end
+
+    def resolved_parent_recording_type_label(parent_recording, recordable)
+      type_label = recording_studio_recordable_type_label(recordable || parent_recording.recordable_type)
+      type_label.presence || parent_recording.recordable_type
     end
 
     def handle_create_failure(_error)
@@ -470,7 +486,7 @@ module RecordingStudioOrderable
 
     # rubocop:disable Metrics/MethodLength
     def order_group_definitions_for(parent_recording, strict: true)
-      recordable_class = parent_recording.recordable&.class || parent_recording.recordable_type.to_s.safe_constantize
+      recordable_class = resolve_recordable_class(parent_recording)
       unless recordable_class
         raise RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
               "Unable to resolve recordable class"
@@ -493,6 +509,43 @@ module RecordingStudioOrderable
       return "Untitled order" unless order_record.respond_to?(:name)
 
       order_record.name.to_s.strip.presence || "Untitled order"
+    end
+
+    def resolve_recordable_class(parent_recording)
+      return parent_recording.recordable.class if parent_recording.recordable.present?
+
+      type_name = parent_recording.recordable_type
+      if defined?(RecordingStudio) && RecordingStudio.respond_to?(:resolve_recordable_type)
+        resolved_type = RecordingStudio.resolve_recordable_type(type_name)
+        return resolved_type if resolved_type
+      end
+
+      type_name.to_s.safe_constantize
+    rescue StandardError
+      type_name.to_s.safe_constantize
+    end
+
+    def recording_studio_recordable_name(recordable)
+      return unless recordable.present?
+      return unless defined?(RecordingStudio) && RecordingStudio.respond_to?(:recordable_name)
+
+      RecordingStudio.recordable_name(recordable)
+    rescue StandardError
+      nil
+    end
+
+    def recording_studio_recordable_type_label(recordable_or_type)
+      return unless defined?(RecordingStudio) && RecordingStudio.respond_to?(:recordable_type_label)
+
+      RecordingStudio.recordable_type_label(recordable_or_type)
+    rescue StandardError
+      nil
+    end
+
+    def generic_recordable_name?(recordable, value)
+      return false if recordable.blank?
+
+      value.to_s == recordable.class.name
     end
   end
   # rubocop:enable Metrics/ClassLength
