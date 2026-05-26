@@ -18,8 +18,6 @@ module RecordingStudio
     before_validation :normalize_name
     before_validation :normalize_ordered_recording_ids
 
-    alias_attribute :order_group, :group_key
-
     def eligible_items
       resolved_parent_recording&.eligible_order_items(group_key) || []
     end
@@ -347,11 +345,5 @@ module RecordingStudio
     def normalized_array_ids
       Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }
     end
-
-    alias ordered_items ordered_item_recordings
-    alias include_recording! include_item!
-    alias remove_recording! remove_item!
-    alias reorder_recordings! reorder!
-    alias cleanup! cleanup_missing_items!
   end
 end
