@@ -243,92 +243,6 @@ folder_recording.recording_order_recordings(:pages, owner: current_user, orderab
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_orders",
-      subtitle: "Addon wrapper: maps matching snapshot recordings to RecordingStudioOrder models.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
-      { variable: "group", accepts: "Symbol or String", example: "group: :pages / group: \"Page\"" },
-      {
-        variable: "orderable_name",
-        accepts: "String",
-        example: "orderable_name: \"Primary list\"",
-        why: "Limit the result set to one named list."
-      },
-      {
-        variable: "named_only",
-        accepts: "true, false",
-        example: "named_only: true",
-        why: "Return named lists only; skip the default unnamed order."
-      }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_orders(owner: current_user)
-# => [#&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;, ...]
-
-folder_recording.recording_orders(owner: current_user, group: "Page")
-# => [#&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;]
-
-folder_recording.recording_orders(owner: current_user, group: :pages, orderable_name: "Primary list")
-# => [#&lt;RecordingStudio::RecordingStudioOrder name: "Primary list"&gt;]
-
-folder_recording.recording_orders(owner: current_user, group: :pages, named_only: true)
-# => [#&lt;RecordingStudio::RecordingStudioOrder name: "Primary list"&gt;, ...]</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "default_recording_order",
-      subtitle: "Addon wrapper: finds the default unnamed RecordingStudioOrder for the group and owner scope (not UUID-specific named-list lookup).",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "group_key", accepts: "Symbol or String", example: "default_recording_order(:pages, ...)" },
-      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.default_recording_order(:pages, owner: current_user)
-# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt; or nil</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "find_recording_order_by_id",
-      subtitle: "Addon wrapper: resolves one RecordingStudioOrder model by order recording UUID with optional group/owner guardrails.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "order_recording_id", accepts: "String UUID", example: "find_recording_order_by_id(\"order-recording-uuid\", ...)" },
-      {
-        variable: "group_key",
-        accepts: "Symbol or String (optional guardrail)",
-        example: "group_key: :pages",
-        why: "Limit lookup to one order group when needed."
-      },
-      {
-        variable: "owner",
-        accepts: "Actor object or nil (optional guardrail)",
-        example: "owner: current_user",
-        why: "Limit lookup to one owner scope when needed."
-      }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.find_recording_order_by_id("order-recording-uuid", group_key: :pages, owner: current_user)
-# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
-
-folder_recording.find_recording_order_by_id("missing-order-recording", group_key: :pages, owner: current_user)
-# => raises ActiveRecord::RecordNotFound</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
       title: "recording_order_recording_for",
       subtitle: "Addon wrapper: fetches the underlying Recording snapshot row (or nil) rather than the order model wrapper.",
       variant: :h4,
@@ -342,26 +256,6 @@ folder_recording.find_recording_order_by_id("missing-order-recording", group_key
       <div class="p-4">
         <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recording_for(:pages, owner: current_user)
 # => #&lt;RecordingStudio::Recording id: "default-order-recording"&gt; or nil</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "find_or_create_recording_order! and ordered_items_for",
-      subtitle: "Addon APIs: find_or_create_recording_order! returns an order model; ordered_items_for returns an ordered array (possibly empty).",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "group_key", accepts: "Symbol or String", example: "find_or_create_recording_order!(:pages, ...)" },
-      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
-# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
-
-folder_recording.ordered_items_for(:pages, owner: current_user)
-# => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
       </div>
     </div>
   </div>
