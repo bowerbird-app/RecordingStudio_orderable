@@ -97,7 +97,7 @@ end
 ```
 
 Ensure your host app has `recording_studio_accessible` installed and configured so mounted page authorization resolves correctly.
-Legacy `RecordingStudioOrderable` auth hooks (`authenticate_controller`, `current_owner_resolver`, and `authorize_parent_recording`) have been removed.
+Legacy `RecordingStudioOrderable` authorization hook configuration has been removed.
 
 Default unnamed orders are also enforced as singleton records at the database layer per `(parent_recording, group_key, owner_type, owner_id)` scope. Named lists remain unrestricted by `name` and should still be addressed by their `RecordingStudio::Recording` id.
 

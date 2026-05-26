@@ -52,7 +52,7 @@
     <div>
       <%= render FlatPack::PageTitle::Component.new(
         title: "Config",
-        subtitle: "Authentication, owner resolution, and event logging hooks.",
+        subtitle: "Actor-based authorization and optional event logging.",
         variant: :h3,
         class: "mb-0 pb-0"
       ) %>
@@ -60,9 +60,8 @@
       <div>
         <ul class="space-y-3 text-sm leading-6">
           <li>Mounted UI authentication defaults to <code>RecordingStudio.configuration.actor</code>.</li>
-          <li><code>authenticate_controller</code> adds an optional extra host-auth check.</li>
-          <li><code>current_owner_resolver</code> scopes named lists by owner.</li>
-          <li><code>authorize_parent_recording</code> gates list UI reads and writes for the resolved parent recording.</li>
+          <li>Parent recording access uses <code>RecordingStudioAccessible.authorized?(actor:, recording:, role: :admin)</code>.</li>
+          <li>Order creation paths enforce the same parent authorization in both controller and manager paths.</li>
           <li><code>log_order_events</code> and <code>event_action_prefix</code> control optional event logging.</li>
         </ul>
 

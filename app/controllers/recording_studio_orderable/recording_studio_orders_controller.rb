@@ -32,6 +32,8 @@ module RecordingStudioOrderable
       redirect_to create_redirect_target(order) || root_path, notice: "Created order."
     rescue ActiveRecord::RecordNotFound
       redirect_to root_path, alert: "Parent recording not found."
+    rescue RecordingStudioOrderable::RecordingOrderManager::PermissionDeniedError
+      redirect_parent_recording_access_denied
     rescue RecordingStudioOrderable::RecordingOrderManager::ConfigurationError,
            ActionController::ParameterMissing,
            ArgumentError => e
@@ -69,6 +71,12 @@ module RecordingStudioOrderable
         render json: { error: "Named list not found." }, status: :not_found
       else
         redirect_to root_path, alert: "Named list not found."
+      end
+    rescue RecordingStudioOrderable::RecordingOrderManager::PermissionDeniedError
+      if wants_json
+        render json: { error: "You are not allowed to access that recording order." }, status: :forbidden
+      else
+        redirect_parent_recording_access_denied
       end
     rescue RecordingStudioOrderable::RecordingOrderManager::ConfigurationError, ArgumentError
       if wants_json

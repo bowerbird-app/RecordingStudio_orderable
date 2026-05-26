@@ -18,15 +18,15 @@
 
   <div class="flex flex-wrap gap-2">
     <%= render FlatPack::Badge::Component.new(text: "Default event logging: off", style: :info, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "Owner fallback: Recording Studio actor", style: :warning, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "Authentication override: optional", style: :success, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "Parent authorization: required", style: :warning, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Actor source: RecordingStudio.configuration.actor", style: :warning, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Authorization: RecordingStudioAccessible", style: :success, size: :sm) %>
+    <%= render FlatPack::Badge::Component.new(text: "Create guard: controller + manager", style: :warning, size: :sm) %>
   </div>
 
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "Configuration keys",
-      subtitle: "Each hook is host-owned and evaluated before mounted reads or writes persist a new RecordingStudioOrder snapshot.",
+      subtitle: "Supported addon keys for event behavior. Authorization is handled by RecordingStudio and RecordingStudioAccessible.",
       variant: :h3,
       class: "mb-0 pb-0"
     ) %>
@@ -62,50 +62,21 @@ end</code></pre>
     </div>
 
     <%= render FlatPack::PageTitle::Component.new(
-      title: "authenticate_controller",
-      subtitle: "Optional additional host-auth hook. It runs after Recording Studio actor authentication succeeds.",
+      title: "Authorization flow",
+      subtitle: "Mounted pages resolve an actor from Recording Studio and then authorize parent recordings through RecordingStudioAccessible.",
       variant: :h4,
       class: "mb-0 pb-0 mt-8"
     ) %>
     <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
       <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
-  config.authenticate_controller = -&gt;(controller) do
-    controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
-  end
-end</code></pre>
-      </div>
-    </div>
+        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)"># Parent access contract used by mounted reads and writes:
+RecordingStudioAccessible.authorized?(
+  actor: RecordingStudio.configuration.actor&amp;.call,
+  recording: parent_recording,
+  role: :admin
+)
 
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "current_owner_resolver",
-      subtitle: "Optional owner resolver for default and named lists. Defaults to RecordingStudio.configuration.actor when unset.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
-  config.current_owner_resolver = -&gt;(_controller) do
-    RecordingStudio.configuration.actor&amp;.call
-  end
-end</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "authorize_parent_recording",
-      subtitle: "Required host policy hook for mounted list access. Receives controller and resolved parent recording.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
-  config.authorize_parent_recording = -&gt;(controller, parent_recording) do
-    controller.send(:current_user).present? &amp;&amp; parent_recording.present?
-  end
-end</code></pre>
+# Creation paths enforce this check in both controller and manager layers.</code></pre>
       </div>
     </div>
   </div>
@@ -120,12 +91,12 @@ end</code></pre>
 
     <div>
       <ul class="space-y-3 text-sm leading-6">
-        <li><code>authorize_parent_recording</code> should enforce real host policy and is required before exposing mounted list UI.</li>
         <li>Mounted UI authentication is actor-first via <code>RecordingStudio.configuration.actor</code>.</li>
-        <li><code>authenticate_controller</code> is optional and adds an extra host-specific auth gate after actor authentication passes.</li>
-        <li><code>current_owner_resolver</code> is optional unless owner scope differs from <code>RecordingStudio.configuration.actor</code>.</li>
+        <li>Mounted reads and writes require <code>RecordingStudioAccessible.authorized?(actor:, recording:, role: :admin)</code>.</li>
+        <li>Order creation paths enforce the same parent authorization at both controller and manager levels.</li>
+        <li>Legacy authorization hook configuration has been removed and is ignored if still present in initializer files.</li>
         <li>Invalid configuration now raises a boot-time error, so treat initializer values as part of app startup correctness.</li>
-        <li>Order changes persist via explicit <code>RecordingStudio::RecordingStudioOrder</code> snapshots; these hooks gate who can read or write those snapshots.</li>
+        <li>Order changes persist via explicit <code>RecordingStudio::RecordingStudioOrder</code> snapshots; actor resolution and RecordingStudioAccessible policy checks gate who can read or write those snapshots.</li>
         <li>Enable semantic event logging only when downstream audit/reporting needs addon-specific order events.</li>
       </ul>
     </div>
@@ -134,7 +105,7 @@ end</code></pre>
   <div>
     <%= render FlatPack::PageTitle::Component.new(
       title: "Initializer example",
-      subtitle: "Typical host app setup for mounted access, actor fallback, and optional order event settings.",
+      subtitle: "Typical host app setup for optional order event settings.",
       variant: :h3,
       class: "mb-0 pb-0"
     ) %>
@@ -144,18 +115,6 @@ end</code></pre>
         <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
         <div class="p-4">
           <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">RecordingStudioOrderable.configure do |config|
-  config.authenticate_controller = -&gt;(controller) do
-    controller.authenticate_user! if controller.respond_to?(:authenticate_user!, true)
-  end
-
-  config.current_owner_resolver = -&gt;(_controller) do
-    RecordingStudio.configuration.actor&amp;.call
-  end
-
-  config.authorize_parent_recording = -&gt;(controller, parent_recording) do
-    controller.send(:current_user).present? &amp;&amp; parent_recording.present?
-  end
-
   config.log_order_events = false
   config.event_action_prefix = "recording_order"
 end</code></pre>

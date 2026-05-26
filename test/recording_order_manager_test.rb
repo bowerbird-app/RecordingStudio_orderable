@@ -320,6 +320,32 @@ class RecordingOrderManagerTest < Minitest::Test
     end
   end
 
+  def test_create_named_recording_order_raises_when_accessible_authorization_rejects_actor
+    parent_recording = FakeParentRecording.new("folder-2", FakeFolder.new, [@page_one, @page_two])
+
+    with_recording_studio_accessible_authorized_stub(lambda do |**kwargs|
+      assert_equal :actor, kwargs[:actor]
+      assert_same parent_recording, kwargs[:recording]
+      assert_equal :admin, kwargs[:role]
+      false
+    end) do
+      error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::PermissionDeniedError) do
+        with_temporary_recording_order_class do
+          RecordingStudioOrderable::RecordingOrderManager.create_named_recording_order!(
+            parent_recording,
+            :pages,
+            owner: @owner,
+            actor: :actor,
+            metadata: { source: "test" },
+            name: "Blocked"
+          )
+        end
+      end
+
+      assert_includes error.message, "not allowed"
+    end
+  end
+
   def test_duplicate_matching_orders_raise_an_error
     duplicate_order = Struct.new(:group_key, :owner_type, :owner_id, :ordered_recording_ids).new("pages", nil, nil, [])
     duplicate_recording = FakeRecording.new("order-3", "RecordingStudio::RecordingStudioOrder", duplicate_order,
@@ -587,6 +613,31 @@ class RecordingOrderManagerTest < Minitest::Test
     end
   end
 
+  def test_find_or_create_recording_order_raises_when_accessible_authorization_rejects_actor
+    parent_recording = FakeParentRecording.new("folder-2", FakeFolder.new, [@page_one, @page_two])
+
+    with_recording_studio_accessible_authorized_stub(lambda do |**kwargs|
+      assert_equal :actor, kwargs[:actor]
+      assert_same parent_recording, kwargs[:recording]
+      assert_equal :admin, kwargs[:role]
+      false
+    end) do
+      error = assert_raises(RecordingStudioOrderable::RecordingOrderManager::PermissionDeniedError) do
+        with_temporary_recording_order_class do
+          RecordingStudioOrderable::RecordingOrderManager.find_or_create_recording_order!(
+            parent_recording,
+            :pages,
+            owner: @owner,
+            actor: :actor,
+            metadata: { source: "test" }
+          )
+        end
+      end
+
+      assert_includes error.message, "not allowed"
+    end
+  end
+
   def test_find_or_create_recording_order_recovers_from_record_not_unique
     parent_recording = FakeParentRecording.new("folder-2", FakeFolder.new, [@page_one, @page_two])
     existing_order = Struct.new(:id).new("existing-order")
@@ -633,6 +684,34 @@ class RecordingOrderManagerTest < Minitest::Test
   end
 
   private
+
+  def with_recording_studio_accessible_authorized_stub(callable)
+    created_constant = false
+    unless defined?(RecordingStudioAccessible)
+      Object.const_set(:RecordingStudioAccessible, Module.new)
+      created_constant = true
+    end
+
+    original_method = if RecordingStudioAccessible.respond_to?(:authorized?)
+                        RecordingStudioAccessible.method(:authorized?)
+                      end
+
+    RecordingStudioAccessible.define_singleton_method(:authorized?) do |_kwargs = nil, **kwargs|
+      callable.call(**kwargs)
+    end
+
+    yield
+  ensure
+    if original_method
+      RecordingStudioAccessible.define_singleton_method(:authorized?) do |_kwargs = nil, **kwargs|
+        original_method.call(**kwargs)
+      end
+    elsif defined?(RecordingStudioAccessible)
+      RecordingStudioAccessible.singleton_class.send(:remove_method, :authorized?)
+    end
+
+    Object.send(:remove_const, :RecordingStudioAccessible) if created_constant && defined?(RecordingStudioAccessible)
+  end
 
   def with_temporary_recording_order_class
     had_constant = RecordingStudio.const_defined?(:RecordingStudioOrder, false)

@@ -6,6 +6,7 @@ module RecordingStudioOrderable
   class RecordingOrderManager
     class ConfigurationError < StandardError; end
     class DuplicateOrderError < StandardError; end
+    class PermissionDeniedError < StandardError; end
     OWNER_GUARDRAIL_UNSET = Object.new.freeze
 
     class << self
@@ -74,6 +75,8 @@ module RecordingStudioOrderable
 
       def find_or_create_recording_order!(parent_recording, group_key = nil, owner: nil, actor: nil, metadata: {},
                                           name: nil, ordered_recording_ids: [])
+        ensure_parent_recording_access_for_create!(parent_recording, actor)
+
         existing_order = default_recording_order(parent_recording, group_key, owner: owner)
         return existing_order if existing_order
 
@@ -106,6 +109,8 @@ module RecordingStudioOrderable
       def create_named_recording_order!(parent_recording, group_key = nil, name:, owner: nil, actor: nil,
                                         metadata: {}, source_order_recording_id: nil,
                                         ordered_recording_ids: nil)
+        ensure_parent_recording_access_for_create!(parent_recording, actor)
+
         resolved_group_key = resolve_group_key!(parent_recording, group_key)
         owner_type, owner_id = owner_attributes(owner)
         requested_ids = if ordered_recording_ids.nil?
@@ -385,6 +390,20 @@ module RecordingStudioOrderable
       end
 
       private
+
+      def ensure_parent_recording_access_for_create!(parent_recording, actor)
+        return unless actor.present?
+        return unless defined?(RecordingStudioAccessible)
+        return unless RecordingStudioAccessible.respond_to?(:authorized?)
+
+        return if RecordingStudioAccessible.authorized?(actor: actor, recording: parent_recording, role: :admin)
+
+        raise PermissionDeniedError, "Actor is not allowed to create recording studio orders for this parent"
+      rescue StandardError => e
+        raise e if e.is_a?(PermissionDeniedError)
+
+        raise PermissionDeniedError, "Actor is not allowed to create recording studio orders for this parent"
+      end
 
       def raise_duplicate_order!(parent_recording, group_key, owner, matches)
         owner_type, owner_id = owner_attributes(owner)
