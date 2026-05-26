@@ -322,9 +322,9 @@ page_order.cleanup_missing_items!(actor: current_user)
 
     <div>
       <ul class="space-y-3 text-sm leading-6">
-        <li>Core RecordingStudio handles recording snapshots and revisions.</li>
-        <li>This addon adds group-scoped ordered ids and mutation helpers for explicit list ordering.</li>
-        <li>Wrapper methods in this page are convenience APIs around those core snapshot and query primitives.</li>
+        <li>Core RecordingStudio handles recording snapshots and revision persistence.</li>
+        <li>This addon adds group-scoped ordered recording ids plus helpers for resolving and mutating explicit list order.</li>
+        <li>Wrapper methods in this page delegate to addon manager/model APIs that build on core RecordingStudio record and revise primitives.</li>
       </ul>
     </div>
   </div>
