@@ -314,67 +314,6 @@ page_order.cleanup_missing_items!(actor: current_user)
 
   <div>
     <%= render FlatPack::PageTitle::Component.new(
-      title: "Lookup example",
-      subtitle: "Resolve the current order from a parent recording or recordable.",
-      variant: :h3,
-      class: "mb-0 pb-0"
-    ) %>
-
-    <%= render_options_table.call([
-      { variable: "folder_recording", accepts: "RecordingStudio::Recording", example: "folder.current_recording" },
-      { variable: "group key", accepts: "Symbol", example: ":pages" },
-      { variable: "owner", accepts: "Actor object", example: "owner: current_user" }
-    ]) %>
-
-    <div>
-      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
-        <div class="p-4">
-          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording = folder.current_recording
-# => #&lt;RecordingStudio::Recording id: "folder-recording-uuid"&gt;
-
-page_order = folder_recording.find_or_create_recording_order!(:pages, owner: current_user)
-# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;
-
-folder_recording.ordered_items_for(:pages, owner: current_user)
-# => [#&lt;RecordingStudio::Recording id: "page-2"&gt;, #&lt;RecordingStudio::Recording id: "page-1"&gt;, ...]</code></pre>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div>
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "Mutation example",
-      subtitle: "Persist the next explicit order snapshot after a move.",
-      variant: :h3,
-      class: "mb-0 pb-0"
-    ) %>
-
-    <%= render_options_table.call([
-      { variable: "moving", accepts: "RecordingStudio::Recording", example: "moving: page_two_recording" },
-      { variable: "after", accepts: "RecordingStudio::Recording", example: "after: page_one_recording" },
-      { variable: "actor / metadata", accepts: "Actor object / Hash", example: "actor: current_user, metadata: { source: \"drag_drop\" }" }
-    ]) %>
-
-    <div>
-      <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-        <div class="px-4 py-2 border-b border-(--code-block-border-color) text-sm font-medium text-(--code-block-title-color)">Code Example</div>
-        <div class="p-4">
-          <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">page_order.move_after!(
-  moving: page_two_recording,
-  after: page_one_recording,
-  actor: current_user,
-  metadata: { source: "drag_drop" }
-)
-# => #&lt;RecordingStudio::RecordingStudioOrder id: "..."&gt;</code></pre>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div>
-    <%= render FlatPack::PageTitle::Component.new(
       title: "Core vs addon",
       subtitle: "RecordingStudio provides snapshot primitives; this addon adds explicit order semantics on top.",
       variant: :h3,
