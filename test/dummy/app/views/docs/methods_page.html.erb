@@ -188,13 +188,23 @@ folder.find_recording_order_by_id("missing-order-recording", group_key: :pages, 
         <ul class="mt-2 list-disc pl-6 text-sm text-(--surface-default-content-color)">
           <li>Its recordable type is included in that group's allows list (from group definition).</li>
           <li>It is not itself an order record type (RecordingStudioOrder snapshots are excluded).</li>
+          <li>Items are returned sorted by <span class="font-mono">created_at</span> then id.</li>
         </ul>
+        <p class="mt-3 text-sm text-(--surface-default-content-color)">
+          The group's allows list is defined on the parent model via
+          <span class="font-mono">recording_studio_order_group ... allows: [...]</span>.
+        </p>
         <p class="mt-3 text-sm text-(--surface-muted-content-color)">So not eligible order_items include:</p>
         <ul class="mt-2 list-disc pl-6 text-sm text-(--surface-default-content-color)">
           <li>Any order_items whose type is not in the group's allows list.</li>
           <li>Any order_items whose type is the order record type.</li>
           <li>Anything not actually attached to the parent recording.</li>
         </ul>
+        <p class="mt-3 text-sm text-(--surface-default-content-color)">
+          <span class="font-mono">eligible_order_items</span> does not call
+          <span class="font-mono">RecordingStudioAccessible.authorized?</span> per item. Authorization is enforced
+          for parent-recording access in addon controller and mutation paths.
+        </p>
       </div>
     </div>
   </div>
