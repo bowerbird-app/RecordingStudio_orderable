@@ -2,16 +2,6 @@
 
 module RecordingStudioOrderable
   module RecordingExtensions
-    def recording_order_recordings(group_key = nil, owner: nil, named_only: false, orderable_name: nil)
-      RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(
-        self,
-        group_key,
-        owner: owner,
-        named_only: named_only,
-        orderable_name: orderable_name
-      )
-    end
-
     def recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)
       RecordingStudioOrderable::RecordingOrderManager.recording_orders(
         self,
@@ -20,10 +10,6 @@ module RecordingStudioOrderable
         orderable_name: orderable_name,
         named_only: named_only
       )
-    end
-
-    def recording_order_recording_for(group_key = nil, owner: nil)
-      RecordingStudioOrderable::RecordingOrderManager.recording_order_recording_for(self, group_key, owner: owner)
     end
 
     def default_recording_order(group_key = nil, owner: nil)

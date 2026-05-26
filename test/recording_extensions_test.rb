@@ -9,20 +9,9 @@ class RecordingExtensionsTest < Minitest::Test
     @owner = Struct.new(:id).new("owner-1")
   end
 
-  def test_recording_order_recordings_delegates_to_manager
-    RecordingStudioOrderable::RecordingOrderManager.stub(
-      :recording_order_recordings,
-      lambda do |recording, group_key, owner:, named_only:, orderable_name:|
-        assert_same @recording, recording
-        assert_equal :pages, group_key
-        assert_same @owner, owner
-        assert_equal false, named_only
-        assert_nil orderable_name
-        [:recording]
-      end
-    ) do
-      assert_equal [:recording], @recording.recording_order_recordings(:pages, owner: @owner)
-    end
+  def test_removed_backward_compat_methods_are_not_exposed
+    refute_respond_to @recording, :recording_order_recordings
+    refute_respond_to @recording, :recording_order_recording_for
   end
 
   def test_recording_orders_delegates_to_manager
@@ -53,20 +42,6 @@ class RecordingExtensionsTest < Minitest::Test
         [:filtered_order],
         @recording.recording_orders(owner: @owner, group: "Page", orderable_name: "Named list")
       )
-    end
-  end
-
-  def test_recording_order_recording_for_delegates_to_manager
-    RecordingStudioOrderable::RecordingOrderManager.stub(
-      :recording_order_recording_for,
-      lambda do |recording, group_key, owner:|
-        assert_same @recording, recording
-        assert_equal :pages, group_key
-        assert_same @owner, owner
-        :recording_order_recording
-      end
-    ) do
-      assert_equal :recording_order_recording, @recording.recording_order_recording_for(:pages, owner: @owner)
     end
   end
 

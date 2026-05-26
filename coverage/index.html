@@ -13,7 +13,7 @@
       <img src="./assets/0.13.2/loading.gif" alt="loading"/>
     </div>
     <div id="wrapper" class="hide">
-      <div class="timestamp">Generated <abbr class="timeago" title="2026-05-26T05:04:09+00:00">2026-05-26T05:04:09+00:00</abbr></div>
+      <div class="timestamp">Generated <abbr class="timeago" title="2026-05-26T05:12:47+00:00">2026-05-26T05:12:47+00:00</abbr></div>
       <ul class="group_tabs"></ul>
 
       <div id="content">
@@ -22,14 +22,14 @@
     <span class="group_name">All Files</span>
     (<span class="covered_percent">
       <span class="green">
-  94.12%
+  94.09%
 </span>
 
      </span>
      covered at
      <span class="covered_strength">
        <span class="green">
-         4.58
+         4.6
        </span>
     </span> hits/line
     )
@@ -42,11 +42,11 @@
   </div>
 
   <div class="t-line-summary">
-    <b>867</b> relevant lines,
-    <span class="green"><b>816</b> lines covered</span> and
+    <b>863</b> relevant lines,
+    <span class="green"><b>812</b> lines covered</span> and
     <span class="red"><b>51</b> lines missed. </span>
     (<span class="green">
-  94.12%
+  94.09%
 </span>
 )
   </div>
@@ -119,7 +119,7 @@
           <tr class="t-file">
             <td class="strong t-file__name"><a href="#3f71ea20b6e6c0f5fc4b822b3ab91f2f2ac39028" class="src_link" title="app/models/recording_studio/recording_studio_order.rb">app/models/recording_studio/recording_studio_order.rb</a></td>
             <td class="green strong cell--number t-file__coverage">95.72 %</td>
-            <td class="cell--number">353</td>
+            <td class="cell--number">357</td>
             <td class="cell--number">187</td>
             <td class="cell--number">179</td>
             <td class="cell--number">8</td>
@@ -215,11 +215,11 @@
           <tr class="t-file">
             <td class="strong t-file__name"><a href="#47fb297f1db20139999ef1394cb51ac7eca41226" class="src_link" title="lib/recording_studio_orderable/recording_extensions.rb">lib/recording_studio_orderable/recording_extensions.rb</a></td>
             <td class="green strong cell--number t-file__coverage">100.00 %</td>
-            <td class="cell--number">55</td>
-            <td class="cell--number">18</td>
-            <td class="cell--number">18</td>
+            <td class="cell--number">41</td>
+            <td class="cell--number">14</td>
+            <td class="cell--number">14</td>
             <td class="cell--number">0</td>
-            <td class="cell--number">1.06</td>
+            <td class="cell--number">1.07</td>
             
               <td class="green strong cell--number t-file__branch-coverage">100.00 %</td>
               <td class="cell--number">0</td>
@@ -12595,7 +12595,7 @@
               
             
 
-            <code class="ruby">      parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope)</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.recording_order_recording_for(</code>
           </li>
         </div>
       
@@ -12607,7 +12607,7 @@
               
             
 
-            <code class="ruby">    end</code>
+            <code class="ruby">        parent_recording,</code>
           </li>
         </div>
       
@@ -12619,12 +12619,60 @@
               
             
 
+            <code class="ruby">        group_key,</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="217">
+            
+
+            
+              
+            
+
+            <code class="ruby">        owner: raw_owner_scope</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="218">
+            
+
+            
+              
+            
+
+            <code class="ruby">      )</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="219">
+            
+
+            
+              
+            
+
+            <code class="ruby">    end</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="220">
+            
+
+            
+              
+            
+
             <code class="ruby"></code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="217">
+          <li class="covered" data-hits="1" data-linenumber="221">
             
               <span class="hits">1</span>
             
@@ -12638,7 +12686,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="11" data-linenumber="218">
+          <li class="covered" data-hits="11" data-linenumber="222">
             
               <span class="hits">11</span>
             
@@ -12652,7 +12700,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="219">
+          <li class="never" data-hits="" data-linenumber="223">
             
 
             
@@ -12664,7 +12712,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="220">
+          <li class="covered" data-hits="2" data-linenumber="224">
             
               <span class="hits">2</span>
             
@@ -12678,7 +12726,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="221">
+          <li class="never" data-hits="" data-linenumber="225">
             
 
             
@@ -12690,7 +12738,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="222">
+          <li class="missed-branch" data-hits="2" data-linenumber="226">
             
               <span class="hits">2</span>
             
@@ -12712,7 +12760,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="223">
+          <li class="missed-branch" data-hits="2" data-linenumber="227">
             
               <span class="hits">2</span>
             
@@ -12734,7 +12782,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="224">
+          <li class="missed-branch" data-hits="2" data-linenumber="228">
             
               <span class="hits">2</span>
             
@@ -12756,7 +12804,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="225">
+          <li class="never" data-hits="" data-linenumber="229">
             
 
             
@@ -12768,7 +12816,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="226">
+          <li class="never" data-hits="" data-linenumber="230">
             
 
             
@@ -12780,7 +12828,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="227">
+          <li class="never" data-hits="" data-linenumber="231">
             
 
             
@@ -12792,7 +12840,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="9" data-linenumber="228">
+          <li class="covered" data-hits="9" data-linenumber="232">
             
               <span class="hits">9</span>
             
@@ -12806,7 +12854,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="229">
+          <li class="never" data-hits="" data-linenumber="233">
             
 
             
@@ -12818,7 +12866,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="230">
+          <li class="never" data-hits="" data-linenumber="234">
             
 
             
@@ -12830,7 +12878,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="231">
+          <li class="covered" data-hits="1" data-linenumber="235">
             
               <span class="hits">1</span>
             
@@ -12844,7 +12892,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="232">
+          <li class="covered" data-hits="1" data-linenumber="236">
             
               <span class="hits">1</span>
             
@@ -12858,7 +12906,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="233">
+          <li class="never" data-hits="" data-linenumber="237">
             
 
             
@@ -12870,7 +12918,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="234">
+          <li class="never" data-hits="" data-linenumber="238">
             
 
             
@@ -12882,7 +12930,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="235">
+          <li class="never" data-hits="" data-linenumber="239">
             
 
             
@@ -12894,7 +12942,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="4" data-linenumber="236">
+          <li class="covered" data-hits="4" data-linenumber="240">
             
               <span class="hits">4</span>
             
@@ -12908,7 +12956,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="237">
+          <li class="covered" data-hits="1" data-linenumber="241">
             
               <span class="hits">1</span>
             
@@ -12922,7 +12970,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="238">
+          <li class="covered" data-hits="2" data-linenumber="242">
             
               <span class="hits">2</span>
             
@@ -12936,7 +12984,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="239">
+          <li class="never" data-hits="" data-linenumber="243">
             
 
             
@@ -12948,7 +12996,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="240">
+          <li class="never" data-hits="" data-linenumber="244">
             
 
             
@@ -12960,7 +13008,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="241">
+          <li class="covered" data-hits="1" data-linenumber="245">
             
               <span class="hits">1</span>
             
@@ -12974,7 +13022,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="242">
+          <li class="never" data-hits="" data-linenumber="246">
             
 
             
@@ -12986,7 +13034,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="243">
+          <li class="never" data-hits="" data-linenumber="247">
             
 
             
@@ -12998,7 +13046,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="244">
+          <li class="covered" data-hits="1" data-linenumber="248">
             
               <span class="hits">1</span>
             
@@ -13012,7 +13060,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="245">
+          <li class="covered" data-hits="2" data-linenumber="249">
             
               <span class="hits">2</span>
             
@@ -13026,7 +13074,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="246">
+          <li class="covered" data-hits="2" data-linenumber="250">
             
               <span class="hits">2</span>
             
@@ -13040,7 +13088,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="247">
+          <li class="covered" data-hits="2" data-linenumber="251">
             
               <span class="hits">2</span>
             
@@ -13054,7 +13102,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="248">
+          <li class="missed-branch" data-hits="2" data-linenumber="252">
             
               <span class="hits">2</span>
             
@@ -13072,68 +13120,6 @@
             
 
             <code class="ruby">      return self if moving_id.blank? || anchor_id.blank?</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="249">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="2" data-linenumber="250">
-            
-              <span class="hits">2</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">      ids.delete(moving_id)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="2" data-linenumber="251">
-            
-              <span class="hits">2</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">      anchor_index = ids.index(anchor_id)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="252">
-            
-              <span class="hits">2</span>
-            
-
-            
-              
-                <span class="hits" title="else branch hit 2 times">
-                  else: 2
-                </span>
-              
-                <span class="hits" title="then branch hit 0 times">
-                  then: 0
-                </span>
-              
-            
-
-            <code class="ruby">      return self unless anchor_index</code>
           </li>
         </div>
       
@@ -13157,6 +13143,68 @@
 
             
               
+            
+
+            <code class="ruby">      ids.delete(moving_id)</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="2" data-linenumber="255">
+            
+              <span class="hits">2</span>
+            
+
+            
+              
+            
+
+            <code class="ruby">      anchor_index = ids.index(anchor_id)</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="missed-branch" data-hits="2" data-linenumber="256">
+            
+              <span class="hits">2</span>
+            
+
+            
+              
+                <span class="hits" title="else branch hit 2 times">
+                  else: 2
+                </span>
+              
+                <span class="hits" title="then branch hit 0 times">
+                  then: 0
+                </span>
+              
+            
+
+            <code class="ruby">      return self unless anchor_index</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="257">
+            
+
+            
+              
+            
+
+            <code class="ruby"></code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="2" data-linenumber="258">
+            
+              <span class="hits">2</span>
+            
+
+            
+              
                 <span class="hits" title="then branch hit 1 times">
                   then: 1
                 </span>
@@ -13172,7 +13220,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="255">
+          <li class="covered" data-hits="2" data-linenumber="259">
             
               <span class="hits">2</span>
             
@@ -13186,7 +13234,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="256">
+          <li class="never" data-hits="" data-linenumber="260">
             
 
             
@@ -13198,7 +13246,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="257">
+          <li class="covered" data-hits="2" data-linenumber="261">
             
               <span class="hits">2</span>
             
@@ -13208,56 +13256,6 @@
             
 
             <code class="ruby">      persist_updated_ids!(ids, actor: actor, metadata: metadata, action: &quot;moved&quot;)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="258">
-            
-
-            
-              
-            
-
-            <code class="ruby">    end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="259">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="260">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">    def normalize_ordered_recording_ids</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="missed" data-hits="0" data-linenumber="261">
-            
-
-            
-              
-            
-
-            <code class="ruby">      self.ordered_recording_ids = normalized_array_ids</code>
           </li>
         </div>
       
@@ -13295,21 +13293,19 @@
               
             
 
-            <code class="ruby">    def normalize_name</code>
+            <code class="ruby">    def normalize_ordered_recording_ids</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="265">
-            
-              <span class="hits">2</span>
+          <li class="missed" data-hits="0" data-linenumber="265">
             
 
             
               
             
 
-            <code class="ruby">      self.name = name.to_s.strip.presence</code>
+            <code class="ruby">      self.ordered_recording_ids = normalized_array_ids</code>
           </li>
         </div>
       
@@ -13347,12 +13343,64 @@
               
             
 
+            <code class="ruby">    def normalize_name</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="2" data-linenumber="269">
+            
+              <span class="hits">2</span>
+            
+
+            
+              
+            
+
+            <code class="ruby">      self.name = name.to_s.strip.presence</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="270">
+            
+
+            
+              
+            
+
+            <code class="ruby">    end</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="271">
+            
+
+            
+              
+            
+
+            <code class="ruby"></code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="272">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
             <code class="ruby">    def group_key_must_be_supported</code>
           </li>
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="1" data-linenumber="269">
+          <li class="missed-branch" data-hits="1" data-linenumber="273">
             
               <span class="hits">1</span>
             
@@ -13374,7 +13422,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="270">
+          <li class="never" data-hits="" data-linenumber="274">
             
 
             
@@ -13386,7 +13434,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="271">
+          <li class="covered" data-hits="1" data-linenumber="275">
             
               <span class="hits">1</span>
             
@@ -13400,7 +13448,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="272">
+          <li class="never" data-hits="" data-linenumber="276">
             
 
             
@@ -13412,7 +13460,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="273">
+          <li class="covered" data-hits="1" data-linenumber="277">
             
               <span class="hits">1</span>
             
@@ -13426,7 +13474,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="274">
+          <li class="never" data-hits="" data-linenumber="278">
             
 
             
@@ -13434,76 +13482,6 @@
             
 
             <code class="ruby">    end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="275">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="276">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">    def order_scope_must_be_unique</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="277">
-            
-              <span class="hits">2</span>
-            
-
-            
-              
-                <span class="hits" title="then branch hit 0 times">
-                  then: 0
-                </span>
-              
-                <span class="hits" title="else branch hit 2 times">
-                  else: 2
-                </span>
-              
-            
-
-            <code class="ruby">      return if resolved_parent_recording.blank? || group_key.blank?</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="2" data-linenumber="278">
-            
-              <span class="hits">2</span>
-            
-
-            
-              
-                <span class="hits" title="then branch hit 1 times">
-                  then: 1
-                </span>
-              
-                <span class="hits" title="else branch hit 1 times">
-                  else: 1
-                </span>
-              
-            
-
-            <code class="ruby">      return if name.present?</code>
           </li>
         </div>
       
@@ -13529,31 +13507,51 @@
               
             
 
-            <code class="ruby">      matches = RecordingStudioOrderable::RecordingOrderManager.matching_order_recordings(</code>
+            <code class="ruby">    def order_scope_must_be_unique</code>
           </li>
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="281">
+          <li class="missed-branch" data-hits="2" data-linenumber="281">
+            
+              <span class="hits">2</span>
             
 
             
               
+                <span class="hits" title="then branch hit 0 times">
+                  then: 0
+                </span>
+              
+                <span class="hits" title="else branch hit 2 times">
+                  else: 2
+                </span>
+              
             
 
-            <code class="ruby">        resolved_parent_recording,</code>
+            <code class="ruby">      return if resolved_parent_recording.blank? || group_key.blank?</code>
           </li>
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="282">
+          <li class="covered" data-hits="2" data-linenumber="282">
+            
+              <span class="hits">2</span>
             
 
             
               
+                <span class="hits" title="then branch hit 1 times">
+                  then: 1
+                </span>
+              
+                <span class="hits" title="else branch hit 1 times">
+                  else: 1
+                </span>
+              
             
 
-            <code class="ruby">        group_key: group_key,</code>
+            <code class="ruby">      return if name.present?</code>
           </li>
         </div>
       
@@ -13565,7 +13563,7 @@
               
             
 
-            <code class="ruby">        owner: raw_owner_scope</code>
+            <code class="ruby"></code>
           </li>
         </div>
       
@@ -13579,12 +13577,62 @@
               
             
 
+            <code class="ruby">      matches = RecordingStudioOrderable::RecordingOrderManager.matching_order_recordings(</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="285">
+            
+
+            
+              
+            
+
+            <code class="ruby">        resolved_parent_recording,</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="286">
+            
+
+            
+              
+            
+
+            <code class="ruby">        group_key: group_key,</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="287">
+            
+
+            
+              
+            
+
+            <code class="ruby">        owner: raw_owner_scope</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="288">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
             <code class="ruby">      ).reject { |recording| recording.id == recording_id_for_validation }</code>
           </li>
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="1" data-linenumber="285">
+          <li class="missed-branch" data-hits="1" data-linenumber="289">
             
               <span class="hits">1</span>
             
@@ -13606,7 +13654,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="286">
+          <li class="never" data-hits="" data-linenumber="290">
             
 
             
@@ -13618,7 +13666,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="287">
+          <li class="covered" data-hits="1" data-linenumber="291">
             
               <span class="hits">1</span>
             
@@ -13632,7 +13680,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="288">
+          <li class="never" data-hits="" data-linenumber="292">
             
 
             
@@ -13644,7 +13692,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="289">
+          <li class="never" data-hits="" data-linenumber="293">
             
 
             
@@ -13656,7 +13704,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="290">
+          <li class="covered" data-hits="1" data-linenumber="294">
             
               <span class="hits">1</span>
             
@@ -13670,7 +13718,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="1" data-linenumber="291">
+          <li class="missed-branch" data-hits="1" data-linenumber="295">
             
               <span class="hits">1</span>
             
@@ -13692,7 +13740,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="292">
+          <li class="never" data-hits="" data-linenumber="296">
             
 
             
@@ -13704,7 +13752,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="1" data-linenumber="293">
+          <li class="missed-branch" data-hits="1" data-linenumber="297">
             
               <span class="hits">1</span>
             
@@ -13726,7 +13774,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="294">
+          <li class="never" data-hits="" data-linenumber="298">
             
 
             
@@ -13734,58 +13782,6 @@
             
 
             <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="295">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">      errors.add(:ordered_recording_ids, &quot;must not contain duplicates&quot;)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="296">
-            
-
-            
-              
-            
-
-            <code class="ruby">    end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="297">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="298">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">    def ordered_recording_ids_must_be_uuids</code>
           </li>
         </div>
       
@@ -13799,12 +13795,64 @@
               
             
 
+            <code class="ruby">      errors.add(:ordered_recording_ids, &quot;must not contain duplicates&quot;)</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="300">
+            
+
+            
+              
+            
+
+            <code class="ruby">    end</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="301">
+            
+
+            
+              
+            
+
+            <code class="ruby"></code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="302">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
+            <code class="ruby">    def ordered_recording_ids_must_be_uuids</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="303">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
             <code class="ruby">      Array(ordered_recording_ids).each do |recording_id|</code>
           </li>
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="2" data-linenumber="300">
+          <li class="missed-branch" data-hits="2" data-linenumber="304">
             
               <span class="hits">2</span>
             
@@ -13826,7 +13874,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="301">
+          <li class="never" data-hits="" data-linenumber="305">
             
 
             
@@ -13838,7 +13886,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="302">
+          <li class="never" data-hits="" data-linenumber="306">
             
 
             
@@ -13850,7 +13898,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="303">
+          <li class="never" data-hits="" data-linenumber="307">
             
 
             
@@ -13862,7 +13910,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="304">
+          <li class="covered" data-hits="1" data-linenumber="308">
             
               <span class="hits">1</span>
             
@@ -13876,7 +13924,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="305">
+          <li class="covered" data-hits="1" data-linenumber="309">
             
               <span class="hits">1</span>
             
@@ -13890,7 +13938,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="306">
+          <li class="never" data-hits="" data-linenumber="310">
             
 
             
@@ -13902,7 +13950,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="307">
+          <li class="never" data-hits="" data-linenumber="311">
             
 
             
@@ -13914,7 +13962,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="308">
+          <li class="never" data-hits="" data-linenumber="312">
             
 
             
@@ -13926,7 +13974,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="309">
+          <li class="covered" data-hits="1" data-linenumber="313">
             
               <span class="hits">1</span>
             
@@ -13940,7 +13988,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="5" data-linenumber="310">
+          <li class="covered" data-hits="5" data-linenumber="314">
             
               <span class="hits">5</span>
             
@@ -13954,7 +14002,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="311">
+          <li class="covered" data-hits="2" data-linenumber="315">
             
               <span class="hits">2</span>
             
@@ -13968,7 +14016,7 @@
         </div>
       
         <div>
-          <li class="missed-branch" data-hits="1" data-linenumber="312">
+          <li class="missed-branch" data-hits="1" data-linenumber="316">
             
               <span class="hits">1</span>
             
@@ -13990,7 +14038,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="313">
+          <li class="never" data-hits="" data-linenumber="317">
             
 
             
@@ -14002,7 +14050,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="314">
+          <li class="covered" data-hits="1" data-linenumber="318">
             
               <span class="hits">1</span>
             
@@ -14016,7 +14064,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="5" data-linenumber="315">
+          <li class="covered" data-hits="5" data-linenumber="319">
             
               <span class="hits">5</span>
             
@@ -14030,7 +14078,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="5" data-linenumber="316">
+          <li class="covered" data-hits="5" data-linenumber="320">
             
               <span class="hits">5</span>
             
@@ -14052,7 +14100,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="317">
+          <li class="covered" data-hits="1" data-linenumber="321">
             
               <span class="hits">1</span>
             
@@ -14066,66 +14114,6 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="318">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">          next</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="319">
-            
-
-            
-              
-            
-
-            <code class="ruby">        end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="320">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="4" data-linenumber="321">
-            
-              <span class="hits">4</span>
-            
-
-            
-              
-                <span class="hits" title="then branch hit 1 times">
-                  then: 1
-                </span>
-              
-                <span class="hits" title="else branch hit 3 times">
-                  else: 3
-                </span>
-              
-            
-
-            <code class="ruby">        if own_recording_ids.include?(child_recording.id.to_s)</code>
-          </li>
-        </div>
-      
-        <div>
           <li class="covered" data-hits="1" data-linenumber="322">
             
               <span class="hits">1</span>
@@ -14135,7 +14123,7 @@
               
             
 
-            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;cannot include the RecordingStudioOrder recording itself&quot;)</code>
+            <code class="ruby">          next</code>
           </li>
         </div>
       
@@ -14181,7 +14169,7 @@
               
             
 
-            <code class="ruby">        if child_recording.parent_recording_id != resolved_parent_recording.id</code>
+            <code class="ruby">        if own_recording_ids.include?(child_recording.id.to_s)</code>
           </li>
         </div>
       
@@ -14195,7 +14183,7 @@
               
             
 
-            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;must only include direct children of the same parent recording&quot;)</code>
+            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;cannot include the RecordingStudioOrder recording itself&quot;)</code>
           </li>
         </div>
       
@@ -14241,7 +14229,7 @@
               
             
 
-            <code class="ruby">        if child_recording.root_recording_id != resolved_parent_recording.root_recording_id</code>
+            <code class="ruby">        if child_recording.parent_recording_id != resolved_parent_recording.id</code>
           </li>
         </div>
       
@@ -14255,7 +14243,7 @@
               
             
 
-            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;must stay within the same root recording&quot;)</code>
+            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;must only include direct children of the same parent recording&quot;)</code>
           </li>
         </div>
       
@@ -14291,17 +14279,17 @@
 
             
               
-                <span class="hits" title="else branch hit 3 times">
-                  else: 3
-                </span>
-              
                 <span class="hits" title="then branch hit 1 times">
                   then: 1
                 </span>
               
+                <span class="hits" title="else branch hit 3 times">
+                  else: 3
+                </span>
+              
             
 
-            <code class="ruby">        unless allowed_types.include?(child_recording.recordable_type)</code>
+            <code class="ruby">        if child_recording.root_recording_id != resolved_parent_recording.root_recording_id</code>
           </li>
         </div>
       
@@ -14315,7 +14303,7 @@
               
             
 
-            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;must only include allowed recordable types for the group&quot;)</code>
+            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;must stay within the same root recording&quot;)</code>
           </li>
         </div>
       
@@ -14339,36 +14327,34 @@
               
             
 
-            <code class="ruby">      end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="337">
-            
-
-            
-              
-            
-
-            <code class="ruby">    end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="338">
-            
-
-            
-              
-            
-
             <code class="ruby"></code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="339">
+          <li class="covered" data-hits="4" data-linenumber="337">
+            
+              <span class="hits">4</span>
+            
+
+            
+              
+                <span class="hits" title="else branch hit 3 times">
+                  else: 3
+                </span>
+              
+                <span class="hits" title="then branch hit 1 times">
+                  then: 1
+                </span>
+              
+            
+
+            <code class="ruby">        unless allowed_types.include?(child_recording.recordable_type)</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="338">
             
               <span class="hits">1</span>
             
@@ -14377,21 +14363,31 @@
               
             
 
-            <code class="ruby">    def normalize_recording_id(recording_or_id)</code>
+            <code class="ruby">          errors.add(:ordered_recording_ids, &quot;must only include allowed recordable types for the group&quot;)</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="42" data-linenumber="340">
-            
-              <span class="hits">42</span>
+          <li class="never" data-hits="" data-linenumber="339">
             
 
             
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.normalize_recording_id(recording_or_id)</code>
+            <code class="ruby">        end</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="never" data-hits="" data-linenumber="340">
+            
+
+            
+              
+            
+
+            <code class="ruby">      end</code>
           </li>
         </div>
       
@@ -14429,21 +14425,21 @@
               
             
 
-            <code class="ruby">    def normalized_array_ids</code>
+            <code class="ruby">    def normalize_recording_id(recording_or_id)</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="5" data-linenumber="344">
+          <li class="covered" data-hits="42" data-linenumber="344">
             
-              <span class="hits">5</span>
+              <span class="hits">42</span>
             
 
             
               
             
 
-            <code class="ruby">      Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.normalize_recording_id(recording_or_id)</code>
           </li>
         </div>
       
@@ -14481,49 +14477,45 @@
               
             
 
-            <code class="ruby">    alias ordered_items ordered_item_recordings</code>
+            <code class="ruby">    def normalized_array_ids</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="348">
+          <li class="covered" data-hits="5" data-linenumber="348">
             
-              <span class="hits">1</span>
+              <span class="hits">5</span>
             
 
             
               
             
 
-            <code class="ruby">    alias include_recording! include_item!</code>
+            <code class="ruby">      Array(ordered_recording_ids).filter_map { |recording_id| normalize_recording_id(recording_id) }</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="349">
-            
-              <span class="hits">1</span>
+          <li class="never" data-hits="" data-linenumber="349">
             
 
             
               
             
 
-            <code class="ruby">    alias remove_recording! remove_item!</code>
+            <code class="ruby">    end</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="350">
-            
-              <span class="hits">1</span>
+          <li class="never" data-hits="" data-linenumber="350">
             
 
             
               
             
 
-            <code class="ruby">    alias reorder_recordings! reorder!</code>
+            <code class="ruby"></code>
           </li>
         </div>
       
@@ -14537,12 +14529,68 @@
               
             
 
+            <code class="ruby">    alias ordered_items ordered_item_recordings</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="352">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
+            <code class="ruby">    alias include_recording! include_item!</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="353">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
+            <code class="ruby">    alias remove_recording! remove_item!</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="354">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
+            <code class="ruby">    alias reorder_recordings! reorder!</code>
+          </li>
+        </div>
+      
+        <div>
+          <li class="covered" data-hits="1" data-linenumber="355">
+            
+              <span class="hits">1</span>
+            
+
+            
+              
+            
+
             <code class="ruby">    alias cleanup! cleanup_missing_items!</code>
           </li>
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="352">
+          <li class="never" data-hits="" data-linenumber="356">
             
 
             
@@ -14554,7 +14602,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="353">
+          <li class="never" data-hits="" data-linenumber="357">
             
 
             
@@ -18863,8 +18911,8 @@
     
 
     <div class="t-line-summary">
-      <b>18</b> relevant lines.
-      <span class="green"><b>18</b> lines covered</span> and
+      <b>14</b> relevant lines.
+      <span class="green"><b>14</b> lines covered</span> and
       <span class="red"><b>0</b> lines missed.</span>
     </div>
 
@@ -18943,21 +18991,21 @@
               
             
 
-            <code class="ruby">    def recording_order_recordings(group_key = nil, owner: nil, named_only: false, orderable_name: nil)</code>
+            <code class="ruby">    def recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="6">
+          <li class="covered" data-hits="2" data-linenumber="6">
             
-              <span class="hits">1</span>
+              <span class="hits">2</span>
             
 
             
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.recording_orders(</code>
           </li>
         </div>
       
@@ -18981,7 +19029,7 @@
               
             
 
-            <code class="ruby">        group_key,</code>
+            <code class="ruby">        owner: owner,</code>
           </li>
         </div>
       
@@ -18993,7 +19041,7 @@
               
             
 
-            <code class="ruby">        owner: owner,</code>
+            <code class="ruby">        group: group,</code>
           </li>
         </div>
       
@@ -19005,7 +19053,7 @@
               
             
 
-            <code class="ruby">        named_only: named_only,</code>
+            <code class="ruby">        orderable_name: orderable_name,</code>
           </li>
         </div>
       
@@ -19017,7 +19065,7 @@
               
             
 
-            <code class="ruby">        orderable_name: orderable_name</code>
+            <code class="ruby">        named_only: named_only</code>
           </li>
         </div>
       
@@ -19067,21 +19115,21 @@
               
             
 
-            <code class="ruby">    def recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)</code>
+            <code class="ruby">    def default_recording_order(group_key = nil, owner: nil)</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="2" data-linenumber="16">
+          <li class="covered" data-hits="1" data-linenumber="16">
             
-              <span class="hits">2</span>
+              <span class="hits">1</span>
             
 
             
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.recording_orders(</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.default_recording_order(self, group_key, owner: owner)</code>
           </li>
         </div>
       
@@ -19093,7 +19141,7 @@
               
             
 
-            <code class="ruby">        self,</code>
+            <code class="ruby">    end</code>
           </li>
         </div>
       
@@ -19105,19 +19153,21 @@
               
             
 
-            <code class="ruby">        owner: owner,</code>
+            <code class="ruby"></code>
           </li>
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="19">
+          <li class="covered" data-hits="1" data-linenumber="19">
+            
+              <span class="hits">1</span>
             
 
             
               
             
 
-            <code class="ruby">        group: group,</code>
+            <code class="ruby">    def find_recording_order_by_id(order_recording_id, group_key: nil,</code>
           </li>
         </div>
       
@@ -19129,19 +19179,21 @@
               
             
 
-            <code class="ruby">        orderable_name: orderable_name,</code>
+            <code class="ruby">                                   owner: RecordingStudioOrderable::RecordingOrderManager::OWNER_GUARDRAIL_UNSET)</code>
           </li>
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="21">
+          <li class="covered" data-hits="1" data-linenumber="21">
+            
+              <span class="hits">1</span>
             
 
             
               
             
 
-            <code class="ruby">        named_only: named_only</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(</code>
           </li>
         </div>
       
@@ -19153,7 +19205,7 @@
               
             
 
-            <code class="ruby">      )</code>
+            <code class="ruby">        self,</code>
           </li>
         </div>
       
@@ -19165,7 +19217,7 @@
               
             
 
-            <code class="ruby">    end</code>
+            <code class="ruby">        order_recording_id,</code>
           </li>
         </div>
       
@@ -19177,35 +19229,31 @@
               
             
 
-            <code class="ruby"></code>
+            <code class="ruby">        group_key: group_key,</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="25">
-            
-              <span class="hits">1</span>
+          <li class="never" data-hits="" data-linenumber="25">
             
 
             
               
             
 
-            <code class="ruby">    def recording_order_recording_for(group_key = nil, owner: nil)</code>
+            <code class="ruby">        owner: owner</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="26">
-            
-              <span class="hits">1</span>
+          <li class="never" data-hits="" data-linenumber="26">
             
 
             
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.recording_order_recording_for(self, group_key, owner: owner)</code>
+            <code class="ruby">      )</code>
           </li>
         </div>
       
@@ -19243,7 +19291,7 @@
               
             
 
-            <code class="ruby">    def default_recording_order(group_key = nil, owner: nil)</code>
+            <code class="ruby">    def find_or_create_recording_order!(group_key = nil, **)</code>
           </li>
         </div>
       
@@ -19257,7 +19305,7 @@
               
             
 
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.default_recording_order(self, group_key, owner: owner)</code>
+            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.find_or_create_recording_order!(self, group_key, **)</code>
           </li>
         </div>
       
@@ -19295,188 +19343,12 @@
               
             
 
-            <code class="ruby">    def find_recording_order_by_id(order_recording_id, group_key: nil,</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="34">
-            
-
-            
-              
-            
-
-            <code class="ruby">                                   owner: RecordingStudioOrderable::RecordingOrderManager::OWNER_GUARDRAIL_UNSET)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="35">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.find_recording_order_by_id(</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="36">
-            
-
-            
-              
-            
-
-            <code class="ruby">        self,</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="37">
-            
-
-            
-              
-            
-
-            <code class="ruby">        order_recording_id,</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="38">
-            
-
-            
-              
-            
-
-            <code class="ruby">        group_key: group_key,</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="39">
-            
-
-            
-              
-            
-
-            <code class="ruby">        owner: owner</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="40">
-            
-
-            
-              
-            
-
-            <code class="ruby">      )</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="41">
-            
-
-            
-              
-            
-
-            <code class="ruby">    end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="42">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="43">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">    def find_or_create_recording_order!(group_key = nil, **)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="44">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
-            <code class="ruby">      RecordingStudioOrderable::RecordingOrderManager.find_or_create_recording_order!(self, group_key, **)</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="45">
-            
-
-            
-              
-            
-
-            <code class="ruby">    end</code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="never" data-hits="" data-linenumber="46">
-            
-
-            
-              
-            
-
-            <code class="ruby"></code>
-          </li>
-        </div>
-      
-        <div>
-          <li class="covered" data-hits="1" data-linenumber="47">
-            
-              <span class="hits">1</span>
-            
-
-            
-              
-            
-
             <code class="ruby">    def eligible_order_items(group_key = nil)</code>
           </li>
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="48">
+          <li class="covered" data-hits="1" data-linenumber="34">
             
               <span class="hits">1</span>
             
@@ -19490,7 +19362,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="49">
+          <li class="never" data-hits="" data-linenumber="35">
             
 
             
@@ -19502,7 +19374,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="50">
+          <li class="never" data-hits="" data-linenumber="36">
             
 
             
@@ -19514,7 +19386,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="51">
+          <li class="covered" data-hits="1" data-linenumber="37">
             
               <span class="hits">1</span>
             
@@ -19528,7 +19400,7 @@
         </div>
       
         <div>
-          <li class="covered" data-hits="1" data-linenumber="52">
+          <li class="covered" data-hits="1" data-linenumber="38">
             
               <span class="hits">1</span>
             
@@ -19542,7 +19414,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="53">
+          <li class="never" data-hits="" data-linenumber="39">
             
 
             
@@ -19554,7 +19426,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="54">
+          <li class="never" data-hits="" data-linenumber="40">
             
 
             
@@ -19566,7 +19438,7 @@
         </div>
       
         <div>
-          <li class="never" data-hits="" data-linenumber="55">
+          <li class="never" data-hits="" data-linenumber="41">
             
 
             

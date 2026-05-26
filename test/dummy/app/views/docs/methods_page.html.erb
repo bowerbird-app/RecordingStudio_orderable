@@ -201,67 +201,6 @@ folder.find_recording_order_by_id("missing-order-recording", group_key: :pages, 
 
   <div>
     <%= render FlatPack::PageTitle::Component.new(
-      title: "Recording extensions",
-      subtitle: "APIs added to RecordingStudio::Recording.",
-      variant: :h3,
-      class: "mb-0 pb-0"
-    ) %>
-
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_order_recordings",
-      subtitle: "Addon wrapper: returns Recording snapshot rows for order records.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "group_key", accepts: "Symbol or String", example: "recording_order_recordings(:pages, ...)" },
-      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" },
-      {
-        variable: "named_only",
-        accepts: "true, false",
-        example: "named_only: true",
-        why: "Use when listing selectable custom orders; hides the default unnamed order record."
-      },
-      {
-        variable: "orderable_name",
-        accepts: "String or nil",
-        example: "orderable_name: \"Primary list\"",
-        why: "Fetch recordings for one named order only."
-      }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recordings(:pages, owner: current_user)
-# => [#&lt;RecordingStudio::Recording id: "default-order-recording"&gt;]
-
-folder_recording.recording_order_recordings(:pages, owner: current_user, named_only: true)
-# => [#&lt;RecordingStudio::Recording id: "named-order-recording"&gt;, ...]
-
-folder_recording.recording_order_recordings(:pages, owner: current_user, orderable_name: "Primary list")
-# => [#&lt;RecordingStudio::Recording id: "primary-list-recording"&gt;]</code></pre>
-      </div>
-    </div>
-
-    <%= render FlatPack::PageTitle::Component.new(
-      title: "recording_order_recording_for",
-      subtitle: "Addon wrapper: fetches the underlying Recording snapshot row (or nil) rather than the order model wrapper.",
-      variant: :h4,
-      class: "mb-0 pb-0 mt-8"
-    ) %>
-    <%= render_options_table.call([
-      { variable: "group_key", accepts: "Symbol or String", example: "recording_order_recording_for(:pages, ...)" },
-      { variable: "owner", accepts: "Actor object or nil", example: "owner: current_user" }
-    ]) %>
-    <div class="mt-4 bg-(--code-block-background-color) border border-(--code-block-border-color) rounded-lg">
-      <div class="p-4">
-        <pre class="whitespace-pre-wrap wrap-break-word"><code class="font-mono text-sm text-(--code-block-code-color)">folder_recording.recording_order_recording_for(:pages, owner: current_user)
-# => #&lt;RecordingStudio::Recording id: "default-order-recording"&gt; or nil</code></pre>
-      </div>
-    </div>
-  </div>
-
-  <div>
-    <%= render FlatPack::PageTitle::Component.new(
       title: "RecordingOrder mutations",
       subtitle: "Explicit order snapshot helpers.",
       variant: :h3,

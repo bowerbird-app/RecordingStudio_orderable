@@ -135,7 +135,12 @@ class HomeController < ApplicationController
     return [] unless @folder_recording
 
     Array(
-      @folder_recording.reload.recording_order_recordings(:pages, owner: current_user, named_only: true)
+      RecordingStudioOrderable::RecordingOrderManager.recording_order_recordings(
+        @folder_recording.reload,
+        :pages,
+        owner: current_user,
+        named_only: true
+      )
     ).map(&:reload)
   end
 

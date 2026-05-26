@@ -92,10 +92,6 @@ class RecordingOrderTest < Minitest::Test
 
     parent_recording.define_singleton_method(:id) { "folder-1" }
 
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, **|
-      current_recording
-    end
-
     parent_recording.define_singleton_method(:revise) do |recording, actor:, metadata:, &block|
       revise_call = { recording: recording, actor: actor, metadata: metadata }
       block.call(revised_recordable)
@@ -103,16 +99,26 @@ class RecordingOrderTest < Minitest::Test
     end
 
     RecordingStudioOrderable::RecordingOrderManager.stub(:normalize_requested_ids, ->(_parent, _group, ids) { ids }) do
-      order.stub(:resolved_parent_recording, parent_recording) do
-        result = order.send(
-          :persist_updated_ids!,
-          %w[page-2 page-3 page-1 page-4],
-          actor: :actor,
-          metadata: { source: "test" },
-          action: "moved"
-        )
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :recording_order_recording_for,
+        lambda do |parent, group_key, owner:|
+          assert_same parent_recording, parent
+          assert_equal "pages", group_key
+          assert_equal({ owner_type: nil, owner_id: nil }, owner)
+          current_recording
+        end
+      ) do
+        order.stub(:resolved_parent_recording, parent_recording) do
+          result = order.send(
+            :persist_updated_ids!,
+            %w[page-2 page-3 page-1 page-4],
+            actor: :actor,
+            metadata: { source: "test" },
+            action: "moved"
+          )
 
-        assert_same revised_recordable, result
+          assert_same revised_recordable, result
+        end
       end
     end
 
@@ -141,9 +147,6 @@ class RecordingOrderTest < Minitest::Test
     revise_call = nil
 
     parent_recording.define_singleton_method(:id) { "folder-1" }
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, **|
-      default_recording
-    end
     parent_recording.define_singleton_method(:revise) do |recording, actor:, metadata:, &block|
       revise_call = { recording: recording, actor: actor, metadata: metadata }
       block.call(revised_recordable)
@@ -153,17 +156,27 @@ class RecordingOrderTest < Minitest::Test
     order.define_singleton_method(:recordings) { [named_recording] }
 
     RecordingStudioOrderable::RecordingOrderManager.stub(:normalize_requested_ids, ->(_parent, _group, ids) { ids }) do
-      result = order.stub(:resolved_parent_recording, parent_recording) do
-        order.send(
-          :persist_updated_ids!,
-          %w[page-2 page-3 page-1 page-4],
-          actor: :actor,
-          metadata: { source: "test" },
-          action: "moved"
-        )
-      end
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :recording_order_recording_for,
+        lambda do |parent, group_key, owner:|
+          assert_same parent_recording, parent
+          assert_equal "pages", group_key
+          assert_equal({ owner_type: nil, owner_id: nil }, owner)
+          default_recording
+        end
+      ) do
+        result = order.stub(:resolved_parent_recording, parent_recording) do
+          order.send(
+            :persist_updated_ids!,
+            %w[page-2 page-3 page-1 page-4],
+            actor: :actor,
+            metadata: { source: "test" },
+            action: "moved"
+          )
+        end
 
-      assert_same revised_recordable, result
+        assert_same revised_recordable, result
+      end
     end
 
     assert_equal named_recording, revise_call[:recording]
@@ -299,10 +312,6 @@ class RecordingOrderTest < Minitest::Test
     parent_recording = Object.new
     create_call = nil
 
-    parent_recording.define_singleton_method(:recording_order_recording_for) do |_group_key, **|
-      nil
-    end
-
     parent_recording.define_singleton_method(:find_or_create_recording_order!) do |group_key, **options|
       create_call = {
         group_key: group_key,
@@ -316,17 +325,27 @@ class RecordingOrderTest < Minitest::Test
     end
 
     RecordingStudioOrderable::RecordingOrderManager.stub(:normalize_requested_ids, ->(_parent, _group, ids) { ids }) do
-      result = order.stub(:resolved_parent_recording, parent_recording) do
-        order.send(
-          :persist_updated_ids!,
-          %w[page-2 page-3 page-1],
-          actor: :actor,
-          metadata: { source: "test" },
-          action: "moved"
-        )
-      end
+      RecordingStudioOrderable::RecordingOrderManager.stub(
+        :recording_order_recording_for,
+        lambda do |parent, group_key, owner:|
+          assert_same parent_recording, parent
+          assert_equal "pages", group_key
+          assert_equal({ owner_type: nil, owner_id: nil }, owner)
+          nil
+        end
+      ) do
+        result = order.stub(:resolved_parent_recording, parent_recording) do
+          order.send(
+            :persist_updated_ids!,
+            %w[page-2 page-3 page-1],
+            actor: :actor,
+            metadata: { source: "test" },
+            action: "moved"
+          )
+        end
 
-      assert_equal :created_order, result
+        assert_equal :created_order, result
+      end
     end
 
     assert_equal "pages", create_call[:group_key]

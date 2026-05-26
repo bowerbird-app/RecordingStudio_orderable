@@ -211,7 +211,11 @@ module RecordingStudio
       current_recording = current_attached_order_recording(fallback_order)
       return current_recording if current_recording
 
-      parent_recording.recording_order_recording_for(group_key, owner: raw_owner_scope)
+      RecordingStudioOrderable::RecordingOrderManager.recording_order_recording_for(
+        parent_recording,
+        group_key,
+        owner: raw_owner_scope
+      )
     end
 
     def current_attached_order_recording(fallback_order)
