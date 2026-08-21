@@ -1,0 +1,9 @@
+<%# Load tokens and the compiled Tailwind bundle via stylesheet_link_tag so
+    Propshaft can digest URLs. Do not @import flat_pack/application from a
+    static CSS file — its relative @imports are not rewritten. The extra
+    fp-* helpers in that file are optional; component utilities come from
+    Tailwind scanning Flatpack .rb / .erb sources. %>
+<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+<%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+<%= stylesheet_link_tag "flat_pack/variables", "data-turbo-track": "reload" %>
+<%= stylesheet_link_tag "flat_pack/rich_text", "data-turbo-track": "reload" %>

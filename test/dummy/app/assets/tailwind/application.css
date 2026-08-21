@@ -1,26 +1,30 @@
 @import "tailwindcss";
 
-/* Include dummy app views for Tailwind CSS */
+/* Dummy app views. This file lives at test/dummy/app/assets/tailwind/. */
 @source "../../views/**/*.erb";
 
-/* Include RecordingStudio engine views for Tailwind CSS, including default_layout */
-@source "../../vendor/bundle/**/recording_studio*/app/views/**/*.erb";
-@source "../../vendor/bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
-@source "../../../../../../usr/local/bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
-@source "../../../../../../home/**/.bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
-@source "../../../../../../home/**/.local/share/mise/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
-
-/* Scan FlatPack components for utility classes */
-@source "../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";
-@source "../../vendor/bundle/**/flat_pack/app/components/**/*.{rb,erb}";
-@source "../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flat_pack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../home/**/.local/share/mise/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../home/**/.local/share/mise/**/bundler/gems/flat_pack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../home/**/.bundle/**/gems/flatpack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../home/**/.bundle/**/gems/flat_pack-*/app/components/**/*.{rb,erb}";
-@source "../../../../../../home/**/.bundle/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
-
-/* Include this engine's views in the Tailwind build */
+/* This engine's views */
 @source "../../../../../app/views/**/*.erb";
+
+/* RecordingStudio gem views, including default_layout.
+   From this file, vendor/bundle is ../../../vendor/bundle, not ../../vendor. */
+@source "../../../vendor/bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
+@source "../../../vendor/bundle/**/gems/recording_studio-*/app/views/**/*.erb";
+@source "../../../../../vendor/bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
+@source "../../../../../vendor/bundle/**/gems/recording_studio-*/app/views/**/*.erb";
+@source "/usr/local/bundle/ruby/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";
+@source "/usr/local/bundle/ruby/**/gems/recording_studio-*/app/views/**/*.erb";
+
+/* Flatpack ViewComponents. Combined rb/erb brace globs are unreliable — scan separately. */
+@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";
+@source "../../../vendor/bundle/**/gems/flat_pack-*/app/components/**/*.rb";
+@source "../../../vendor/bundle/**/gems/flat_pack-*/app/components/**/*.erb";
+@source "../../../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+@source "../../../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";
+@source "../../../../../vendor/bundle/**/gems/flat_pack-*/app/components/**/*.rb";
+@source "../../../../../vendor/bundle/**/gems/flat_pack-*/app/components/**/*.erb";
+@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.erb";
+@source "/usr/local/bundle/ruby/**/gems/flat_pack-*/app/components/**/*.rb";
+@source "/usr/local/bundle/ruby/**/gems/flat_pack-*/app/components/**/*.erb";

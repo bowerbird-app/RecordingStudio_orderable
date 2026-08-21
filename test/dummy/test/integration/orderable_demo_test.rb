@@ -18,6 +18,31 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "label", text: /Email/i
     assert_match "admin@admin.com", response.body
+    assert_match "Sign In", response.body
+  end
+
+  test "compiled tailwind includes flatpack component utilities" do
+    css_path = Rails.root.join("app/assets/builds/tailwind.css")
+    assert File.exist?(css_path), "expected #{css_path} after bin/rails tailwindcss:build"
+    assert_operator css_path.size, :>, 20_000, "expected scanned Flatpack utilities, got #{css_path.size} bytes"
+
+    css = css_path.read
+    assert_includes css, "inline-flex"
+    assert_includes css, 'rounded-\\[var\\(--button'
+    assert_includes css, 'bg-\\[var\\(--button'
+    assert_includes css, 'min-w-\\[40rem'
+  end
+
+  test "events nav is a real link from home" do
+    sign_in @user
+    get root_path
+    assert_response :success
+    assert_select "a[href=?]", events_path, text: /Events/
+
+    get events_path
+    assert_response :success
+    assert_match "Events", response.body
+    assert_select "a[href=?]", root_path, text: /Home/
   end
 
   test "signed in home lists orderable pages and not a sidebar shell" do
@@ -28,6 +53,8 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_match "Order demo", response.body
     assert_match "Mix Notes", response.body
     assert_match "Move down", response.body
+    assert_select "a[href=?]", root_path, text: /Home/
+    assert_select "a[href=?]", events_path, text: /Events/
     refute_match "flat_pack_sidebar", response.body
     refute_match "Setup", response.body
   end

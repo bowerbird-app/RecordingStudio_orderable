@@ -8,7 +8,7 @@
   <%= render FlatPack::Button::Component.new(
     text: "Sign out",
     style: :ghost,
-    url: main_app.destroy_user_session_path,
+    href: main_app.destroy_user_session_path,
     data: { turbo_method: :delete }
   ) %>
 <% end %>
@@ -20,15 +20,7 @@
     variant: :h1
   ) %>
 
-  <div class="flex flex-wrap gap-3">
-    <% demo_nav_links.each do |link| %>
-      <%= render FlatPack::Button::Component.new(
-        text: link.fetch(:text),
-        style: :secondary,
-        url: link.fetch(:url)
-      ) %>
-    <% end %>
-  </div>
+  <%= render "home/demo_nav" %>
 
   <% if @folder_recording %>
     <%= render FlatPack::SectionTitle::Component.new(

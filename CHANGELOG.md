@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Dummy Tailwind `@source` paths now scan `vendor/bundle` RecordingStudio views and Flatpack `.rb` / `.erb` components so host CSS includes button, table, card, and page-nav utilities
+
 ## [0.2.0] - 2026-08-21
 
 ### Breaking

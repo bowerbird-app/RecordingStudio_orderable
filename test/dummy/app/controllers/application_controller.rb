@@ -25,8 +25,8 @@ class ApplicationController < ActionController::Base
 
   def demo_nav_links
     [
-      { text: "Home", url: main_app.root_path },
-      { text: "Events", url: main_app.events_path }
+      { text: "Home", href: main_app.root_path },
+      { text: "Events", href: main_app.events_path }
     ]
   end
 end

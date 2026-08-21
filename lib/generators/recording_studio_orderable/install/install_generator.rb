@@ -71,11 +71,14 @@ module RecordingStudioOrderable
       end
 
       def formatted_tailwind_source_block(missing_lines)
+        engine_lines = missing_lines.select { |line| line.include?("recording_studio_orderable") }
+        flatpack_lines = missing_lines - engine_lines
+
         [
           "\n/* Include RecordingStudioOrderable engine views for Tailwind CSS */",
-          missing_lines.first(2),
+          engine_lines,
           "\n/* Include FlatPack component sources for Tailwind CSS */",
-          missing_lines.drop(2)
+          flatpack_lines
         ].flatten.reject(&:empty?).join("\n")
       end
 
@@ -89,11 +92,13 @@ module RecordingStudioOrderable
 
       def tailwind_source_lines
         [
-          '@source "../../vendor/bundle/**/recording_studio_orderable/app/views/**/*.erb";',
-          '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/' \
-          'recording_studio_orderable-*/app/views/**/*.erb";',
-          '@source "../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";',
-          '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";'
+          '@source "../../../vendor/bundle/**/recording_studio_orderable*/app/views/**/*.erb";',
+          '@source "../../../vendor/bundle/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";',
+          '@source "/usr/local/bundle/ruby/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";',
+          '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";',
+          '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";',
+          '@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.rb";',
+          '@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.erb";'
         ]
       end
     end

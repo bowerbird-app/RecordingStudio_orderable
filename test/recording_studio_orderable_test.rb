@@ -49,8 +49,24 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes home_source, "FlatPack::PageTitle::Component"
     assert_includes home_source, "FlatPack::Table::Component"
     assert_includes home_source, "FlatPack::Button::Component"
+    demo_nav = File.read(File.expand_path("dummy/app/views/home/_demo_nav.html.erb", __dir__))
+    assert_includes demo_nav, "href: link.fetch(:href)"
+    refute_includes demo_nav, "url: link.fetch"
     assert_includes login_source, "admin@admin.com"
     assert_includes login_source, "FlatPack::Card::Component"
+    assert_includes login_source, "FlatPack::Grid::Component"
+  end
+
+  def test_dummy_tailwind_sources_scan_vendor_bundle_and_split_globs
+    css = File.read(File.expand_path("dummy/app/assets/tailwind/application.css", __dir__))
+
+    assert_includes css, '@source "../../views/**/*.erb";'
+    assert_includes css, '@source "../../../../../app/views/**/*.erb";'
+    assert_includes css, '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";'
+    assert_includes css, '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";'
+    assert_includes css, '@source "../../../vendor/bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";'
+    refute_includes css, '@source "../../vendor/bundle'
+    refute_includes css, "*.{rb,erb}"
   end
 
   def test_dummy_enables_orderable_only_on_folder
