@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+
+module ActiveSupport
+  class TestCase
+    parallelize(workers: 1)
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+end

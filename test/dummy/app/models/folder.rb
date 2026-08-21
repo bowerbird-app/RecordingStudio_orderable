@@ -1,5 +1,6 @@
 class Folder < ApplicationRecord
-  include RecordingStudioOrderable::OrderableRecordable
+  recording_studio_recordable label: "Folder", plural_label: "Folders", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder]
 
-  recording_studio_order_group :pages, allows: [ "Page" ]
+  include RecordingStudio::Capabilities::Orderable.to(allows: [ "Page" ])
 end

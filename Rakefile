@@ -7,7 +7,7 @@ Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.test_files = FileList["test/**/*_test.rb"]
                  .exclude("test/rename_verification_test.rb")
-                 .exclude("test/dummy/vendor/bundle/**/*_test.rb")
+                 .exclude("test/dummy/**/*")
   t.verbose = false
 end
 

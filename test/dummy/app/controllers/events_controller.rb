@@ -1,33 +1,42 @@
-# frozen_string_literal: true
-
 class EventsController < ApplicationController
-  EVENTS_LIMIT = 200
+  helper_method :event_recording_label, :event_actor_label, :event_metadata
 
-  def index
-    @events = recent_events.limit(EVENTS_LIMIT).map do |event|
-      {
-        occurred_at: event.occurred_at,
-        action: event.action,
-        recording_id: event.recording_id,
-        recordable: [event.recordable_type, event.recordable_id].compact.join(" #"),
-        actor: [event.actor_type, event.actor_id].compact.join(" #"),
-        metadata: format_metadata(event.metadata)
-      }
-    end
+  def show
+    @events = RecordingStudio::Event.includes(:recording, :recordable, :previous_recordable, :actor, :impersonator).recent
   end
 
   private
 
-  def recent_events
-    RecordingStudio::Event
-      .order(occurred_at: :desc, created_at: :desc)
+  def event_recording_label(event)
+    recording = event.recording
+    return recordable_label(recording.recordable) if recording&.recordable.present?
+
+    recordable = event.recordable || event.previous_recordable
+    return recordable_label(recordable) if recordable.present?
+
+    "#{event.recordable_type} ##{event.recordable_id.to_s.first(8)}"
   end
 
-  def format_metadata(metadata)
+  def event_actor_label(event)
+    actor_label = recordable_label(event.actor, missing: "System")
+    return actor_label if event.impersonator.blank?
+
+    "#{actor_label} via #{recordable_label(event.impersonator, missing: 'System')}"
+  end
+
+  def event_metadata(event)
+    metadata = event.metadata.respond_to?(:to_h) ? event.metadata.to_h : {}
     return "-" if metadata.blank?
 
-    JSON.generate(metadata)
-  rescue JSON::GeneratorError
-    metadata.to_s
+    JSON.pretty_generate(metadata)
+  end
+
+  def recordable_label(record, missing: nil)
+    return missing if record.blank? && missing.present?
+    return record.title if record.respond_to?(:title) && record.title.present?
+    return record.name if record.respond_to?(:name) && record.name.present?
+    return record.email if record.respond_to?(:email) && record.email.present?
+
+    "#{record.class.name} ##{record.id.to_s.first(8)}"
   end
 end

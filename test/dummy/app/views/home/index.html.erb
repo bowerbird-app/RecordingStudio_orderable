@@ -1,104 +1,115 @@
-<% if flash[:notice].present? %>
-  <%= render FlatPack::Alert::Component.new(style: :success, title: flash[:notice]) %>
+<% recording_studio_page_nav(
+  title: "Order demo",
+  page_nav_anchor_url: main_app.root_path,
+  page_nav_anchor_label: "Home"
+) %>
+
+<% recording_studio_page_nav_right do %>
+  <%= render FlatPack::Button::Component.new(
+    text: "Sign out",
+    style: :ghost,
+    url: main_app.destroy_user_session_path,
+    data: { turbo_method: :delete }
+  ) %>
 <% end %>
 
-<% if flash[:alert].present? %>
-  <%= render FlatPack::Alert::Component.new(style: :danger, title: flash[:alert]) %>
-<% end %>
-
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<div class="flex flex-col gap-8">
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Order Demo Examples",
-    subtitle: "Compare background drag-save with a custom event against the flash-and-refresh fallback.",
+    title: "Order demo",
+    subtitle: "Sibling position for children of an orderable parent. Folder is opted in; Project is not.",
     variant: :h1
   ) %>
 
-  <%= render FlatPack::Alert::Component.new(
-    style: custom_event_demo?(@demo_variant) ? :info : :success,
-    title: page_order_demo_title(@demo_variant),
-    description: page_order_demo_description(@demo_variant)
-  ) %>
-
-
-  <div class="">
-    <div class="flex flex-col gap-6">
-      <%= turbo_frame_tag "page_order_demo", class: "flex flex-col gap-6" do %>
-        <div>
-          <div>
-            <% if @folder_recording.present? %>
-              <div class="flex flex-col gap-4">
-                <div class="flex flex-wrap items-end gap-3">
-                  <% if @page_order_recordings.present? %>
-                    <%= form_with url: root_path, method: :get,
-                                  data: { turbo_frame: "page_order_demo" },
-                                  class: "flex flex-1 items-end gap-3" do %>
-                      <%= hidden_field_tag :demo, @demo_variant %>
-                      <%= render FlatPack::Select::Component.new(
-                        name: "selected_order_recording_id",
-                        options: @page_order_recordings.map { |recording|
-                          {
-                            label: recording.recordable.name.presence || "Untitled list",
-                            value: recording.id
-                          }
-                        } + [
-                          {
-                            label: "-- Add New Order --",
-                            value: HomeController::ADD_NEW_ORDER_OPTION_VALUE
-                          }
-                        ],
-                        value: @page_order_recording&.id,
-                        label: "Ordered List",
-                        class: "min-w-72 flex-1",
-                        data: {
-                          controller: "auto-submit",
-                          action: "change->auto-submit#submit"
-                        }
-                      ) %>
-                    <% end %>
-                  <% end %>
-                </div>
-
-                <% if @page_order_recordings.blank? %>
-                  <%= render FlatPack::Alert::Component.new(
-                    style: :info,
-                    title: "No ordered list yet",
-                    description: capture do %>
-                      <%= link_to "Create", recording_studio_orderable.new_recording_studio_order_path(
-                        parent_recording_id: @folder_recording.id,
-                        group_key: :pages,
-                        source_order_recording_id: @page_order_recording&.id,
-                        redirect_to: root_path(demo: @demo_variant)
-                      ), class: "font-medium underline" %> an ordered list now.
-                    <% end
-                  ) %>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        </div>
-
-        <div>
-          <div>
-            <% if @folder_recording.present? && @page_order_recording.present? %>
-              <%= render "page_order_demo", demo_variant: @demo_variant %>
-            <% elsif @folder_recording.present? %>
-              <%= render FlatPack::Alert::Component.new(
-                style: :info,
-                title: "Choose or create a named list",
-                description: "The draggable table appears when a saved page-order list is selected."
-              ) %>
-            <% else %>
-              <%= render FlatPack::Alert::Component.new(
-                style: :warning,
-                title: "Demo data missing",
-                description: "Run bin/rails db:seed to create the Folder + Page ordering example."
-              ) %>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-    </div>
-
-    
+  <div class="flex flex-wrap gap-3">
+    <% demo_nav_links.each do |link| %>
+      <%= render FlatPack::Button::Component.new(
+        text: link.fetch(:text),
+        style: :secondary,
+        url: link.fetch(:url)
+      ) %>
+    <% end %>
   </div>
+
+  <% if @folder_recording %>
+    <%= render FlatPack::SectionTitle::Component.new(
+      title: "Pages in #{@folder_recording.recordable.name}",
+      subtitle: "These siblings share a parent that included RecordingStudio::Capabilities::Orderable.to."
+    ) %>
+
+    <%= render FlatPack::Table::Component.new(data: @ordered_pages) do |table| %>
+      <% table.column(
+           title: "position",
+           html: ->(recording) { recording.recording_studio_orderable_position }
+         ) %>
+      <% table.column(
+           title: "name",
+           html: lambda { |recording|
+             recording.recordable.respond_to?(:title) ? recording.recordable.title : recording.recordable_type
+           }
+         ) %>
+      <% table.column(title: "type", html: ->(recording) { recording.recordable_type }) %>
+      <% table.column(
+           title: "action",
+           html: lambda { |recording|
+             index = @ordered_pages.index(recording)
+             actions = []
+
+             if index&.positive?
+               actions << form_with(
+                 url: main_app.move_page_path(recording),
+                 method: :patch,
+                 data: { turbo: false },
+                 html: { class: "shrink-0" }
+               ) do
+                 safe_join([
+                   hidden_field_tag(:to_index, index - 1),
+                   render(FlatPack::Button::Component.new(text: "Move up", style: :secondary, type: "submit"))
+                 ])
+               end
+             end
+
+             if index && index < @ordered_pages.length - 1
+               actions << form_with(
+                 url: main_app.move_page_path(recording),
+                 method: :patch,
+                 data: { turbo: false },
+                 html: { class: "shrink-0" }
+               ) do
+                 safe_join([
+                   hidden_field_tag(:to_index, index + 1),
+                   render(FlatPack::Button::Component.new(text: "Move down", style: :secondary, type: "submit"))
+                 ])
+               end
+             end
+
+             content_tag(:div, safe_join(actions), class: "flex flex-wrap items-center gap-2")
+           }
+         ) %>
+    <% end %>
+  <% else %>
+    <%= render FlatPack::Alert::Component.new(
+      description: "Seed the dummy app to load an orderable folder and its pages.",
+      style: :info
+    ) %>
+  <% end %>
+
+  <% if @unordered_project_recording %>
+    <section class="flex flex-col gap-4">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Project is not orderable",
+        subtitle: "Installing the gem does not enable order on every recordable."
+      ) %>
+
+      <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+        <% card.body do %>
+          <p>
+            <%= @unordered_project_recording.recordable.name %>
+            has not included
+            <code>RecordingStudio::Capabilities::Orderable.to</code>.
+            Only Folder opted in for this demo.
+          </p>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
 </div>

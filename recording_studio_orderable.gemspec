@@ -7,11 +7,12 @@ Gem::Specification.new do |spec|
   spec.version     = RecordingStudioOrderable::VERSION
   spec.authors     = ["Bowerbird"]
   spec.homepage    = "https://github.com/bowerbird-app/RecordingStudio_orderable"
-  spec.summary     = "Recording Studio ordering addon for array-backed child ordering"
-  spec.description = "Recording Studio addon for opt-in ordered child recordings backed by " \
-                     "RecordingStudio::RecordingOrder snapshots and UUID arrays."
+  spec.summary     = "Opt-in sibling ordering addon for RecordingStudio"
+  spec.description =
+    "Recording Studio Orderable lets host recordables opt in to sibling position " \
+    "for their children, with reorder history stored as Recording Studio events."
   spec.license     = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
@@ -22,7 +23,7 @@ Gem::Specification.new do |spec|
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   end
 
+  spec.add_dependency "flat_pack", ">= 0.1.74"
   spec.add_dependency "rails", "~> 8.1.0"
-  spec.add_dependency "recording_studio", ">= 0.1.0"
-  spec.add_dependency "recording_studio_accessible", ">= 0.1.0"
+  spec.add_dependency "recording_studio", "~> 4.1"
 end

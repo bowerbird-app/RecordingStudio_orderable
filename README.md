@@ -1,172 +1,162 @@
-# RecordingStudioOrderable
+# Recording Studio Orderable
 
-RecordingStudioOrderable adds opt-in ordered item collections to Recording Studio parent recordables.
+Recording Studio Orderable is the opt-in sibling-position addon for `RecordingStudio`.
 
-It keeps `RecordingStudio::Recording` lightweight by storing order state on an explicit `RecordingStudio::RecordingStudioOrder` child recordable. Each order snapshot stores `ordered_recording_ids` in a UUID array on the recordable itself and is identified by a `(parent_recording, group_key, owner_type, owner_id)` scope.
+It lets a parent recordable type sort its children without creating a product-managed order object in the recording tree. Position is a column on the child recording. Reorder history is an event on the parent.
 
-## What it provides
+## What the gem provides
 
-- Parent opt-in DSL:
-  ```ruby
-  class Folder < ApplicationRecord
-    include RecordingStudioOrderable::OrderableRecordable
+- gem name: `recording_studio_orderable`
+- Ruby namespace: `RecordingStudioOrderable`
+- capability opt-in through `RecordingStudio::Capabilities::Orderable.to`
+- namespaced methods on `RecordingStudio::Recording`
+  - `recording_studio_orderable_children`
+  - `recording_studio_orderable_reorder!`
+  - `recording_studio_orderable_move!`
+- addon-owned migration for `recording_studio_orderable_position` on `recording_studio_recordings`
+- optional `log_event!` history when siblings are reordered
+- optional RecordingStudioAccessible authorization when that addon is loaded
 
-    recording_studio_order_group :pages, allows: ["Page"]
-  end
-  ```
-- Recording-level APIs:
-  - `recording_orders(owner: nil, group: nil, orderable_name: nil, named_only: false)`
-  - `default_recording_order(group_key, owner: nil)`
-  - `find_recording_order_by_id(order_recording_id, group_key: nil, owner: optional_guardrail)`
-  - `find_or_create_recording_order!(group_key, owner: nil)`
-  - `eligible_order_items`
-  - `ordered_items_for(group_key, owner: nil)`
-- `RecordingStudio::RecordingStudioOrder` mutation helpers:
-  - `ordered_item_recordings`
-  - `normalized_ordered_recording_ids`
-  - `include_item!`
-  - `remove_item!`
-  - `move_before!`
-  - `move_after!`
-  - `move_to_start!`
-  - `move_to_end!`
-  - `reorder!`
-  - `cleanup_missing_items!`
-
-## Read behavior
-
-Reads are resilient by design:
-
-- stale ids in `ordered_recording_ids` are ignored
-- unordered eligible children are appended automatically
-- fallback order is `created_at ASC, id ASC`
-
-That means you can persist partial order state without broad lifecycle observers on child changes.
-
-## Write behavior
-
-Order mutations prefer Recording Studio’s revise-style behavior. Updating an order revises the active `RecordingStudio::RecordingStudioOrder` child recording rather than storing order metadata on `RecordingStudio::Recording`. Event logging for these mutations stays opt-in and is disabled by default.
-
-
-## Drag-save notification and event contract
-
-The drag-to-reorder UI supports two notification modes:
-
-- **Default:** After a successful drag-save, the client revisits the page so the standard Rails flash notice can render.
-- **Custom event:** If you set <code>send_custom_event: true</code> on the drag-save form, the engine will dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like:
-
-  ```js
-  document.addEventListener("recordingstudio:order:updated", (event) => {
-    // event.detail = { message, status, selected_order_recording_id, moving_recording_id, target_position }
-    console.log(event.detail.message)
-  })
-  ```
-
-This allows host apps to integrate their own notification system (toast, snackbar, etc.) or handle order updates however they wish.
-
-Interactive reorder UIs do not have to submit the full visible UUID list. The dummy app now sends a minimal move payload (`moving_recording_id` plus the target position), and `RecordingStudio::RecordingStudioOrder` rebuilds the next explicit snapshot from the current resolved order. That means newly eligible children that were previously only auto-appended on read are folded into the next persisted revision whenever a user performs another explicit move.
-
-`group_key` identifies the named order definition (`"pages"`, `"dashboard"`, etc.). `owner_type` and `owner_id` allow the same parent and group to have either a shared/default order or an owner-scoped order such as a user-specific arrangement.
-
-Named lists build on top of that owner scope. The unnamed/default order remains singleton per `(parent_recording, group_key, owner_type, owner_id)`, while additional named lists can coexist for the same owner and group. Duplicate names are allowed, so host apps should select named lists by their `RecordingStudio::Recording` id rather than by `name`.
-
-`recording_orders` can now also narrow results with optional filters:
-
-- `group:` accepts either a group key (`:pages`) or an allowed recordable type string (`"Page"`) when that type maps to exactly one configured group.
-- `orderable_name:` matches a specific named list by exact order name.
-- Named-only list queries can be composed with `recording_orders(..., named_only: true)`.
-
-`eligible_order_items` uses group-definition rules. An order_item is eligible only if:
-
-- Its recordable type is included in that group's `allows` list.
-- It is not itself an order record type (`RecordingStudio::RecordingStudioOrder` snapshots are excluded).
-
-So not eligible order_items include:
-
-- Any order_items whose type is not in the group's `allows` list.
-- Any order_items whose type is the order record type.
-- Anything not actually attached to the parent recording.
-
-The mountable engine exposes a simple named-list creation page at `new_recording_order_list_path`. Host apps can pass `parent_recording_id`, `group_key`, an optional `source_order_recording_id`, and an optional local-only `redirect_to`. Parent-recording authorization is delegated to `RecordingStudioAccessible.authorized?` with the resolved Recording Studio actor and `role: :admin`.
-
-```ruby
-RecordingStudioOrderable.configure do |config|
-  # Authorization is handled by RecordingStudioAccessible.
-  config.log_order_events = false
-end
-```
-
-Ensure your host app has `recording_studio_accessible` installed and configured so mounted page authorization resolves correctly.
-Legacy `RecordingStudioOrderable` authorization hook configuration has been removed.
-
-Default unnamed orders are also enforced as singleton records at the database layer per `(parent_recording, group_key, owner_type, owner_id)` scope. Named lists remain unrestricted by `name` and should still be addressed by their `RecordingStudio::Recording` id.
-
-Addon-specific semantic event logging is optional and quiet by default:
-
-```ruby
-RecordingStudioOrderable.configure do |config|
-  config.log_order_events = false
-end
-```
+Installing the gem does not enable order on every recordable.
 
 ## Installation
 
-1. Add the gem and run `bundle install`.
-2. Install the initializer and mount route:
-   ```bash
-   rails generate recording_studio_orderable:install
-   ```
-3. Copy migrations:
-   ```bash
-   rails generate recording_studio_orderable:migrations
-   bin/rails db:migrate
-   ```
-  If older unnamed orders already exist for the same parent/group/owner scope, the migration preserves the newest one as the default and renames the older duplicates so the unique index can be added safely.
-4. Install and configure `recording_studio_accessible` in your host app. Mounted UI authorization now uses `RecordingStudioAccessible.authorized?` with the resolved Recording Studio actor.
-5. Register host recordable types with Recording Studio as usual.
-6. Opt parent recordables into one or more order groups.
-
-## Example
+Add the gems to your host app. This addon requires Recording Studio 4.1.0 or newer:
 
 ```ruby
-folder_recording = root_recording.record(Folder, parent_recording: root_recording) do |folder|
-  folder.name = "Order Demo"
+gem "recording_studio"
+gem "recording_studio_orderable"
+```
+
+Then run:
+
+```bash
+bundle install
+bin/rails generate recording_studio_orderable:install
+bin/rails generate recording_studio_orderable:migrations
+bin/rails db:migrate
+```
+
+## Setup
+
+Mount the engine if you did not use the install generator:
+
+```ruby
+mount RecordingStudioOrderable::Engine, at: "/recording_studio_orderable"
+```
+
+Configure RecordingStudio normally, then enable Orderable only on the parent types whose children should be sortable:
+
+```ruby
+RecordingStudio.configure do |config|
+  config.recordable_types = %w[Workspace Project Folder Page]
+  config.actor = -> { Current.actor }
 end
 
-page_one = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Mix notes" }
-page_two = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Checklist" }
-page_three = root_recording.record(Page, parent_recording: folder_recording) { |page| page.title = "Auto appended" }
+class Workspace < ApplicationRecord
+  recording_studio_recordable label: "Workspace", plural_label: "Workspaces", root: true
+end
 
-page_order = folder_recording.find_or_create_recording_order!(:pages)
-page_order.reorder!(ordered_recording_ids: [page_two.id, page_one.id])
+class Project < ApplicationRecord
+  recording_studio_recordable label: "Project", plural_label: "Projects",
+                              root: false, allowed_parent_types: ["Workspace"]
+end
 
-folder_recording.ordered_items_for(:pages).map { |recording| recording.recordable.title }
-# => ["Checklist", "Mix notes", "Auto appended"]
+class Folder < ApplicationRecord
+  recording_studio_recordable label: "Folder", plural_label: "Folders", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder]
+
+  include RecordingStudio::Capabilities::Orderable.to(allows: ["Page"])
+end
+
+class Page < ApplicationRecord
+  recording_studio_recordable label: "Page", plural_label: "Pages", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder Page]
+end
+
+RecordingStudioOrderable.configure do |config|
+  config.log_order_events = true
+  config.event_action = "reordered"
+end
 ```
+
+## Adding to a recordable
+
+Recordables stay opt-in. Include the capability only on the parent models that should order their children:
+
+```ruby
+class Folder < ApplicationRecord
+  recording_studio_recordable label: "Folder", plural_label: "Folders", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder]
+
+  include RecordingStudio::Capabilities::Orderable.to(allows: ["Page"])
+end
+```
+
+`allows:` limits which direct child recordable types participate. Omit it to order every direct child.
+
+Media kits use the same shape: enable Orderable on the kit, then reorder image and document siblings inside that kit. Those children stay ordinary recordings. Order is not a snapshot recordable and does not clog the tree.
+
+## Ordering methods
+
+The addon uses addon-owned method names on `RecordingStudio::Recording`:
+
+```ruby
+folder_recording.recording_studio_orderable_children
+# => Page recordings under the folder, ordered by position then created_at
+
+folder_recording.recording_studio_orderable_reorder!(
+  ordered_recording_ids: [page_b.id, page_a.id, page_c.id],
+  actor: current_user
+)
+
+folder_recording.recording_studio_orderable_move!(
+  page_c,
+  to_index: 0,
+  actor: current_user
+)
+```
+
+Reads are resilient:
+
+- requested ids that are not eligible children are ignored
+- eligible children missing from the list are appended in `created_at`, `id` order
+- `NULL` positions sort last
+
+Writes update `recording_studio_orderable_position` on the child recordings. They do not create, revise, or nest a `RecordingOrder` recordable.
+
+## Events
+
+When `config.log_order_events` is true (the default), a successful reorder calls `log_event!` on the parent:
+
+```ruby
+action: "reordered"
+metadata: {
+  ordered_recording_ids: [...],
+  previous_ordered_recording_ids: [...],
+  moving_recording_id: "...", # present for move!
+  to_index: 0
+}
+```
+
+Events answer what happened to the parent object. High-churn position lists stay on the recordings table.
+
+## Authorization
+
+If `recording_studio_accessible` is loaded and `config.use_recording_studio_accessible` is true, reorder calls check `config.authorization_role` (default `:edit`). Set an explicit `authorization_resolver` to replace that check. With neither Accessible nor a resolver, reorder is allowed.
 
 ## Dummy app
 
-`test/dummy` includes a Folder + Page demo with:
+`test/dummy` is a host that proves the gem. It uses Recording Studio's default layout (back, optional close, title, optional buttons, then content) and Flatpack components.
 
-- Devise login
-- FlatPack sidebar shell
-- FlatPack table with drag/drop reorder
-- current-user-owned named page-order lists created through the mounted engine page
-- dummy-owned Setup, Config, Methods, and Views documentation pages
-- an eligible page intentionally omitted from `ordered_recording_ids`
+- Sign in as `admin@admin.com` / `Password`
+- Folder is the only orderable type (`allows: ["Page"]`)
+- Home shows that folder's pages with move controls
+- Events lists reorder history from `log_event!`
 
-Quick start:
+## Validation
 
 ```bash
-cd test/dummy
-bundle install
-bin/rails db:setup
-bin/dev
+bundle exec rubocop
+bundle exec rake app:test
 ```
-
-Login:
-
-| Field    | Value           |
-|----------|-----------------|
-| Email    | admin@admin.com |
-| Password | Password        |

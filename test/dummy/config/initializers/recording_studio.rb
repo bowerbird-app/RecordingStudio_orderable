@@ -1,24 +1,12 @@
 # frozen_string_literal: true
 
 RecordingStudio.configure do |config|
-  # Registered delegated_type recordables (strings or classes)
-  config.recordable_types = [ "Workspace", "Folder", "Page" ]
-
-  # Actor resolver for events when no actor is explicitly supplied
+  config.app_name = "Orderable Demo" if config.respond_to?(:app_name=)
+  config.recordable_types = %w[Workspace Project Folder Page]
   config.actor = -> { Current.actor }
-
-  # Emit ActiveSupport::Notifications events
   config.event_notifications_enabled = true
-
-  # Idempotency behavior for log_event!
-  config.idempotency_mode = :return_existing # or :raise
-
-  # Legacy config key removed in newer RecordingStudio versions.
-  config.include_children = false if config.respond_to?(:include_children=)
-
-  # Recordable duplication strategy for revisions
+  config.idempotency_mode = :return_existing
   config.recordable_dup_strategy = :dup
-
-  # Built-in capabilities remain disabled until you opt a recordable type into
-  # them by including the relevant RecordingStudio capability module.
+  config.require_actor = true if config.respond_to?(:require_actor=)
+  config.max_metadata_bytes = 16_384 if config.respond_to?(:max_metadata_bytes=)
 end

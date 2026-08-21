@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 RecordingStudioOrderable.configure do |config|
-  # Authorization is handled by RecordingStudioAccessible.
+  # Reorder history is written with RecordingStudio::Recording#log_event!.
+  config.log_order_events = true
+  config.event_action = "reordered"
 
-  # Optional semantic event logging for order mutations.
-  # Recording Studio creation/update events still happen as normal.
-  config.log_order_events = false
+  # When RecordingStudioAccessible is loaded, reorder calls check this role.
+  # Set to false if the host app authorizes reorder itself.
+  config.use_recording_studio_accessible = true
+  config.authorization_role = :edit
 
-  # Event names become "#{config.event_action_prefix}_reordered", etc.
-  config.event_action_prefix = "recording_order"
+  # Optional explicit authorizer. When set, Accessible is not consulted.
+  # config.authorization_resolver = ->(action:, actor:, recording:, **) { actor.present? }
 end

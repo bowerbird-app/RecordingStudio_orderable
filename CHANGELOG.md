@@ -1,7 +1,3 @@
-# 0.13.3 (Unreleased)
-
-- Added: Drag-save notification/event contract for orderable UIs. Host apps can now opt into custom event notifications (`recordingstudio:order:updated`) instead of the default revisit-based flash notice flow.
-- Updated: Documentation in README, INSTALLING.md, CONFIGURATION.md, and dummy app docs to explain notification/event split and JS integration pattern.
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -11,12 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- Renamed the engine to `recording_studio_orderable`
-- Replaced the template sample addon with `RecordingStudio::RecordingStudioOrder` ordering support
-- Added Folder + Page ordering demo data and FlatPack table UI in the dummy app
-- Bumped the dummy app FlatPack dependency from `v0.1.33` to `v0.1.53` and hardened `current_recording` for plain delegate recordings
-- Bumped the dummy app FlatPack dependency from `v0.1.58` to `v0.1.60`
+## [0.2.0] - 2026-08-21
+
+### Breaking
+- Replaced `RecordingStudio::RecordingStudioOrder` snapshot recordables, named lists, and owner-scoped order trees with sibling position on `recording_studio_recordings`
+- Enablement is now `include RecordingStudio::Capabilities::Orderable.to(**opts)` on parent recordables. The `OrderableRecordable` / `recording_studio_order_group` DSL is gone
+- Runtime dependency is now RecordingStudio `~> 4.1` (tested with `4.1.0`). `recording_studio_accessible` is no longer a required gem dependency
+- Required Ruby is `>= 3.3`
+
+### Added
+- `recording_studio_orderable_position` column and sibling reorder APIs on `RecordingStudio::Recording`
+- Optional `log_event!` reorder history on the parent recording
+- Dummy app on Recording Studio core default layout and Flatpack
+
+### Removed
+- `RecordingStudioOrder` recordable, mounted named-list product surface, and committed coverage artifacts
+
+### Upgrade Notes
+- Host apps must move to RecordingStudio `~> 4.1` with this gem
+- Enable Orderable on parent recordables with `RecordingStudio::Capabilities::Orderable.to(allows: [...])`
+- Run `bin/rails generate recording_studio_orderable:migrations` and `bin/rails db:migrate`
+- Do not keep or migrate snapshot order recordables; sibling position is the supported model
 
 ## [0.1.1] - 2026-04-28
 
@@ -36,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.2.0
 [0.1.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.0

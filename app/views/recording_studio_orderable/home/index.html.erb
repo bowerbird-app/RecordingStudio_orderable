@@ -1,116 +1,23 @@
-<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12">
-  <%= render FlatPack::Breadcrumb::Component.new(
-    show_back: true,
-    back_href: "javascript:window.history.back()",
-    show_home: true,
-    home_url: main_app.root_path,
-    class: "mb-2"
-  ) do |breadcrumb| %>
-    <% breadcrumb.item(text: "RecordingStudioOrderable") %>
-  <% end %>
+<% recording_studio_page_nav(
+  title: "Orderable",
+  page_nav_anchor_url: main_app.root_path,
+  page_nav_anchor_label: "Home"
+) %>
 
+<div class="flex flex-col gap-8">
   <%= render FlatPack::PageTitle::Component.new(
-    title: "RecordingStudioOrderable",
-    subtitle: "Array-backed child ordering for Recording Studio parent recordables.",
+    title: "Recording Studio Orderable",
+    subtitle: "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object.",
     variant: :h1
   ) %>
 
-  <div class="flex flex-wrap gap-2">
-    <%= render FlatPack::Badge::Component.new(text: "RecordingStudio::Recording stays lightweight", style: :success, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "UUID array-backed order snapshots", style: :info, size: :sm) %>
-    <%= render FlatPack::Badge::Component.new(text: "FlatPack-ready demo included", style: :warning, size: :sm) %>
-  </div>
-
-  <%= render FlatPack::Alert::Component.new(
-    style: :info,
-    title: "Documentation and demo hub",
-    description: "Use these pages to onboard a host app, wire configuration, understand the public APIs, and review the mounted addon routes and views."
-  ) %>
-
-  <div class="grid gap-6 lg:grid-cols-2">
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Setup",
-        subtitle: "Install prerequisites, generators, migrations, and demo validation.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Confirm Recording Studio is already installed in the host app.</li>
-          <li>Run the install and migrations generators, then migrate.</li>
-          <li>Register eligible parent recordables and order groups.</li>
-        </ul>
-
-        <p class="mt-4 text-sm leading-6">
-          <%= link_to "Open setup guide", main_app.docs_setup_path, class: "font-medium underline" %>
-        </p>
-      </div>
-    </div>
-
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Config",
-        subtitle: "Actor-based authorization and optional event logging.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Mounted UI authentication defaults to <code>RecordingStudio.configuration.actor</code>.</li>
-          <li>Parent recording access uses <code>RecordingStudioAccessible.authorized?(actor:, recording:, role: :admin)</code>.</li>
-          <li>Order creation paths enforce the same parent authorization in both controller and manager paths.</li>
-          <li><code>log_order_events</code> and <code>event_action_prefix</code> control optional event logging.</li>
-        </ul>
-
-        <p class="mt-4 text-sm leading-6">
-          <%= link_to "Review configuration", main_app.docs_config_path, class: "font-medium underline" %>
-        </p>
-      </div>
-    </div>
-
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Methods",
-        subtitle: "Public APIs for parent recordables, recordings, and order snapshots.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Opt in with <code>recording_studio_order_group</code>.</li>
-          <li>Resolve shared or owner-scoped orders from <code>RecordingStudio::Recording</code>.</li>
-          <li>Mutate order snapshots with <code>move_before!</code>, <code>move_after!</code>, and <code>reorder!</code>. <span class="text-xs text-gray-500">(Trash, access, and device session features are now handled by separate RecordingStudio addons. See the migration guide if upgrading from an older version.)</span></li>
-        </ul>
-
-        <p class="mt-4 text-sm leading-6">
-          <%= link_to "Browse methods", main_app.docs_methods_path, class: "font-medium underline" %>
-        </p>
-      </div>
-    </div>
-
-    <div>
-      <%= render FlatPack::PageTitle::Component.new(
-        title: "Views",
-        subtitle: "Mounted routes, home/docs pages, and the named-list creation flow.",
-        variant: :h3,
-        class: "mb-0 pb-0"
-      ) %>
-
-      <div>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>The addon mounts under <code>/recording_studio_orderable</code>.</li>
-          <li>The engine exposes documentation pages plus the list-creation screen.</li>
-          <li>The mounted pages link directly between the home page, docs, and list-creation flow.</li>
-        </ul>
-
-        <p class="mt-4 text-sm leading-6">
-          <%= link_to "Inspect routes and views", main_app.docs_views_path, class: "font-medium underline" %>
-        </p>
-      </div>
-    </div>
-  </div>
+  <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+    <% card.body do %>
+      <p>
+        Host apps enable ordering with
+        <code>include RecordingStudio::Capabilities::Orderable.to</code>
+        on the parent type whose children should be sortable.
+      </p>
+    <% end %>
+  <% end %>
 </div>

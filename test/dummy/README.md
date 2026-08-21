@@ -1,16 +1,16 @@
 # Dummy App
 
-This Rails app exists to validate RecordingStudioOrderable in a real host application.
+This Rails app exists to validate Recording Studio Orderable inside a realistic host application.
 
 ## What It Covers
 
 - Devise authentication with a seeded admin user
-- `Current.actor` wiring for Recording Studio events
-- Root workspace and root recording setup
-- Recording Studio custom ordering demo with a FlatPack-first table
-- Current-user-owned named page-order lists created through the mounted RecordingStudioOrderable engine page
-- FlatPack layout integration and Tailwind source scanning
-- Mounted `RecordingStudio::Engine` route behavior inside a host app
+- `Current.actor` wiring for Recording Studio 4.1 and addon events
+- Workspace, project, folder, and page examples
+- Explicit orderable opt-in on `Folder` only, limited to `Page` children
+- Sibling reorder on the home page through Flatpack buttons
+- Events page for `log_event!` reorder history
+- Recording Studio core default layout, not a sidebar shell
 
 ## Quick Start
 
@@ -20,20 +20,14 @@ bin/rails db:setup
 bin/dev
 ```
 
-Then open the app and sign in with:
+Then sign in with:
 
 - Email: `admin@admin.com`
 - Password: `Password`
 
 ## Useful Routes
 
-- `/` - dummy app home page and template guidance
-- `/` - Order Demo
+- `/` - dummy app demo home page
+- `/events` - reorder event history
 - `/recording_studio` - mounted Recording Studio engine
-- `/recording_studio_orderable` - mounted RecordingStudioOrderable engine
-- `/users/sign_in` - Devise sign-in page
-- `/up` - Rails health check
-
-## Why This App Exists
-
-Use this app to verify the generated addon experience before shipping. The seeded demo includes one eligible page that is intentionally omitted from `ordered_recording_ids` so the UI shows the addon’s resilient read behavior. The dummy home page now reads and writes page order through current-user-owned named lists, while the mounted engine page provides the minimal list-creation flow.
+- `/recording_studio_orderable` - addon overview page

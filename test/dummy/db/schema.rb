@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_15_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -18,13 +18,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000003) do
   create_table "folders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_folders_on_slug", unique: true
   end
 
   create_table "pages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body"
     t.datetime "created_at", null: false
+    t.string "slug", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_pages_on_slug", unique: true
+  end
+
+  create_table "projects", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_projects_on_slug", unique: true
   end
 
   create_table "recording_studio_access_boundaries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -70,23 +83,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000003) do
     t.uuid "recordable_id", null: false
     t.string "recordable_type", null: false
     t.uuid "recording_id", null: false
+    t.index ["action", "occurred_at"], name: "index_rs_events_on_action_and_occurred_at"
+    t.index ["actor_type", "actor_id", "occurred_at"], name: "index_rs_events_on_actor_and_occurred_at"
     t.index ["recording_id", "idempotency_key"], name: "index_recording_studio_events_on_recording_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["recording_id", "occurred_at", "created_at"], name: "index_rs_events_on_recording_and_timeline", order: { occurred_at: :desc, created_at: :desc }
     t.index ["recording_id"], name: "index_recording_studio_events_on_recording_id"
-  end
-
-  create_table "recording_studio_recording_studio_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "group_key", null: false
-    t.string "name"
-    t.uuid "ordered_recording_ids", default: [], null: false, array: true
-    t.uuid "owner_id"
-    t.string "owner_type"
-    t.uuid "parent_recording_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_scope_lookup"
-    t.index ["parent_recording_id", "group_key", "owner_type", "owner_id"], name: "idx_rs_recording_orders_unique_default_scope", unique: true, where: "(COALESCE(btrim((name)::text), ''::text) = ''::text)"
-    t.index ["parent_recording_id", "group_key"], name: "index_rs_recording_orders_on_parent_and_group"
-    t.index ["parent_recording_id"], name: "idx_on_parent_recording_id_8a5d7bc4a6"
   end
 
   create_table "recording_studio_recordings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -94,14 +95,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_000003) do
     t.uuid "parent_recording_id"
     t.uuid "recordable_id", null: false
     t.string "recordable_type", null: false
+    t.integer "recording_studio_orderable_position"
     t.uuid "root_recording_id"
     t.datetime "trashed_at"
     t.datetime "updated_at", null: false
+    t.index ["parent_recording_id", "recording_studio_orderable_position"], name: "idx_rs_recordings_orderable_sibling_position"
     t.index ["parent_recording_id"], name: "index_recording_studio_recordings_on_parent_recording_id"
     t.index ["parent_recording_id"], name: "index_rs_unique_active_access_boundary_per_parent", unique: true, where: "(((recordable_type)::text = 'RecordingStudio::AccessBoundary'::text) AND (trashed_at IS NULL))"
     t.index ["recordable_id", "root_recording_id"], name: "idx_rs_recordings_root_access", where: "(((recordable_type)::text = 'RecordingStudio::Access'::text) AND (parent_recording_id IS NOT NULL) AND (trashed_at IS NULL))"
     t.index ["recordable_type", "recordable_id", "parent_recording_id", "trashed_at"], name: "index_recording_studio_recordings_on_recordable_parent_trashed"
     t.index ["recordable_type", "recordable_id"], name: "index_recording_studio_recordings_on_recordable"
+    t.index ["recordable_type", "recordable_id"], name: "index_rs_unique_root_recording_per_recordable", unique: true, where: "(parent_recording_id IS NULL)"
+    t.index ["root_recording_id", "parent_recording_id"], name: "index_rs_recordings_on_root_and_parent"
+    t.index ["root_recording_id", "recordable_type", "recordable_id"], name: "index_rs_recordings_on_root_and_recordable"
     t.index ["root_recording_id"], name: "index_rs_recordings_on_root_recording"
   end
 

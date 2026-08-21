@@ -3,16 +3,17 @@ RecordingStudioOrderable install complete.
 Next steps:
 
 1. Review `config/initializers/recording_studio_orderable.rb`.
-  Authorization is handled by `recording_studio_accessible`.
-  Make sure your host app configures `RecordingStudioAccessible` policies/authorizers for mounted pages.
-2. Run `rails generate recording_studio_orderable:migrations`.
-  If your app already has duplicate unnamed orders for the same parent/group/owner scope, the migration will recover them by renaming older duplicates before adding the unique index.
-3. Opt parent recordables into order groups, for example:
+2. Run `bin/rails generate recording_studio_orderable:migrations` and `bin/rails db:migrate`.
+3. Opt parent recordables into sibling ordering:
+
    ```ruby
    class Folder < ApplicationRecord
-     include RecordingStudioOrderable::OrderableRecordable
+     recording_studio_recordable label: "Folder", plural_label: "Folders",
+                                 root: false, allowed_parent_types: %w[Workspace Project]
 
-     recording_studio_order_group :pages, allows: ["Page"]
+     include RecordingStudio::Capabilities::Orderable.to(allows: ["Page"])
    end
    ```
+
+   Installing the gem does not enable order on every recordable.
 4. Run `bin/rails tailwindcss:build` if you use Tailwind CSS.

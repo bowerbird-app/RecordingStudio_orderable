@@ -1,2 +1,4 @@
 class Page < ApplicationRecord
+  recording_studio_recordable label: "Page", plural_label: "Pages", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder Page]
 end

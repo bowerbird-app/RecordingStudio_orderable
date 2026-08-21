@@ -14,7 +14,7 @@ class EngineTest < Minitest::Test
 
   def test_load_config_merges_x_configuration
     xcfg = Struct.new(:recording_studio_orderable).new(
-      { log_order_events: true, event_action_prefix: "custom_order" }
+      { log_order_events: false, event_action: "custom_order" }
     )
     app_config = Struct.new(:x).new(xcfg)
     app = Struct.new(:config, :config_for_result) do
@@ -25,21 +25,21 @@ class EngineTest < Minitest::Test
 
     find_initializer("recording_studio_orderable.load_config").block.call(app)
 
-    assert_equal true, RecordingStudioOrderable.configuration.log_order_events
-    assert_equal "custom_order", RecordingStudioOrderable.configuration.event_action_prefix
+    assert_equal false, RecordingStudioOrderable.configuration.log_order_events
+    assert_equal "custom_order", RecordingStudioOrderable.configuration.event_action
   end
 
   def test_load_config_reads_yaml_when_available
     app_config = Struct.new(:x).new(nil)
     app = Struct.new(:config) do
       def config_for(_name)
-        { event_action_prefix: "custom_order" }
+        { event_action: "custom_order" }
       end
     end.new(app_config)
 
     find_initializer("recording_studio_orderable.load_config").block.call(app)
 
-    assert_equal "custom_order", RecordingStudioOrderable.configuration.event_action_prefix
+    assert_equal "custom_order", RecordingStudioOrderable.configuration.event_action
   end
 
   def test_load_config_ignores_missing_yaml_file
@@ -51,7 +51,7 @@ class EngineTest < Minitest::Test
 
     find_initializer("recording_studio_orderable.load_config").block.call(app)
 
-    assert_equal false, RecordingStudioOrderable.configuration.log_order_events
+    assert_equal true, RecordingStudioOrderable.configuration.log_order_events
   end
 
   def test_load_config_raises_for_invalid_configuration
@@ -69,90 +69,24 @@ class EngineTest < Minitest::Test
     assert_includes error.message, "boom"
   end
 
-  def test_integrate_recording_studio_registers_type_and_extension
-    to_prepare_blocks = []
-    config_stub = Object.new
-    config_stub.define_singleton_method(:to_prepare) do |&block|
-      to_prepare_blocks << block
+  def test_load_yaml_config_returns_nil_when_file_is_missing
+    app = Object.new
+    def app.config_for(_name)
+      raise "Could not load configuration. No such file - missing.yml"
     end
 
-    RecordingStudioOrderable::Engine.stub(:config, config_stub) do
-      find_initializer("recording_studio_orderable.integrate_recording_studio").block.call
-    end
-
-    assert_equal 1, to_prepare_blocks.size
+    assert_nil RecordingStudioOrderable::Engine.load_yaml_config(app)
   end
 
-  def test_integrate_recording_studio_prepares_registration_and_extension_inclusion
-    to_prepare_blocks = []
-    config_stub = Object.new
-    register_calls = []
-    capability_calls = []
+  def test_importmap_initializer_is_registered
+    initializer = find_initializer("recording_studio_orderable.importmap")
 
-    config_stub.define_singleton_method(:to_prepare) do |&block|
-      to_prepare_blocks << block
-    end
-
-    RecordingStudioOrderable::Engine.stub(:config, config_stub) do
-      find_initializer("recording_studio_orderable.integrate_recording_studio").block.call
-    end
-
-    RecordingStudio.stub(:register_recordable_type, ->(type) { register_calls << type }) do
-      RecordingStudio.stub(:register_capability, ->(*args) { capability_calls << args }) do
-        to_prepare_blocks.first.call
-      end
-    end
-
-    assert_equal ["RecordingStudio::RecordingStudioOrder"], register_calls
-    assert_equal [[:recording_studio_orderable, RecordingStudioOrderable::RecordingExtensions]], capability_calls
-  end
-
-  def test_integrate_recording_studio_falls_back_to_extension_inclusion_without_capability_api
-    to_prepare_blocks = []
-    config_stub = Object.new
-    register_calls = []
-    include_calls = []
-
-    config_stub.define_singleton_method(:to_prepare) do |&block|
-      to_prepare_blocks << block
-    end
-
-    RecordingStudioOrderable::Engine.stub(:config, config_stub) do
-      find_initializer("recording_studio_orderable.integrate_recording_studio").block.call
-    end
-
-    RecordingStudio.stub(:register_recordable_type, ->(type) { register_calls << type }) do
-      RecordingStudio.stub(:register_capability, ->(_name, _mod) { raise NoMethodError, "missing" }) do
-        with_temporary_recording_class do |recording_class|
-          recording_class.stub(:included_modules, []) do
-            recording_class.stub(:include, ->(mod) { include_calls << mod }) do
-              to_prepare_blocks.first.call
-            end
-          end
-        end
-      end
-    end
-
-    assert_equal ["RecordingStudio::RecordingStudioOrder"], register_calls
-    assert_equal [RecordingStudioOrderable::RecordingExtensions], include_calls
+    refute_nil initializer
   end
 
   private
 
   def find_initializer(name)
     RecordingStudioOrderable::Engine.initializers.find { |initializer| initializer.name == name }
-  end
-
-  def with_temporary_recording_class
-    had_constant = RecordingStudio.const_defined?(:Recording, false)
-    original_constant = RecordingStudio.const_get(:Recording) if had_constant
-    temporary_class = Class.new
-
-    RecordingStudio.send(:remove_const, :Recording) if had_constant
-    RecordingStudio.const_set(:Recording, temporary_class)
-    yield temporary_class
-  ensure
-    RecordingStudio.send(:remove_const, :Recording) if RecordingStudio.const_defined?(:Recording, false)
-    RecordingStudio.const_set(:Recording, original_constant) if had_constant
   end
 end

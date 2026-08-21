@@ -4,210 +4,168 @@ require "test_helper"
 
 class RecordingStudioOrderableTest < Minitest::Test
   def test_version_exists
-    refute_nil ::RecordingStudioOrderable::VERSION
+    refute_nil RecordingStudioOrderable::VERSION
+  end
+
+  def test_recording_studio_dependency_is_4_1_or_newer
+    spec = Gem.loaded_specs.fetch("recording_studio")
+    gemspec = File.read(File.expand_path("../recording_studio_orderable.gemspec", __dir__))
+
+    assert spec.version >= Gem::Version.new("4.1.0"),
+           "expected recording_studio >= 4.1.0, got #{spec.version}"
+    assert_includes gemspec, 'spec.add_dependency "recording_studio", "~> 4.1"'
+    assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.74"'
+    assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
+    refute_includes gemspec, "recording_studio_accessible"
+  end
+
+  def test_version_matches_latest_changelog_release
+    changelog = File.read(File.expand_path("../CHANGELOG.md", __dir__))
+
+    assert_includes changelog, "## [#{RecordingStudioOrderable::VERSION}]"
   end
 
   def test_engine_exists
-    assert_kind_of Class, ::RecordingStudioOrderable::Engine
+    assert_kind_of Class, RecordingStudioOrderable::Engine
   end
 
-  def test_dummy_app_uses_flatpack_sidebar_layout
-    layout_path = File.expand_path("dummy/app/views/layouts/flat_pack_sidebar.html.erb", __dir__)
-    assert File.exist?(layout_path)
+  def test_page_capability_alias_is_registered
+    assert_equal RecordingStudio::Orderable::Capabilities::Orderable, RecordingStudio::Capabilities::Orderable
+  end
 
+  def test_dummy_uses_core_default_layout
     application_controller_path = File.expand_path("dummy/app/controllers/application_controller.rb", __dir__)
+    home_path = File.expand_path("dummy/app/views/home/index.html.erb", __dir__)
+    login_path = File.expand_path("dummy/app/views/devise/sessions/new.html.erb", __dir__)
     controller_source = File.read(application_controller_path)
-    assert_includes controller_source, "flat_pack_sidebar"
-  end
+    home_source = File.read(home_path)
+    login_source = File.read(login_path)
 
-  def test_recording_studio_capabilities_are_off_by_default
-    initializer_path = File.expand_path("dummy/config/initializers/recording_studio.rb", __dir__)
-    initializer_source = File.read(initializer_path)
-
-    assert_includes initializer_source, "Built-in capabilities remain disabled"
-    refute_includes initializer_source, "config.features."
-  end
-
-  def test_dummy_readme_explains_dummy_app_purpose
-    readme_path = File.expand_path("dummy/README.md", __dir__)
-    readme_source = File.read(readme_path)
-
-    assert_includes readme_source, "Recording Studio custom ordering demo"
-    assert_includes readme_source, "RecordingStudioOrderable"
-  end
-
-  def test_dummy_home_page_mentions_ordering_demo
-    view_path = File.expand_path("dummy/app/views/home/index.html.erb", __dir__)
-    view_source = File.read(view_path)
-    demo_partial_path = File.expand_path("dummy/app/views/home/_page_order_demo.html.erb", __dir__)
-    demo_partial_source = File.read(demo_partial_path)
-    helper_path = File.expand_path("dummy/app/helpers/application_helper.rb", __dir__)
-    helper_source = File.read(helper_path)
-    controller_path = File.expand_path("dummy/app/javascript/controllers/page_order_form_controller.js", __dir__)
-    controller_source = File.read(controller_path)
-    auto_submit_controller_path = File.expand_path("dummy/app/javascript/controllers/auto_submit_controller.js",
-                                                   __dir__)
-    auto_submit_controller_source = File.read(auto_submit_controller_path)
-    home_controller_path = File.expand_path("dummy/app/controllers/home_controller.rb", __dir__)
-    home_controller_source = File.read(home_controller_path)
-
-    assert_includes view_source, "Order Demo Examples"
-    assert_includes view_source, "Ordered List"
-    assert_includes view_source, "-- Add New Order --"
-    refute_includes view_source, "Add new"
-    assert_includes view_source, "FlatPack::Select::Component"
-    assert_includes view_source, "hidden_field_tag :demo, @demo_variant"
-    assert_includes view_source, 'turbo_frame_tag "page_order_demo"'
-    assert_includes view_source, 'data: { turbo_frame: "page_order_demo" }'
-    assert_includes view_source, 'controller: "auto-submit"'
-    assert_includes view_source, 'action: "change->auto-submit#submit"'
-    assert_includes view_source, 'render "page_order_demo", demo_variant: @demo_variant'
-    refute_includes view_source, "select_tag :selected_order_recording_id"
-    refute_includes view_source, 'onchange: "this.form.requestSubmit()"'
-    refute_includes view_source, "grid gap-4 lg:grid-cols-2"
-    refute_includes view_source, "link_to root_path(selected_order_recording_id: list_row.recording.id)"
-    assert_includes view_source, "No ordered list yet"
-    assert_includes view_source, "an ordered list now."
-    assert_includes view_source, "selected_order_recording_id"
-    assert_includes demo_partial_source, "FlatPack::Table::Component"
-    assert_includes demo_partial_source, 'table.column(title: "", html: ->(_row) { page_order_drag_handle })'
-    expected_controller_binding =
-      'data-controller="<%= [("order-update-alert" if send_custom_event), "page-order-form"].compact.join(" ") %>"'
-    assert_includes demo_partial_source, expected_controller_binding
-    assert_includes demo_partial_source, 'data-page-order-form-send-custom-event-value="<%= send_custom_event %>"'
-    assert_includes demo_partial_source, "Code Example"
-    assert_includes demo_partial_source, 'data-page-order-form-target="status"'
-    assert_includes helper_source, "page_order_demo_code_sample"
-    assert_includes helper_source, "page_order_drag_handle"
-    assert_includes helper_source, "content_tag("
-    assert_includes helper_source, '"⋮⋮"'
-    assert_includes helper_source, "cursor-grab"
-    assert_includes helper_source, "Example 1: Custom Event"
-    assert_includes helper_source, "Example 2: Flash Message"
-    refute_includes view_source, "Your named lists"
-    refute_includes view_source, "Each list is owner-scoped to the signed-in user"
-    refute_includes view_source, "Folder page order"
-    refute_includes view_source, "Eligible pages omitted from ordered_recording_ids"
-    assert_includes helper_source, "Auto-appended eligible page"
-    refute_includes helper_source, "flat-pack--table-sortable#moveUp"
-    refute_includes helper_source, "flat-pack--table-sortable#moveDown"
-    refute_includes demo_partial_source, 'table.column(title: "Move"'
-    assert_includes controller_source, "detectSingleMove"
-    assert_includes controller_source, "requestAnimationFrame"
-    assert_includes controller_source, "fetch(this.formTarget.action"
-    assert_includes controller_source, "sendCustomEventValue"
-    assert_includes controller_source, "recordingstudio:order:updated"
-    assert_includes controller_source, "dispatchUpdateEvent"
-    assert_includes controller_source, "visitRedirect"
-    assert_includes controller_source, "window.Turbo?.visit"
-    assert_includes controller_source, "restoreRowOrder"
-    assert_includes controller_source, "updateDisplayedPositions"
-    assert_includes controller_source, 'querySelector("[data-page-order-position]")'
-    refute_includes controller_source, 'querySelector("td")'
-    order_update_alert_controller_path = File.expand_path(
-      "dummy/app/javascript/controllers/order_update_alert_controller.js", __dir__
-    )
-    order_update_alert_controller_source = File.read(order_update_alert_controller_path)
-    assert_includes order_update_alert_controller_source, "recordingstudio:order:updated"
-    assert_includes order_update_alert_controller_source, "console.log(message)"
-    assert_includes auto_submit_controller_source, "requestSubmit"
-    assert_includes auto_submit_controller_source, "event.target.form"
-    assert_includes home_controller_source, "named_page_order_recordings"
-    assert_includes home_controller_source, "selected_page_order_recording"
-    assert_includes home_controller_source, "DEFAULT_DEMO_VARIANT = \"custom_event\""
-    assert_includes home_controller_source, "load_demo_variant"
-    assert_includes home_controller_source, "page_order_demo_path"
-    assert_includes home_controller_source, "ADD_NEW_ORDER_OPTION_VALUE"
-    assert_includes home_controller_source, "add_new_order_option_selected?"
-    assert_includes home_controller_source, "new_page_order_path"
-    refute_includes home_controller_source, "ListRow"
-    refute_includes home_controller_source, "@list_rows"
-    assert_includes home_controller_source, 'CUSTOM_EVENT_NAME = "recordingstudio:order:updated"'
-    assert_includes home_controller_source, "send_custom_event_param?"
-    assert_includes home_controller_source, "redirect_url:"
-    refute_includes home_controller_source, "render_to_string("
-    refute_includes home_controller_source, "notice_html:"
-    assert_includes home_controller_source, "render json: { error:"
-  end
-
-  def test_engine_home_page_uses_flatpack_components
-    view_path = File.expand_path("../app/views/recording_studio_orderable/home/index.html.erb", __dir__)
-    view_source = File.read(view_path)
-
-    assert_includes view_source, "FlatPack::PageTitle::Component"
-    assert_includes view_source, "FlatPack::Badge::Component"
-    assert_includes view_source, "Documentation and demo hub"
-    assert_includes view_source, "mounted pages link directly between the home page"
-    refute_includes view_source, "FlatPack::Card::Component"
-    refute_includes view_source, "dummy app sidebar"
-  end
-
-  def test_engine_application_controller_prefers_sidebar_layout_when_available
-    controller_path = File.expand_path(
-      "../app/controllers/recording_studio_orderable/application_controller.rb",
-      __dir__
-    )
-    controller_source = File.read(controller_path)
-
-    assert_includes controller_source, "layout :recording_studio_orderable_layout"
-    assert_includes controller_source, '"application"'
+    assert_includes controller_source, "RecordingStudio::UsesDefaultLayout"
+    assert_includes controller_source, '"recording_studio/default_layout"'
     refute_includes controller_source, "flat_pack_sidebar"
+    refute File.exist?(File.expand_path("dummy/app/views/layouts/flat_pack_sidebar.html.erb", __dir__))
+    assert_includes home_source, "recording_studio_page_nav("
+    assert_includes home_source, "FlatPack::PageTitle::Component"
+    assert_includes home_source, "FlatPack::Table::Component"
+    assert_includes home_source, "FlatPack::Button::Component"
+    assert_includes login_source, "admin@admin.com"
+    assert_includes login_source, "FlatPack::Card::Component"
   end
 
-  def test_engine_new_order_list_page_uses_back_only_breadcrumb
-    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/new.html.erb",
-                                 __dir__)
-    view_source = File.read(view_path)
+  def test_dummy_enables_orderable_only_on_folder
+    folder = File.read(File.expand_path("dummy/app/models/folder.rb", __dir__))
+    page = File.read(File.expand_path("dummy/app/models/page.rb", __dir__))
+    project = File.read(File.expand_path("dummy/app/models/project.rb", __dir__))
+    workspace = File.read(File.expand_path("dummy/app/models/workspace.rb", __dir__))
 
-    assert_includes view_source, "FlatPack::Breadcrumb::Component"
-    assert_includes view_source, "show_back: true"
-    assert_includes view_source, 'back_href: "javascript:window.history.back()"'
-    assert_includes view_source, "@parent_recording_label"
-    refute_includes view_source, "show_home: true"
-    refute_includes view_source, "home_url: main_app.root_path"
-    refute_includes view_source, 'breadcrumb.item(text: "Create ordered list")'
-    refute_includes view_source, "Save a new order list for this recording."
+    assert_includes folder, "include RecordingStudio::Capabilities::Orderable.to"
+    assert_includes folder, 'allows: [ "Page" ]'
+    refute_includes page, "Orderable.to"
+    refute_includes project, "Orderable.to"
+    refute_includes workspace, "Orderable.to"
+    refute_includes folder, "OrderableRecordable"
+    refute_includes folder, "recording_studio_order_group"
   end
 
-  def test_engine_edit_order_list_page_shows_ordered_records_table
-    view_path = File.expand_path("../app/views/recording_studio_orderable/recording_studio_orders/edit.html.erb",
-                                 __dir__)
-    view_source = File.read(view_path)
-
-    assert_includes view_source, 'title: "Reorder"'
-    refute_includes view_source, 'subtitle: "Drag to reorder. Changes are saved automatically."'
-    assert_includes view_source, "FlatPack::Table::Component"
-    assert_includes view_source, "draggable_rows: true"
-    assert_includes view_source, "table:reordered->page-order-form#sync"
-    assert_includes view_source, "Name"
-    refute_includes view_source, 'title: "Position"'
-    refute_includes view_source, 'title: "Type"'
-    refute_includes view_source, 'title: "Recording ID"'
-    refute_includes view_source, 'render "order_form"'
-    refute_includes view_source, "recording_studio_order[name]"
+  def test_dummy_recordables_declare_recording_studio_hierarchy
+    assert_dummy_model_includes("workspace.rb", 'recording_studio_recordable label: "Workspace"')
+    assert_dummy_model_includes("workspace.rb", "root: true")
+    assert_dummy_model_includes("project.rb", 'recording_studio_recordable label: "Project"')
+    assert_dummy_model_includes("folder.rb", 'recording_studio_recordable label: "Folder"')
+    assert_dummy_model_includes("page.rb", 'recording_studio_recordable label: "Page"')
   end
 
-  def test_dummy_sidebar_uses_host_app_sign_out_route
-    sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
-    sidebar_source = File.read(sidebar_path)
+  def test_dummy_current_supports_actor_and_impersonator
+    current_model = File.read(File.expand_path("dummy/app/models/current.rb", __dir__))
 
-    assert_includes sidebar_source, "main_app.destroy_user_session_path"
+    assert_includes current_model, "attribute :actor, :impersonator"
   end
 
-  def test_dummy_sidebar_uses_heroicon_style_icon_names
-    sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
-    sidebar_source = File.read(sidebar_path)
+  def test_dummy_does_not_ship_template_docs_pages
+    refute File.exist?(File.expand_path("dummy/app/views/docs/setup.html.erb", __dir__))
+    refute File.exist?(File.expand_path("dummy/app/views/docs/configuration.html.erb", __dir__))
+    refute File.exist?(File.expand_path("dummy/app/views/docs/methods_page.html.erb", __dir__))
+    refute File.exist?(File.expand_path("dummy/app/views/docs/views_page.html.erb", __dir__))
+    refute File.exist?(File.expand_path("dummy/app/controllers/docs_controller.rb", __dir__))
+  end
 
-    assert_includes sidebar_source, "Drag & Drop: Custom Event"
-    assert_includes sidebar_source, "Drag & Drop: Flash Message"
-    assert_includes sidebar_source, 'main_app.root_path(demo: "custom_event")'
-    assert_includes sidebar_source, 'main_app.root_path(demo: "flash_message")'
-    assert_includes sidebar_source, "icon: :arrows_up_down"
-    assert_includes sidebar_source, "icon: :bell_alert"
-    assert_includes sidebar_source, "icon: :wrench_screwdriver"
-    assert_includes sidebar_source, "icon: :cog_6_tooth"
-    assert_includes sidebar_source, "icon: :code_bracket"
-    assert_includes sidebar_source, "icon: :rectangle_stack"
-    assert_includes sidebar_source, "icon: :arrow_right_on_rectangle"
+  def test_dummy_readme_explains_host_purpose
+    readme = File.read(File.expand_path("dummy/README.md", __dir__))
+
+    assert_includes readme, "Recording Studio Orderable"
+    assert_includes readme, "default layout"
+    refute_includes readme, "gem_template"
+  end
+
+  def test_product_readme_is_not_template_copy
+    readme = File.read(File.expand_path("../README.md", __dir__))
+
+    assert_includes readme, "Recording Studio Orderable"
+    assert_includes readme, "RecordingStudio::Capabilities::Orderable.to"
+    refute_includes readme, "RecordingStudio::RecordingStudioOrder"
+    refute_includes readme, "OrderableRecordable"
+    refute_includes readme, "Welcome to the template"
+  end
+
+  def test_engine_does_not_register_an_order_recordable
+    engine = File.read(File.expand_path("../lib/recording_studio_orderable/engine.rb", __dir__))
+    models = Dir.glob(File.expand_path("../app/models/**/*.rb", __dir__))
+
+    refute_includes engine, "register_recordable_type"
+    assert_empty models
+  end
+
+  def test_capability_options_for_reads_registered_options
+    RecordingStudio.stub(:capability_options, { allows: ["Page"] }) do
+      assert_equal({ allows: ["Page"] }, RecordingStudioOrderable.capability_options_for("Folder"))
+    end
+  end
+
+  def test_capability_options_for_handles_missing_api
+    RecordingStudio.stub(:capability_options, ->(*) { raise NoMethodError }) do
+      assert_equal({}, RecordingStudioOrderable.capability_options_for("Folder"))
+    end
+  end
+
+  def test_capability_options_for_accepts_class_and_recording
+    recording = Struct.new(:recordable_type).new("Folder")
+
+    RecordingStudio.stub(:capability_options, ->(*args, **kwargs) { { args: args, kwargs: kwargs } }) do
+      assert_equal "Folder", RecordingStudioOrderable.send(:capability_type_name, FolderType)
+      assert_equal "Folder", RecordingStudioOrderable.send(:capability_type_name, :Folder)
+      assert_equal "Folder", RecordingStudioOrderable.send(:capability_type_name, recording)
+      assert_nil RecordingStudioOrderable.send(:capability_type_name, nil)
+    end
+  end
+
+  def test_authorized_delegates_to_authorization
+    called = nil
+    RecordingStudioOrderable::Authorization.stub(
+      :authorized?,
+      lambda { |**kwargs|
+        called = kwargs
+        true
+      }
+    ) do
+      assert RecordingStudioOrderable.authorized?(action: :reorder, actor: :user, recording: :rec)
+    end
+
+    assert_equal :reorder, called[:action]
+    assert_equal :user, called[:actor]
+    assert_equal :rec, called[:recording]
+  end
+
+  FolderType = Class.new do
+    def self.name
+      "Folder"
+    end
+  end
+
+  private
+
+  def assert_dummy_model_includes(filename, snippet)
+    source = File.read(File.expand_path("dummy/app/models/#{filename}", __dir__))
+    assert_includes source, snippet
   end
 end

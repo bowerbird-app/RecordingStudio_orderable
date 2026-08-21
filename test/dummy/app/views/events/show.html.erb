@@ -1,0 +1,42 @@
+<% recording_studio_page_nav(
+  title: "Events",
+  page_nav_back_url: main_app.root_path,
+  page_nav_anchor_url: main_app.root_path,
+  page_nav_anchor_label: "Close"
+) %>
+
+<div class="flex flex-col gap-6">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Events",
+    subtitle: "All Recording Studio events in the dummy app",
+    variant: :h1
+  ) %>
+
+  <% if @events.empty? %>
+    <%= render FlatPack::Alert::Component.new(description: "No events recorded yet.", style: :info) %>
+  <% else %>
+    <%= render FlatPack::Table::Component.new(data: @events) do |table| %>
+      <% table.column(title: "action", html: ->(event) { event.action }) %>
+      <% table.column(
+           title: "item",
+           html: ->(event) { safe_join([event_recording_label(event), tag.br, event.recordable_type]) }
+         ) %>
+      <% table.column(title: "actor", html: ->(event) { event_actor_label(event) }) %>
+      <% table.column(
+           title: "when",
+           html: lambda { |event|
+             trigger_id = "event-occurred-at-#{event.id}"
+             safe_join([
+               button_tag("#{time_ago_in_words(event.occurred_at)} ago", id: trigger_id, type: "button"),
+               render(
+                 FlatPack::Popover::Component.new(trigger_id: trigger_id, placement: :top) do |popover|
+                   popover.content { l(event.occurred_at, format: :long) }
+                 end
+               )
+             ])
+           }
+         ) %>
+      <% table.column(title: "metadata", html: ->(event) { tag.pre(event_metadata(event)) }) %>
+    <% end %>
+  <% end %>
+</div>
