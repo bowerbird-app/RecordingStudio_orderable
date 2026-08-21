@@ -32,7 +32,7 @@ jobs:
         ruby-version: ['3.3']
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Ruby ${{ matrix.ruby-version }}
       uses: ruby/setup-ruby@v1
@@ -55,10 +55,22 @@ jobs:
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/gem_template_test
 
+    - name: Build dummy Tailwind
+      run: bundle exec rails tailwindcss:build
+      working-directory: test/dummy
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/gem_template_test
+
     - name: Run RuboCop
       run: bundle exec rubocop
 
-    - name: Run tests
+    - name: Run gem tests
       run: bundle exec rake app:test
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/gem_template_test
+
+    - name: Run dummy tests
+      run: bundle exec rails test
+      working-directory: test/dummy
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/gem_template_test

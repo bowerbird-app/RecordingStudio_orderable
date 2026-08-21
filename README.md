@@ -1,131 +1,162 @@
-# GemTemplate
+# Recording Studio Orderable
 
-Internal template for building Rails engine addons on top of RecordingStudio.
+Recording Studio Orderable is the opt-in sibling-position addon for `RecordingStudio`.
 
-## What's Included
+It lets a parent recordable type sort its children without creating a product-managed order object in the recording tree. Position is a column on the child recording. Reorder history is an event on the parent.
 
-- **RecordingStudio** gem installed and configured
-- **Devise** authentication with a pre-seeded admin user
-- **Workspace** root recording set up following RecordingStudio's Quick Start pattern
-- **FlatPack** UI component library for all views
-- **Dummy app** (`test/dummy/`) with a working login screen and FlatPack default sidebar layout for authenticated pages
+## What the gem provides
 
-## Quick Start
+- gem name: `recording_studio_orderable`
+- Ruby namespace: `RecordingStudioOrderable`
+- capability opt-in through `RecordingStudio::Capabilities::Orderable.to`
+- namespaced methods on `RecordingStudio::Recording`
+  - `recording_studio_orderable_children`
+  - `recording_studio_orderable_reorder!`
+  - `recording_studio_orderable_move!`
+- addon-owned migration for `recording_studio_orderable_position` on `recording_studio_recordings`
+- optional `log_event!` history when siblings are reordered
+- optional RecordingStudioAccessible authorization when that addon is loaded
 
-### GitHub Codespaces (Recommended)
+Installing the gem does not enable order on every recordable.
 
-1. Click **Code** → **Codespaces** → **Create codespace**
-2. Wait for setup to complete
-3. Run:
-   ```bash
-   cd test/dummy
-   bin/rails db:setup
-   bin/dev
-   ```
-4. Open port 3000 — you'll see the login screen
+## Installation
 
-The dummy app already includes FlatPack generator output (`flat_pack:install` and default sidebar layout scaffold) so authenticated pages render with the FlatPack sidebar shell by default.
-
-### Login Credentials
-
-| Field    | Value             |
-|----------|-------------------|
-| Email    | admin@admin.com   |
-| Password | Password          |
-
-The login form is prefilled with these credentials for fast access.
-
-## Architecture
-
-### Root Recording Pattern
-
-This template follows RecordingStudio's root recording pattern:
-
-- **Workspace** is the top-level recordable
-- A root `RecordingStudio::Recording` wraps the Workspace
-- The admin user has root-level admin access via `RecordingStudio::Access`
-- `Current.actor` is set from `current_user` (Devise) in `ApplicationController`
-
-### Extending RecordingStudio
-
-To add new recordable types:
-
-1. Create your model (e.g., `Page`, `Comment`)
-2. Register it in `config/initializers/recording_studio.rb`:
-   ```ruby
-   RecordingStudio.configure do |config|
-     config.recordable_types = ["Workspace", "YourNewType"]
-   end
-   ```
-3. Leave optional behavior off by default, then opt into capabilities on the specific recordable models that need them:
-   ```ruby
-   class YourNewType < ApplicationRecord
-     include RecordingStudio::Capabilities::Movable.to("Workspace")
-     include RecordingStudio::Capabilities::Copyable.to("Workspace")
-   end
-   ```
-4. If you want per-device root persistence, wire it explicitly in your controller layer:
-   ```ruby
-   class ApplicationController < ActionController::Base
-     include RecordingStudio::Concerns::DeviceSessionConcern
-   end
-   ```
-5. Create recordings under the root:
-   ```ruby
-   root_recording.record(YourNewType) do |record|
-     record.title = "Example"
-   end
-   ```
-
-### Capabilities
-
-This template uses the current RecordingStudio approach: built-in capabilities are off by default and are enabled per recordable type by including the relevant module on the model.
-
-- `movable`
-- `copyable`
-
-Device session persistence is separate from capabilities. It is enabled only when you include `RecordingStudio::Concerns::DeviceSessionConcern` in your controller layer.
-
-Enable behavior intentionally where it belongs:
+Add the gems to your host app. This addon requires Recording Studio 4.1.0 or newer:
 
 ```ruby
-class RecordingStudioPage < ApplicationRecord
-  include RecordingStudio::Capabilities::Movable.to("Workspace")
-  include RecordingStudio::Capabilities::Copyable.to("Workspace")
+gem "recording_studio"
+gem "recording_studio_orderable"
+```
+
+Then run:
+
+```bash
+bundle install
+bin/rails generate recording_studio_orderable:install
+bin/rails generate recording_studio_orderable:migrations
+bin/rails db:migrate
+```
+
+## Setup
+
+Mount the engine if you did not use the install generator:
+
+```ruby
+mount RecordingStudioOrderable::Engine, at: "/recording_studio_orderable"
+```
+
+Configure RecordingStudio normally, then enable Orderable only on the parent types whose children should be sortable:
+
+```ruby
+RecordingStudio.configure do |config|
+  config.recordable_types = %w[Workspace Project Folder Page]
+  config.actor = -> { Current.actor }
 end
 
-class ApplicationController < ActionController::Base
-  include RecordingStudio::Concerns::DeviceSessionConcern
+class Workspace < ApplicationRecord
+  recording_studio_recordable label: "Workspace", plural_label: "Workspaces", root: true
+end
+
+class Project < ApplicationRecord
+  recording_studio_recordable label: "Project", plural_label: "Projects",
+                              root: false, allowed_parent_types: ["Workspace"]
+end
+
+class Folder < ApplicationRecord
+  recording_studio_recordable label: "Folder", plural_label: "Folders", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder]
+
+  include RecordingStudio::Capabilities::Orderable.to(allows: ["Page"])
+end
+
+class Page < ApplicationRecord
+  recording_studio_recordable label: "Page", plural_label: "Pages", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder Page]
+end
+
+RecordingStudioOrderable.configure do |config|
+  config.log_order_events = true
+  config.event_action = "reordered"
 end
 ```
 
-### FlatPack UI Components
+## Adding to a recordable
 
-All views use FlatPack ViewComponents. Available components include:
+Recordables stay opt-in. Include the capability only on the parent models that should order their children:
 
-- `FlatPack::Button::Component` — Buttons (`:primary`, `:secondary`, `:ghost`)
-- `FlatPack::Card::Component` — Cards (`:default`, `:elevated`, `:outlined`)
-- `FlatPack::Alert::Component` — Alerts (`:success`, `:error`, `:warning`, `:info`)
-- `FlatPack::Badge::Component` — Status badges
-- `FlatPack::Table::Component` — Data tables
-- `FlatPack::TextInput::Component`, `EmailInput`, `PasswordInput` — Form inputs
-- `FlatPack::Breadcrumb::Component` — Navigation breadcrumbs
-- `FlatPack::Navbar::Component` — Navigation sidebar
+```ruby
+class Folder < ApplicationRecord
+  recording_studio_recordable label: "Folder", plural_label: "Folders", root: false,
+                              allowed_parent_types: %w[Workspace Project Folder]
 
-See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full documentation.
+  include RecordingStudio::Capabilities::Orderable.to(allows: ["Page"])
+end
+```
 
-## Tech Stack
+`allows:` limits which direct child recordable types participate. Omit it to order every direct child.
 
-| Component       | Version |
-|-----------------|---------|
-| Ruby            | 3.3+    |
-| Rails           | 8.1+    |
-| PostgreSQL      | 16      |
-| TailwindCSS     | 4       |
-| RecordingStudio | v0.1.0-alpha (pinned in `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.33 (pinned in `test/dummy/Gemfile`) |
-| Devise          | latest  |
+Media kits use the same shape: enable Orderable on the kit, then reorder image and document siblings inside that kit. Those children stay ordinary recordings. Order is not a snapshot recordable and does not clog the tree.
 
-## Documentation
+## Ordering methods
 
-The original gem template documentation is preserved in `docs/gem_template/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.
+The addon uses addon-owned method names on `RecordingStudio::Recording`:
+
+```ruby
+folder_recording.recording_studio_orderable_children
+# => Page recordings under the folder, ordered by position then created_at
+
+folder_recording.recording_studio_orderable_reorder!(
+  ordered_recording_ids: [page_b.id, page_a.id, page_c.id],
+  actor: current_user
+)
+
+folder_recording.recording_studio_orderable_move!(
+  page_c,
+  to_index: 0,
+  actor: current_user
+)
+```
+
+Reads are resilient:
+
+- requested ids that are not eligible children are ignored
+- eligible children missing from the list are appended in `created_at`, `id` order
+- `NULL` positions sort last
+
+Writes update `recording_studio_orderable_position` on the child recordings. They do not create, revise, or nest a `RecordingOrder` recordable.
+
+## Events
+
+When `config.log_order_events` is true (the default), a successful reorder calls `log_event!` on the parent:
+
+```ruby
+action: "reordered"
+metadata: {
+  ordered_recording_ids: [...],
+  previous_ordered_recording_ids: [...],
+  moving_recording_id: "...", # present for move!
+  to_index: 0
+}
+```
+
+Events answer what happened to the parent object. High-churn position lists stay on the recordings table.
+
+## Authorization
+
+If `recording_studio_accessible` is loaded and `config.use_recording_studio_accessible` is true, reorder calls check `config.authorization_role` (default `:edit`). Set an explicit `authorization_resolver` to replace that check. With neither Accessible nor a resolver, reorder is allowed.
+
+## Dummy app
+
+`test/dummy` is a host that proves the gem. It uses Recording Studio's default layout (back, optional close, title, optional buttons, then content) and Flatpack components.
+
+- Sign in as `admin@admin.com` / `Password`
+- Folder is the only orderable type (`allows: ["Page"]`)
+- Home shows that folder's pages with move controls
+- Events lists reorder history from `log_event!`
+
+## Validation
+
+```bash
+bundle exec rubocop
+bundle exec rake app:test
+```

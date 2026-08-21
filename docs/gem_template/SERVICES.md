@@ -6,7 +6,10 @@
 
 ---
 
+
 # Service Objects
+
+> **Note:** If your service objects interact with order updates or UI flows, be aware of the drag-save notification/event contract. The engine can dispatch a custom event (`recordingstudio:order:updated`) for host notification integration. See INSTALLING.md and CONFIGURATION.md for details.
 
 Business logic in GemTemplate is encapsulated in service objects using the Result monad pattern.
 

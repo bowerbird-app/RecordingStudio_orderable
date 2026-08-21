@@ -93,6 +93,26 @@ This ensures Tailwind scans the engine's templates for class names during CSS co
 
 ---
 
+
+## Drag-Save Notification & Event Integration
+
+When using the drag-to-reorder UI provided by the engine, you can choose how notifications are handled after a successful save:
+
+- **Default:** The client revisits the page after each drag-save so the standard Rails flash notice can render.
+- **Custom event:** Set <code>send_custom_event: true</code> on the drag-save form to dispatch a <code>recordingstudio:order:updated</code> event on <code>document</code> with a payload like <code>{ message, status, selected_order_recording_id, moving_recording_id, target_position }</code>.
+
+This allows you to integrate your own notification system (toast, snackbar, etc.) or handle order updates in custom JavaScript:
+
+```js
+document.addEventListener("recordingstudio:order:updated", (event) => {
+  // event.detail = { message, status, ... }
+  // Integrate with your notification system here
+  console.log(event.detail.message)
+})
+```
+
+See the dummy app for a working example.
+
 ## Manual Installation
 
 If you prefer not to use the generator:

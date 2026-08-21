@@ -1,86 +1,107 @@
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<% recording_studio_page_nav(
+  title: "Order demo",
+  page_nav_anchor_url: main_app.root_path,
+  page_nav_anchor_label: "Home"
+) %>
+
+<% recording_studio_page_nav_right do %>
+  <%= render FlatPack::Button::Component.new(
+    text: "Sign out",
+    style: :ghost,
+    href: main_app.destroy_user_session_path,
+    data: { turbo_method: :delete }
+  ) %>
+<% end %>
+
+<div class="flex flex-col gap-8">
   <%= render FlatPack::PageTitle::Component.new(
-    title: @workspace&.name || "Recording Studio addon template",
-    subtitle: "Use this dummy app to validate authentication, root recording setup, and addon UI wiring before you rename the engine.",
+    title: "Order demo",
+    subtitle: "Sibling position for children of an orderable parent. Folder is opted in; Project is not.",
     variant: :h1
   ) %>
 
-  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Template workflow",
-          subtitle: "The first things to change when you turn this into a real addon.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+  <%= render "home/demo_nav" %>
 
-      <% card.body do %>
-        <ol class="space-y-4 text-sm leading-6 text-[var(--surface-content-color)]">
-          <li>
-            Rename the gem with <code>bin/rename_gem your_addon_name</code> once the engine structure looks right.
-          </li>
-          <li>
-            Replace the sample migration with your addon's real tables and then run <code>rails generate gem_template:migrations</code> in the host app.
-          </li>
-          <li>
-            Register your recordable types in <code>test/dummy/config/initializers/recording_studio.rb</code> and add capabilities only where they are needed.
-          </li>
-          <li>
-            Use this dummy app to check layout, authentication, Tailwind sources, and root recording behavior before shipping the engine.
-          </li>
-        </ol>
-      <% end %>
+  <% if @folder_recording %>
+    <%= render FlatPack::SectionTitle::Component.new(
+      title: "Pages in #{@folder_recording.recordable.name}",
+      subtitle: "These siblings share a parent that included RecordingStudio::Capabilities::Orderable.to."
+    ) %>
+
+    <%= render FlatPack::Table::Component.new(data: @ordered_pages) do |table| %>
+      <% table.column(
+           title: "position",
+           html: ->(recording) { recording.recording_studio_orderable_position }
+         ) %>
+      <% table.column(
+           title: "name",
+           html: lambda { |recording|
+             recording.recordable.respond_to?(:title) ? recording.recordable.title : recording.recordable_type
+           }
+         ) %>
+      <% table.column(title: "type", html: ->(recording) { recording.recordable_type }) %>
+      <% table.column(
+           title: "action",
+           html: lambda { |recording|
+             index = @ordered_pages.index(recording)
+             actions = []
+
+             if index&.positive?
+               actions << form_with(
+                 url: main_app.move_page_path(recording),
+                 method: :patch,
+                 data: { turbo: false },
+                 html: { class: "shrink-0" }
+               ) do
+                 safe_join([
+                   hidden_field_tag(:to_index, index - 1),
+                   render(FlatPack::Button::Component.new(text: "Move up", style: :secondary, type: "submit"))
+                 ])
+               end
+             end
+
+             if index && index < @ordered_pages.length - 1
+               actions << form_with(
+                 url: main_app.move_page_path(recording),
+                 method: :patch,
+                 data: { turbo: false },
+                 html: { class: "shrink-0" }
+               ) do
+                 safe_join([
+                   hidden_field_tag(:to_index, index + 1),
+                   render(FlatPack::Button::Component.new(text: "Move down", style: :secondary, type: "submit"))
+                 ])
+               end
+             end
+
+             content_tag(:div, safe_join(actions), class: "flex flex-wrap items-center gap-2")
+           }
+         ) %>
     <% end %>
+  <% else %>
+    <%= render FlatPack::Alert::Component.new(
+      description: "Seed the dummy app to load an orderable folder and its pages.",
+      style: :info
+    ) %>
+  <% end %>
 
-    <div class="flex flex-col gap-6">
-      <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-        <% card.header do %>
-          <%= render FlatPack::PageTitle::Component.new(
-            title: "Workspace state",
-            subtitle: "The seeded Recording Studio baseline for local development.",
-            variant: :h3,
-            class: "mb-0 pb-0"
-          ) %>
-        <% end %>
+  <% if @unordered_project_recording %>
+    <section class="flex flex-col gap-4">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Project is not orderable",
+        subtitle: "Installing the gem does not enable order on every recordable."
+      ) %>
 
+      <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
         <% card.body do %>
-          <dl class="space-y-3 text-sm">
-            <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Workspace</dt>
-              <dd class="font-medium"><%= @workspace&.name || "Not seeded" %></dd>
-            </div>
-            <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Root recording</dt>
-              <dd class="font-mono text-xs"><%= @root_recording&.id || "Missing" %></dd>
-            </div>
-            <div>
-              <dt class="text-[var(--surface-muted-content-color)]">Signed in as</dt>
-              <dd class="font-medium"><%= current_user.email %></dd>
-            </div>
-          </dl>
+          <p>
+            <%= @unordered_project_recording.recordable.name %>
+            has not included
+            <code>RecordingStudio::Capabilities::Orderable.to</code>.
+            Only Folder opted in for this demo.
+          </p>
         <% end %>
       <% end %>
-
-      <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-        <% card.header do %>
-          <%= render FlatPack::PageTitle::Component.new(
-            title: "Useful routes",
-            subtitle: "Quick links for checking the mounted engine and local app shell.",
-            variant: :h3,
-            class: "mb-0 pb-0"
-          ) %>
-        <% end %>
-
-        <% card.body do %>
-          <div class="space-y-3 text-sm">
-            <p><strong>App home:</strong> <code>/</code></p>
-            <p><strong>Recording Studio mount:</strong> <code>/recording_studio</code></p>
-            <p><strong>Health check:</strong> <code>/up</code></p>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
-  </div>
+    </section>
+  <% end %>
 </div>

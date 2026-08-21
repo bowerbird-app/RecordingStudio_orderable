@@ -1,0 +1,9 @@
+<div class="flex flex-wrap gap-3">
+  <% demo_nav_links.each do |link| %>
+    <%= render FlatPack::Button::Component.new(
+      text: link.fetch(:text),
+      style: :secondary,
+      href: link.fetch(:href)
+    ) %>
+  <% end %>
+</div>

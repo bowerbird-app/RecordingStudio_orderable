@@ -3,7 +3,7 @@
 require "test_helper"
 require "fileutils"
 require "tmpdir"
-require "generators/gem_template/install/install_generator"
+require "generators/recording_studio_orderable/install/install_generator"
 
 class InstallGeneratorTest < Minitest::Test
   def with_temp_app
@@ -14,7 +14,7 @@ class InstallGeneratorTest < Minitest::Test
   end
 
   def build_generator(destination_root, options = {})
-    GemTemplate::Generators::InstallGenerator.new(
+    RecordingStudioOrderable::Generators::InstallGenerator.new(
       [],
       options,
       destination_root: destination_root
@@ -29,7 +29,20 @@ class InstallGeneratorTest < Minitest::Test
       generator.mount_engine
     end
 
-    assert_equal ["mount GemTemplate::Engine, at: \"/addons/recording\""], routes
+    assert_equal ["mount RecordingStudioOrderable::Engine, at: \"/addons/recording\""], routes
+  end
+
+  def test_copy_initializer_uses_expected_destination
+    generator = build_generator("/tmp")
+    template_calls = []
+
+    generator.stub(:template, ->(*args) { template_calls << args }) do
+      generator.copy_initializer
+    end
+
+    assert_equal [
+      ["recording_studio_orderable_initializer.rb", "config/initializers/recording_studio_orderable.rb"]
+    ], template_calls
   end
 
   def test_add_tailwind_source_injects_engine_and_flatpack_sources
@@ -55,10 +68,13 @@ class InstallGeneratorTest < Minitest::Test
       css_path = File.join(dir, "app/assets/tailwind/application.css")
       File.write(css_path, <<~CSS)
         @import "tailwindcss";
-        @source "../../vendor/bundle/**/gem_template/app/views/**/*.erb";
-        @source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/gem_template-*/app/views/**/*.erb";
-        @source "../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";
-        @source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
+        @source "../../../vendor/bundle/**/recording_studio_orderable*/app/views/**/*.erb";
+        @source "../../../vendor/bundle/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";
+        @source "/usr/local/bundle/ruby/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";
+        @source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+        @source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";
+        @source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+        @source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.erb";
       CSS
 
       generator = build_generator(dir)
@@ -73,6 +89,57 @@ class InstallGeneratorTest < Minitest::Test
       assert_tailwind_sources_present(css)
       assert_tailwind_sources_count(css, 1)
     end
+  end
+
+  def test_add_tailwind_source_warns_when_tailwind_css_is_missing
+    messages = []
+    generator = build_generator("/tmp")
+
+    Rails.stub(:root, Pathname.new("/tmp")) do
+      generator.stub(:say, ->(message, *) { messages << message }) do
+        generator.add_tailwind_source
+      end
+    end
+
+    assert_includes messages, "Tailwind CSS not detected. Skipping Tailwind configuration."
+    assert_includes messages, "If you use Tailwind, add these lines to your Tailwind CSS config:"
+    tailwind_source_lines.each do |line|
+      assert_includes messages, "  #{line}"
+    end
+  end
+
+  def test_add_tailwind_source_shows_manual_notice_without_import_line
+    with_temp_app do |dir|
+      css_path = File.join(dir, "app/assets/tailwind/application.css")
+      File.write(css_path, "body { color: black; }\n")
+      messages = []
+      generator = build_generator(dir)
+
+      Rails.stub(:root, Pathname.new(dir)) do
+        generator.stub(:say, ->(message, *) { messages << message }) do
+          generator.add_tailwind_source
+        end
+      end
+
+      assert_includes messages, 'Could not find @import "tailwindcss" in your Tailwind config.'
+      assert_includes messages, "Please manually add these lines to your Tailwind CSS config:"
+      tailwind_source_lines.each do |line|
+        assert_includes messages, "  #{line}"
+      end
+    end
+  end
+
+  def test_show_readme_reads_install_file_when_invoked
+    generator = build_generator("/tmp")
+    readme_calls = []
+
+    generator.stub(:behavior, :invoke) do
+      generator.stub(:readme, ->(path) { readme_calls << path }) do
+        generator.show_readme
+      end
+    end
+
+    assert_equal ["INSTALL.md"], readme_calls
   end
 
   private
@@ -91,10 +158,13 @@ class InstallGeneratorTest < Minitest::Test
 
   def tailwind_source_lines
     [
-      '@source "../../vendor/bundle/**/gem_template/app/views/**/*.erb";',
-      '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/gem_template-*/app/views/**/*.erb";',
-      '@source "../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";',
-      '@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";'
+      '@source "../../../vendor/bundle/**/recording_studio_orderable*/app/views/**/*.erb";',
+      '@source "../../../vendor/bundle/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";',
+      '@source "/usr/local/bundle/ruby/**/bundler/gems/recording_studio_orderable-*/app/views/**/*.erb";',
+      '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";',
+      '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";',
+      '@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.rb";',
+      '@source "/usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.erb";'
     ]
   end
 end
