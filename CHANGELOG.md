@@ -7,8 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-02
+
+Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build.
+
+### Added
+- `.cursor/environment.json` runs `.cursor/install.sh` and `.cursor/start.sh`
+- `.cursor/install.sh` provisions a cold image. On a warm snapshot it skips apt, ruby-build, db:prepare, and tailwind when Ruby, bundle, and Postgres are already usable. A skippable provision failure does not fail the Build. Fetch-skills always runs last
+- `.cursor/fetch-skills.sh` downloads recording-studio skills and plugin rules. It never clones the plugin or vendors `SKILL.md`
+- `.cursor/start.sh` starts PostgreSQL on each environment boot
+- [Cursor skills in Cloud Agents](docs/cursor-skills.md)
+
 ### Fixed
 - Dummy Tailwind `@source` paths now scan `vendor/bundle` RecordingStudio views and Flatpack `.rb` / `.erb` components so host CSS includes button, table, card, and page-nav utilities
+
+### Upgrade Notes
+- No host or schema changes. Rebuild the Cloud Agent environment with Draft off so Build loads the pack
 
 ## [0.2.0] - 2026-08-21
 
@@ -50,7 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.2.0
 [0.1.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.0
