@@ -61,6 +61,17 @@ module RecordingStudio
             )
           end
 
+          def recording_studio_orderable_append!(moving, actor: nil, impersonator: nil, metadata: {})
+            recording_studio_orderable_assert_capability!
+            recording_studio_orderable_authorize!(:reorder, actor: actor)
+            RecordingStudioOrderable::SiblingOrder.new(self).append!(
+              moving,
+              actor: actor,
+              impersonator: impersonator,
+              metadata: metadata
+            )
+          end
+
           private
 
           def recording_studio_orderable_assert_capability!

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-07
+
+### Added
+- `recording_studio_orderable_append!` moves an eligible child to the end of the sibling list. Hosts no longer compute `to_index` for append.
+
+### Upgrade Notes
+- No host or schema changes. `recording_studio_orderable_move!` and `recording_studio_orderable_reorder!` are unchanged.
+- To append, call `parent.recording_studio_orderable_append!(child, actor: current_user)` instead of `move!` with the last index.
+
 ## [0.2.1] - 2026-09-02
 
 Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build.
@@ -64,7 +73,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.2.0
 [0.1.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.1
