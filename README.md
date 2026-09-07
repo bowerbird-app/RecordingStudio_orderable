@@ -123,7 +123,7 @@ folder_recording.recording_studio_orderable_append!(
 )
 ```
 
-`recording_studio_orderable_append!` moves an eligible child to the end of the sibling list. Hosts do not pass `to_index`. The helper calls the same `move!` path that already clamps a large index to the end.
+`recording_studio_orderable_append!` moves an eligible child to the end of the sibling list.
 
 Reads are resilient:
 
