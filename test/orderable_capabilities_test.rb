@@ -189,6 +189,37 @@ class OrderableCapabilitiesTest < Minitest::Test
     assert_equal "c", parent.logged_events.first[:metadata][:moving_recording_id]
   end
 
+  def test_append_moves_child_to_end_and_authorizes
+    children = [
+      FakeRecording.new(id: "a", recordable_type: "Page", recording_studio_orderable_position: 0),
+      FakeRecording.new(id: "b", recordable_type: "Page", recording_studio_orderable_position: 1),
+      FakeRecording.new(id: "c", recordable_type: "Page", recording_studio_orderable_position: 2)
+    ]
+    parent = FakeRecording.new(id: "folder", child_records: children)
+
+    RecordingStudioOrderable.stub(:authorized?, true) do
+      parent.recording_studio_orderable_append!(children[0], actor: :admin)
+    end
+
+    assert_equal 2, children[0].recording_studio_orderable_position
+    assert_equal 0, children[1].recording_studio_orderable_position
+    assert_equal 1, children[2].recording_studio_orderable_position
+    assert_equal "a", parent.logged_events.first[:metadata][:moving_recording_id]
+    assert_equal 2, parent.logged_events.first[:metadata][:to_index]
+  end
+
+  def test_append_raises_when_unauthorized
+    parent = FakeRecording.new(id: "folder", child_records: [])
+
+    RecordingStudioOrderable.stub(:authorized?, false) do
+      error = assert_raises(ArgumentError) do
+        parent.recording_studio_orderable_append!("a", actor: :admin)
+      end
+
+      assert_includes error.message, "Not authorized to reorder"
+    end
+  end
+
   def test_reorder_raises_when_unauthorized
     parent = FakeRecording.new(id: "folder", child_records: [])
 

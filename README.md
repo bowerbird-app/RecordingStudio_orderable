@@ -13,6 +13,7 @@ It lets a parent recordable type sort its children without creating a product-ma
   - `recording_studio_orderable_children`
   - `recording_studio_orderable_reorder!`
   - `recording_studio_orderable_move!`
+  - `recording_studio_orderable_append!`
 - addon-owned migration for `recording_studio_orderable_position` on `recording_studio_recordings`
 - optional `log_event!` history when siblings are reordered
 - optional RecordingStudioAccessible authorization when that addon is loaded
@@ -115,7 +116,14 @@ folder_recording.recording_studio_orderable_move!(
   to_index: 0,
   actor: current_user
 )
+
+folder_recording.recording_studio_orderable_append!(
+  page_a,
+  actor: current_user
+)
 ```
+
+`recording_studio_orderable_append!` moves an eligible child to the end of the sibling list. Hosts do not pass `to_index`. The helper calls the same `move!` path that already clamps a large index to the end.
 
 Reads are resilient:
 
@@ -134,7 +142,7 @@ action: "reordered"
 metadata: {
   ordered_recording_ids: [...],
   previous_ordered_recording_ids: [...],
-  moving_recording_id: "...", # present for move!
+  moving_recording_id: "...", # present for move! and append!
   to_index: 0
 }
 ```

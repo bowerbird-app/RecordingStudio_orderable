@@ -71,6 +71,37 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert @folder_recording.events(actions: ["reordered"]).exists?
   end
 
+  test "appending a page moves it to the end of the sibling list" do
+    sign_in @user
+    pages = @folder_recording.recording_studio_orderable_children.to_a
+    moving = pages.first
+
+    @folder_recording.recording_studio_orderable_append!(moving, actor: @user)
+
+    assert_equal moving.id, @folder_recording.reload.recording_studio_orderable_children.last.id
+    assert_equal pages.last.id, @folder_recording.recording_studio_orderable_children.first.id
+  end
+
+  test "appending the only page on an empty list keeps it as the sole child" do
+    sign_in @user
+    workspace_recording = RecordingStudio.root_recording_for(Workspace.first)
+    empty_folder = find_or_record!(workspace_recording, Folder, "empty-order-folder") do |folder|
+      folder.name = "Empty Order Folder"
+      folder.slug = "empty-order-folder"
+    end
+    page_recording = find_or_record!(workspace_recording, Page, "solo-order-page", parent: empty_folder) do |page|
+      page.title = "Solo Order Page"
+      page.slug = "solo-order-page"
+      page.body = "Dummy append empty list page"
+    end
+
+    empty_folder.recording_studio_orderable_append!(page_recording, actor: @user)
+
+    children = empty_folder.reload.recording_studio_orderable_children.to_a
+    assert_equal [page_recording.id], children.map(&:id)
+    assert_equal 0, page_recording.reload.recording_studio_orderable_position
+  end
+
   test "project does not receive the orderable capability" do
     refute RecordingStudio.capability_enabled?(:orderable, for: "Project")
     assert RecordingStudio.capability_enabled?(:orderable, for: "Folder")

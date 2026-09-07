@@ -32,6 +32,10 @@ module RecordingStudioOrderable
       )
     end
 
+    def append!(moving, actor: nil, impersonator: nil, metadata: {})
+      move!(moving, to_index: children.to_a.size, actor: actor, impersonator: impersonator, metadata: metadata)
+    end
+
     private
 
     attr_reader :parent_recording

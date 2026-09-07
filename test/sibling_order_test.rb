@@ -148,6 +148,52 @@ class SiblingOrderTest < Minitest::Test
     assert_equal 0, second.recording_studio_orderable_position
   end
 
+  def test_append_moves_a_child_to_the_end_of_a_non_empty_list
+    first = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    third = FakeRecording.new(id: "c", recording_studio_orderable_position: 2)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, third])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!("a", actor: :admin)
+
+    assert_equal 0, second.recording_studio_orderable_position
+    assert_equal 1, third.recording_studio_orderable_position
+    assert_equal 2, first.recording_studio_orderable_position
+    assert_equal "a", parent.logged_events.first[:metadata][:moving_recording_id]
+    assert_equal 2, parent.logged_events.first[:metadata][:to_index]
+  end
+
+  def test_append_on_a_sole_child_assigns_position_zero
+    only_child = FakeRecording.new(id: "a", recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [only_child])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!(only_child)
+
+    assert_equal 0, only_child.recording_studio_orderable_position
+    assert_equal ["a"], parent.logged_events.first[:metadata][:ordered_recording_ids]
+  end
+
+  def test_append_on_empty_children_does_not_raise
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!("missing")
+
+    assert parent.logged_events.first
+    assert_equal "missing", parent.logged_events.first[:metadata][:moving_recording_id]
+    assert_equal 0, parent.logged_events.first[:metadata][:to_index]
+  end
+
+  def test_append_of_the_last_child_keeps_order
+    first = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!("b")
+
+    assert_equal 0, first.recording_studio_orderable_position
+    assert_equal 1, second.recording_studio_orderable_position
+  end
+
   def test_reads_capability_options_from_recording_studio_when_needed
     child = FakeRecording.new(id: "a")
     parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [child])

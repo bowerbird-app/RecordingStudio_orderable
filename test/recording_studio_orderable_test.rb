@@ -119,6 +119,7 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     assert_includes readme, "Recording Studio Orderable"
     assert_includes readme, "RecordingStudio::Capabilities::Orderable.to"
+    assert_includes readme, "recording_studio_orderable_append!"
     refute_includes readme, "RecordingStudio::RecordingStudioOrder"
     refute_includes readme, "OrderableRecordable"
     refute_includes readme, "Welcome to the template"
