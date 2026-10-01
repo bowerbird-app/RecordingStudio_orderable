@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `RecordingStudioOrderable::InvalidChild` when `move!` or `append!` is given a recording that is not an eligible direct child
+
+### Changed
+- `reorder!`, `move!`, and `append!` lock the parent recording while reading siblings, writing positions, and logging the reorder event
+
+### Upgrade Notes
+- Explicit `move!` and `append!` no longer ignore unknown or ineligible recordings. Bulk `reorder!` still ignores stale and ineligible ids.
+- No schema changes.
+
 ## [0.2.2] - 2026-09-07
 
 ### Added

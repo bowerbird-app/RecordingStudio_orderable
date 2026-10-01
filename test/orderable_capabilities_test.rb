@@ -67,6 +67,10 @@ class OrderableCapabilitiesTest < Minitest::Test
       FakeRelation.new(child_records)
     end
 
+    def with_lock(&)
+      self.class.transaction(&)
+    end
+
     def reload
       self.reloaded = true
       self
@@ -206,6 +210,75 @@ class OrderableCapabilitiesTest < Minitest::Test
     assert_equal 1, children[2].recording_studio_orderable_position
     assert_equal "a", parent.logged_events.first[:metadata][:moving_recording_id]
     assert_equal 2, parent.logged_events.first[:metadata][:to_index]
+  end
+
+  def test_move_raises_invalid_child_when_recording_is_not_a_direct_child
+    child = FakeRecording.new(id: "a", recordable_type: "Page", recording_studio_orderable_position: 0)
+    stranger = FakeRecording.new(id: "stranger", recordable_type: "Page")
+    parent = FakeRecording.new(id: "folder", child_records: [child])
+
+    RecordingStudioOrderable.stub(:authorized?, true) do
+      error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+        parent.recording_studio_orderable_move!(stranger, to_index: 0, actor: :admin)
+      end
+
+      assert_match "not an eligible child of the orderable parent", error.message
+    end
+
+    assert_empty parent.logged_events
+    assert_equal 0, child.recording_studio_orderable_position
+  end
+
+  def test_append_raises_invalid_child_when_recording_is_missing
+    parent = FakeRecording.new(id: "folder", child_records: [])
+
+    RecordingStudioOrderable.stub(:authorized?, true) do
+      error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+        parent.recording_studio_orderable_append!("missing", actor: :admin)
+      end
+
+      assert_match "missing", error.message
+      assert_match "not an eligible child of the orderable parent", error.message
+    end
+
+    assert_empty parent.logged_events
+  end
+
+  def test_move_and_append_raise_invalid_child_when_allows_excludes_the_child
+    page = FakeRecording.new(id: "page", recordable_type: "Page", recording_studio_orderable_position: 0)
+    note = FakeRecording.new(id: "note", recordable_type: "Note", recording_studio_orderable_position: 4)
+    parent = FakeRecording.new(id: "folder", child_records: [page, note])
+
+    RecordingStudioOrderable.stub(:authorized?, true) do
+      assert_raises(RecordingStudioOrderable::InvalidChild) do
+        parent.recording_studio_orderable_move!(note, to_index: 0, actor: :admin)
+      end
+      assert_raises(RecordingStudioOrderable::InvalidChild) do
+        parent.recording_studio_orderable_append!("note", actor: :admin)
+      end
+    end
+
+    assert_empty parent.logged_events
+    assert_equal 0, page.recording_studio_orderable_position
+    assert_equal 4, note.recording_studio_orderable_position
+  end
+
+  def test_reorder_ignores_stale_and_non_eligible_ids
+    page = FakeRecording.new(id: "page", recordable_type: "Page", recording_studio_orderable_position: 1)
+    note = FakeRecording.new(id: "note", recordable_type: "Note", recording_studio_orderable_position: 8)
+    parent = FakeRecording.new(id: "folder", child_records: [page, note])
+
+    RecordingStudioOrderable.stub(:authorized?, true) do
+      parent.recording_studio_orderable_reorder!(
+        ordered_recording_ids: %w[missing note page],
+        actor: :admin
+      )
+    end
+
+    assert_equal 0, page.recording_studio_orderable_position
+    assert_equal 8, note.recording_studio_orderable_position
+    assert_equal ["page"], parent.logged_events.first[:metadata][:ordered_recording_ids]
+    assert_equal "reordered", parent.logged_events.first[:action]
   end
 
   def test_append_raises_when_unauthorized
