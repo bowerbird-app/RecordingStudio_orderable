@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-01
+
+### Added
+- `RecordingStudioOrderable::InvalidChild` when `move!` or `append!` is given a recording that is not an eligible direct child
+
+### Changed
+- `reorder!`, `move!`, and `append!` lock the parent recording while reading siblings, writing positions, and logging the reorder event
+- Dummy Tailwind `@source` paths also scan `/usr/local/lib/ruby/gems`, so Flatpack utilities compile when Bundler uses Ruby's default gem home
+
+### Upgrade Notes
+- Explicit `move!` and `append!` no longer ignore unknown or ineligible recordings. Bulk `reorder!` still ignores stale and ineligible ids.
+- No schema changes.
+
 ## [0.2.2] - 2026-09-07
 
 ### Added
@@ -73,7 +86,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.2.0

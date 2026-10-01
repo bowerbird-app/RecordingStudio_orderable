@@ -125,11 +125,15 @@ folder_recording.recording_studio_orderable_append!(
 
 `recording_studio_orderable_append!` moves an eligible child to the end of the sibling list.
 
-Reads are resilient:
+`recording_studio_orderable_move!` and `recording_studio_orderable_append!` require that recording to be an eligible direct child. If it is missing, not a direct child, or excluded by `allows:`, they raise `RecordingStudioOrderable::InvalidChild`.
+
+`recording_studio_orderable_reorder!` stays resilient for bulk updates:
 
 - requested ids that are not eligible children are ignored
 - eligible children missing from the list are appended in `created_at`, `id` order
 - `NULL` positions sort last
+
+Reorder, move, and append lock the parent recording, then read the current siblings, write positions, and log the reorder event before releasing that lock. Concurrent reorder writes for the same parent run one at a time.
 
 Writes update `recording_studio_orderable_position` on the child recordings. They do not create, revise, or nest a `RecordingOrder` recordable.
 

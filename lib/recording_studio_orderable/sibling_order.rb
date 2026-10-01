@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module RecordingStudioOrderable
+  class InvalidChild < StandardError; end
+
   class SiblingOrder
     def initialize(parent_recording)
       @parent_recording = parent_recording
@@ -11,34 +13,54 @@ module RecordingStudioOrderable
     end
 
     def reorder!(ordered_recording_ids:, actor: nil, impersonator: nil, metadata: {})
-      eligible = child_scope.to_a
-      ordered = resolve_ordered_recordings(eligible, ordered_recording_ids)
-      persist_and_log!(
-        ordered,
-        actor: actor,
-        impersonator: impersonator,
-        metadata: metadata,
-        previous_ids: sorted_ids(eligible)
-      )
+      with_parent_lock do
+        eligible = current_eligible_recordings
+        commit_order!(eligible, ordered_recording_ids, actor: actor, impersonator: impersonator, metadata: metadata)
+      end
     end
 
     def move!(moving, to_index:, actor: nil, impersonator: nil, metadata: {})
-      moving_id, insertion_index, ordered_ids = moved_id_list(moving, to_index)
-      reorder!(
-        ordered_recording_ids: ordered_ids,
+      with_parent_lock do
+        commit_explicit_move!(moving, to_index, actor: actor, impersonator: impersonator, metadata: metadata)
+      end
+    end
+
+    def append!(moving, actor: nil, impersonator: nil, metadata: {})
+      with_parent_lock do
+        commit_explicit_move!(moving, :end, actor: actor, impersonator: impersonator, metadata: metadata)
+      end
+    end
+
+    private
+
+    attr_reader :parent_recording
+
+    def with_parent_lock(&)
+      parent_recording.with_lock(&)
+    end
+
+    def commit_explicit_move!(moving, to_index, actor:, impersonator:, metadata:)
+      eligible = current_eligible_recordings
+      child = eligible_child!(eligible, moving)
+      moving_id, insertion_index, ordered_ids = moved_id_list(eligible, child, to_index)
+      commit_order!(
+        eligible,
+        ordered_ids,
         actor: actor,
         impersonator: impersonator,
         metadata: metadata.merge(moving_recording_id: moving_id, to_index: insertion_index)
       )
     end
 
-    def append!(moving, actor: nil, impersonator: nil, metadata: {})
-      move!(moving, to_index: children.to_a.size, actor: actor, impersonator: impersonator, metadata: metadata)
+    def commit_order!(eligible, ordered_recording_ids, actor:, impersonator:, metadata:)
+      persist_and_log!(
+        resolve_ordered_recordings(eligible, ordered_recording_ids),
+        actor: actor,
+        impersonator: impersonator,
+        metadata: metadata,
+        previous_ids: recording_ids(eligible)
+      )
     end
-
-    private
-
-    attr_reader :parent_recording
 
     def persist_and_log!(ordered, actor:, impersonator:, metadata:, previous_ids:)
       persist_positions!(ordered)
@@ -47,7 +69,7 @@ module RecordingStudioOrderable
         impersonator: impersonator,
         metadata: metadata,
         previous_ids: previous_ids,
-        ordered_ids: ordered.map { |recording| recording.id.to_s }
+        ordered_ids: recording_ids(ordered)
       )
       parent_recording.reload
     end
@@ -78,6 +100,26 @@ module RecordingStudioOrderable
       scope.reorder(:recording_studio_orderable_position, :created_at, :id)
     end
 
+    def current_eligible_recordings
+      ordered_relation(child_scope).to_a
+    end
+
+    def eligible_child!(eligible, moving)
+      moving_id = recording_id(moving)
+      found = eligible.find { |recording| recording.id.to_s == moving_id }
+      return found if found
+
+      raise InvalidChild, "Recording #{moving_id} is not an eligible child of the orderable parent"
+    end
+
+    def recording_id(moving)
+      moving.respond_to?(:id) ? moving.id.to_s : moving.to_s
+    end
+
+    def recording_ids(recordings)
+      recordings.map { |recording| recording.id.to_s }
+    end
+
     def resolve_ordered_recordings(eligible, ordered_recording_ids)
       eligible_by_id = eligible.index_by { |recording| recording.id.to_s }
       requested_ids = requested_eligible_ids(ordered_recording_ids, eligible_by_id)
@@ -95,10 +137,8 @@ module RecordingStudioOrderable
     end
 
     def persist_positions!(ordered)
-      parent_recording.class.transaction do
-        ordered.each_with_index do |recording, index|
-          recording.update!(recording_studio_orderable_position: index)
-        end
+      ordered.each_with_index do |recording, index|
+        recording.update!(recording_studio_orderable_position: index)
       end
     end
 
@@ -121,34 +161,18 @@ module RecordingStudioOrderable
       )
     end
 
-    def sorted_ids(recordings)
-      ids_from_relation(recordings)
-    rescue StandardError
-      fallback_sorted_ids(recordings)
-    end
-
-    def ids_from_relation(recordings)
-      ordered_relation(parent_recording.class.where(id: recordings.map(&:id))).map do |recording|
-        recording.id.to_s
-      end
-    end
-
-    def fallback_sorted_ids(recordings)
-      recordings.sort_by { |recording| sort_key_for(recording) }.map { |recording| recording.id.to_s }
-    end
-
-    def sort_key_for(recording)
-      [recording.recording_studio_orderable_position || Float::INFINITY, recording.created_at || Time.at(0),
-       recording.id.to_s]
-    end
-
-    def moved_id_list(moving, to_index)
-      moving_id = moving.respond_to?(:id) ? moving.id.to_s : moving.to_s
-      ordered_ids = children.map { |recording| recording.id.to_s }
+    def moved_id_list(eligible, moving, to_index)
+      moving_id = moving.id.to_s
+      ordered_ids = recording_ids(eligible)
       ordered_ids.delete(moving_id)
-      insertion_index = to_index.to_i.clamp(0, ordered_ids.length)
+      insertion_index = insertion_index_for(to_index, ordered_ids.length)
       ordered_ids.insert(insertion_index, moving_id)
       [moving_id, insertion_index, ordered_ids]
+    end
+
+    def insertion_index_for(to_index, length)
+      index = to_index == :end ? length : to_index.to_i
+      index.clamp(0, length)
     end
   end
 end
