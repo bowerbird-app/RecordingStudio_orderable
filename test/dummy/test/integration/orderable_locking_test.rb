@@ -62,6 +62,8 @@ class OrderableLockingTest < ActiveSupport::TestCase
     ready = Queue.new
     release = Queue.new
     result = Queue.new
+    holder_pids = Queue.new
+    reorder_pids = Queue.new
     errors = []
 
     holder = nil
@@ -72,6 +74,7 @@ class OrderableLockingTest < ActiveSupport::TestCase
         ActiveRecord::Base.connection_pool.with_connection do
           parent = RecordingStudio::Recording.find(folder_id)
           parent.with_lock do
+            holder_pids << backend_pid
             ready << true
             release.pop
             RecordingStudio::Recording.find(page_b_id).update!(recording_studio_orderable_position: 0)
@@ -84,9 +87,11 @@ class OrderableLockingTest < ActiveSupport::TestCase
       end
 
       assert ready.pop, "parent lock holder failed: #{error_summary(errors)}"
+      holder_pid = holder_pids.pop
 
       reorder = Thread.new do
         ActiveRecord::Base.connection_pool.with_connection do
+          reorder_pids << backend_pid
           parent = RecordingStudio::Recording.find(folder_id)
           parent.recording_studio_orderable_reorder!(
             ordered_recording_ids: [page_a_id, page_b_id],
@@ -99,11 +104,17 @@ class OrderableLockingTest < ActiveSupport::TestCase
         result << e
       end
 
-      wait_until { reorder_waiting_on_lock? || !reorder.alive? }
+      wait_until { !reorder_pids.empty? || !reorder.alive? }
+      flunk "reorder failed before locking: #{error_summary(errors)}" if errors.any?
+
+      reorder_pid = reorder_pids.pop
+      refute_equal holder_pid, reorder_pid
+      wait_until { reorder_blocked_on_parent_row?(reorder_pid, holder_pid, folder_id) || !reorder.alive? }
       flunk "reorder failed before locking: #{error_summary(errors)}" if errors.any?
 
       assert reorder.alive?, "reorder finished before the parent lock was released"
-      assert reorder_waiting_on_lock?, "reorder did not wait on the parent row lock\n#{lock_activity}"
+      assert reorder_blocked_on_parent_row?(reorder_pid, holder_pid, folder_id),
+             "reorder backend #{reorder_pid} did not wait on holder #{holder_pid} for #{folder_id}\n#{backend_activity(reorder_pid)}"
       assert result.empty?
 
       release << true
@@ -191,28 +202,53 @@ class OrderableLockingTest < ActiveSupport::TestCase
     sql.match?(/recording_studio_orderable_position/i) && sql.match?(/ORDER BY/i)
   end
 
-  def reorder_waiting_on_lock?
+  def backend_pid
+    ActiveRecord::Base.connection.select_value("SELECT pg_backend_pid()").to_i
+  end
+
+  def reorder_blocked_on_parent_row?(reorder_pid, holder_pid, parent_id)
     ActiveRecord::Base.uncached do
-      sql = <<~SQL.squish
-        SELECT COUNT(*)
-        FROM pg_stat_activity
-        WHERE datname = current_database()
-          AND pid <> pg_backend_pid()
-          AND wait_event_type = 'Lock'
-          AND state = 'active'
+      sql = ActiveRecord::Base.sanitize_sql_array([<<~SQL, reorder_pid, holder_pid, reorder_pid, parent_id])
+        SELECT activity.pid
+        FROM pg_stat_activity activity
+        WHERE activity.pid = ?
+          AND activity.state = 'active'
+          AND activity.wait_event_type = 'Lock'
+          AND EXISTS (
+            SELECT 1
+            FROM pg_locks holder_transaction
+            JOIN pg_locks waiter_transaction
+              ON waiter_transaction.transactionid = holder_transaction.transactionid
+            WHERE holder_transaction.pid = ?
+              AND holder_transaction.locktype = 'transactionid'
+              AND holder_transaction.mode = 'ExclusiveLock'
+              AND holder_transaction.granted
+              AND waiter_transaction.pid = activity.pid
+              AND waiter_transaction.locktype = 'transactionid'
+              AND NOT waiter_transaction.granted
+          )
+          AND EXISTS (
+            SELECT 1
+            FROM pg_locks tuple_lock
+            JOIN recording_studio_recordings recording
+              ON tuple_lock.locktype = 'tuple'
+             AND recording.ctid = format('(%s,%s)', tuple_lock.page, tuple_lock.tuple)::tid
+            WHERE tuple_lock.pid = ?
+              AND recording.id = ?
+          )
       SQL
-      ActiveRecord::Base.connection.select_value(sql).to_i.positive?
+      ActiveRecord::Base.connection.select_value(sql).to_i == reorder_pid
     end
   end
 
-  def lock_activity
+  def backend_activity(pid)
     ActiveRecord::Base.uncached do
-      ActiveRecord::Base.connection.select_all(<<~SQL.squish).rows.map { |row| row.join(" | ") }.join("\n")
+      sql = ActiveRecord::Base.sanitize_sql_array([<<~SQL, pid])
         SELECT pid, state, wait_event_type, wait_event, left(query, 160)
         FROM pg_stat_activity
-        WHERE datname = current_database()
-          AND pid <> pg_backend_pid()
+        WHERE pid = ?
       SQL
+      ActiveRecord::Base.connection.select_all(sql).rows.map { |row| row.join(" | ") }.join("\n")
     end
   end
 
