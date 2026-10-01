@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `reorder!`, `move!`, and `append!` lock the parent recording while reading siblings, writing positions, and logging the reorder event
+- Dummy Tailwind `@source` paths also scan `/usr/local/lib/ruby/gems`, so Flatpack utilities compile when Bundler uses Ruby's default gem home
 
 ### Upgrade Notes
 - Explicit `move!` and `append!` no longer ignore unknown or ineligible recordings. Bulk `reorder!` still ignores stale and ineligible ids.

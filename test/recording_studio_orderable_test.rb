@@ -65,6 +65,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes css, '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";'
     assert_includes css, '@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";'
     assert_includes css, '@source "../../../vendor/bundle/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";'
+    assert_includes css, '@source "/usr/local/lib/ruby/gems/**/bundler/gems/flatpack-*/app/components/**/*.rb";'
+    assert_includes css, '@source "/usr/local/lib/ruby/gems/**/bundler/gems/RecordingStudio-*/app/views/**/*.erb";'
     refute_includes css, '@source "../../vendor/bundle'
     refute_includes css, "*.{rb,erb}"
   end
