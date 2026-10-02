@@ -8,10 +8,10 @@ GIT
 
 GIT
   remote: https://github.com/bowerbird-app/flatpack.git
-  revision: 3152dbb1d91236ebb281d2366b48fe8f29691a0e
-  tag: v0.1.133
+  revision: 3d6fdb6f669a1f2228cc17e1f56c798dfd8fc2db
+  tag: v0.1.196
   specs:
-    flat_pack (0.1.133)
+    flat_pack (0.1.196)
       pagy (~> 9.0)
       rails (>= 7.1, < 9)
       tailwind_merge (~> 0.13)
