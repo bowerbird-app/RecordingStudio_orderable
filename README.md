@@ -157,6 +157,24 @@ Events answer what happened to the parent object. High-churn position lists stay
 
 If `recording_studio_accessible` is loaded and `config.use_recording_studio_accessible` is true, reorder calls check `config.authorization_role` (default `:edit`). Set an explicit `authorization_resolver` to replace that check. With neither Accessible nor a resolver, reorder is allowed.
 
+## Internationalization
+
+Static interface copy on the mounted overview page resolves through Rails I18n under
+`recording_studio.orderable.*`. English is the only locale shipped by the gem
+(`config/locales/en.yml`). Every `t()` call passes an English `default:` so a host
+locale without a fallback never shows "translation missing".
+
+Hosts override by defining the same nested keys in their own `config/locales`.
+There is no dependency on `recording_studio_internationalization`.
+
+Generator CLI text, developer `ArgumentError`s, `InvalidChild` messages,
+configuration load errors, and stored recording names stay English.
+
+### Upgrading to 0.3.0
+
+1. Install Orderable `0.3.0`. No migration.
+2. Copy `recording_studio.orderable.home.*` into host locale files when translating.
+
 ## Dummy app
 
 `test/dummy` is a host that proves the gem. It uses Recording Studio's default layout (back, optional close, title, optional buttons, then content) and Flatpack components.

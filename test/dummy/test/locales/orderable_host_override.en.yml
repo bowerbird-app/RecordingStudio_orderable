@@ -1,0 +1,9 @@
+# Test-only host override fixture (not under config/locales). Loaded last via
+# I18n.backend.load_translations in host-override integration tests so
+# last-file-wins can be asserted without mutating I18n.load_path.
+en:
+  recording_studio:
+    orderable:
+      home:
+        subtitle: "HOST Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
+        body_after: "HOST on the parent type whose children should be sortable."

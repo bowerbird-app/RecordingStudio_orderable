@@ -1,0 +1,8 @@
+# Host override for a rarely shown Orderable overview key (engine home body).
+# Kept off the dummy root happy path so other dummy tests still see gem English.
+# Loaded by Rails from config/locales — do not append this path in tests.
+en:
+  recording_studio:
+    orderable:
+      home:
+        body_after: "HOST on the parent type whose children should be sortable."
