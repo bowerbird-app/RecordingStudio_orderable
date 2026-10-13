@@ -1,22 +1,22 @@
 <% recording_studio_page_nav(
-  title: "Orderable",
+  title: t("recording_studio.orderable.home.title", default: "Orderable"),
   page_nav_anchor_url: main_app.root_path,
-  page_nav_anchor_label: "Home"
+  page_nav_anchor_label: t("recording_studio.orderable.home.page_nav_anchor_label", default: "Home")
 ) %>
 
 <div class="flex flex-col gap-8">
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Recording Studio Orderable",
-    subtitle: "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object.",
+    title: t("recording_studio.orderable.home.page_title", default: "Recording Studio Orderable"),
+    subtitle: t("recording_studio.orderable.home.subtitle", default: "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."),
     variant: :h1
   ) %>
 
   <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
     <% card.body do %>
       <p>
-        Host apps enable ordering with
+        <%= t("recording_studio.orderable.home.body_before", default: "Host apps enable ordering with") %>
         <code>include RecordingStudio::Capabilities::Orderable.to</code>
-        on the parent type whose children should be sortable.
+        <%= t("recording_studio.orderable.home.body_after", default: "on the parent type whose children should be sortable.") %>
       </p>
     <% end %>
   <% end %>

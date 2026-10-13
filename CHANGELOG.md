@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-13
+
+### Added
+
+- English Rails I18n keys under `recording_studio.orderable.*` for the mounted overview page (`config/locales/en.yml`). Every `t()` call passes an English `default:` so a host locale without a fallback never shows "translation missing".
+- Host English override coverage: test-only fixture `test/dummy/test/locales/orderable_host_override.en.yml` loaded via `I18n.backend.load_translations` (no `I18n.load_path` mutation) plus a real-page assert.
+- Always-loaded boot-order guard `test/dummy/config/locales/recording_studio_orderable_host.en.yml` for the rarely shown `home.body_after` key (engine overview only; not the dummy root happy path), with a render assert.
+- Locale regression: every `lib/**/*.rb` file must not mention `i18n.load_path` / `I18n.load_path`.
+- Render-level asserts that the overview page English matches main for titles, subtitle, and body copy.
+
+### Upgrade Notes
+
+- Bump to `0.3.0`. No migration.
+- English hosts need no change. Copy `recording_studio.orderable.home.*` into host locale files when translating.
+- Hosts override by defining the same nested keys in their own `config/locales`.
+- Generator CLI text, `ArgumentError` / `InvalidChild` messages, configuration load errors, icon/style tokens, and stored recording names stay untranslated.
+
 ## [0.2.3] - 2026-10-01
 
 ### Added
@@ -86,7 +103,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...v0.2.1
