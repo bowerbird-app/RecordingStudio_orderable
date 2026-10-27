@@ -6,6 +6,7 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
   get "events", to: "events#show", as: :events
+  patch "pages/reorder", to: "home#reorder", as: :reorder_pages
   patch "pages/:id/move", to: "home#move", as: :move_page
 
   root "home#index"

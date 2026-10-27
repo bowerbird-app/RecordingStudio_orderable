@@ -22,7 +22,7 @@ Installing the gem does not enable order on every recordable.
 
 ## Installation
 
-Add the gems to your host app. This addon requires Recording Studio 4.1.0 or newer:
+Add the gems to your host app. This addon requires Recording Studio 6.1.0 or newer and Flatpack 0.1.315 or newer:
 
 ```ruby
 gem "recording_studio"
@@ -80,6 +80,18 @@ RecordingStudioOrderable.configure do |config|
   config.event_action = "reordered"
 end
 ```
+
+## Layout
+
+`config.layout` is the layout for Orderable controllers. `nil` uses `RecordingStudio.configuration.layout`, then `"recording_studio/default_layout"`. A String is a layout name. `false` renders with no layout. A callable is invoked as `call(controller:)` and returns a String, `nil`, or `false`.
+
+```ruby
+RecordingStudioOrderable.configure do |config|
+  config.layout = "recording_studio/default_layout"
+end
+```
+
+Mounted pages set `content_for :title` and `content_for :subtitle`. The default layout renders that heading. Back and close use `flat_pack_page_nav`. Page actions use `register_page_nav`.
 
 ## Adding to a recordable
 
@@ -175,9 +187,19 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.3.0`. No migration.
 2. Copy `recording_studio.orderable.home.*` into host locale files when translating.
 
+## Upgrading to 0.4.0
+
+1. Require `recording_studio` 6.1.0 or newer and `flat_pack` 0.1.315 or newer. Keep `view_component` at 4.14 or newer and below 5.
+2. Remove `include RecordingStudio::UsesDefaultLayout` and any `layout "recording_studio/default_layout"`. Orderable controllers call `recording_studio_layout { RecordingStudioOrderable.configuration.layout }`. Leave `config.layout` nil to follow the host layout, then the default layout.
+3. In a copied overview, set `content_for :title` and `content_for :subtitle`. Replace `recording_studio_page_nav` with `flat_pack_page_nav(round: true, style: :default, ...)`. Register actions with `register_page_nav` or `recording_studio_page_nav_right`.
+4. Pass `background:`, `border:`, or `shadow:` to `FlatPack::Card`. The `style:` keyword is gone.
+5. No database migration. Position writes stay inside the parent lock. Authorization and the `reordered` event stay the same.
+
+`recording_studio.orderable.home.title` was the old page-nav title. The visible heading is `page_title`.
+
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. It uses Recording Studio's default layout (back, optional close, title, optional buttons, then content) and Flatpack components.
+`test/dummy` is a host that proves the gem. Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal.
 
 Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with the shared RecordingStudio_* development master key. Set `RAILS_MASTER_KEY` or put that key in `test/dummy/config/master.key` (gitignored). Keep the encrypted file; do not generate a per-repo dummy key.
 

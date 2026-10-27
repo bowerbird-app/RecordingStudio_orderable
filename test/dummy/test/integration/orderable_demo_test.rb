@@ -41,6 +41,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
 
     get events_path
     assert_response :success
+    assert_select "h1", count: 1, text: "Events"
     assert_match "Events", response.body
     assert_select "a[href=?]", root_path, text: /Home/
   end
@@ -50,13 +51,40 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
+    assert_select "h1", count: 1, text: "Order demo"
+    assert_select "body[data-recording-studio-default-layout='true']"
     assert_match "Order demo", response.body
     assert_match "Mix Notes", response.body
     assert_match "Move down", response.body
+    assert_equal ["0", "1"], position_cells("order-demo-table")
+    assert_select "[data-modal-id=?]", "reorder-pages-modal", text: "Reorder in modal"
     assert_select "a[href=?]", root_path, text: /Home/
     assert_select "a[href=?]", events_path, text: /Events/
     refute_match "flat_pack_sidebar", response.body
     refute_match "Setup", response.body
+  end
+
+  test "reorder modal lists draggable pages and the reorder endpoint persists that order" do
+    sign_in @user
+    pages = @folder_recording.recording_studio_orderable_children.to_a
+    reversed = pages.reverse.map(&:id)
+
+    get root_path
+
+    assert_response :success
+    assert_select "#reorder-pages-modal[data-controller~=?]", "flat-pack--modal"
+    assert_select "#reorder-pages-modal [data-controller~=?]", "flat-pack--table-sortable"
+    assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-target=?]", "row", count: pages.length
+    assert_equal pages.map { |page| page.recording_studio_orderable_position.to_s }, position_cells("reorder-pages-modal")
+
+    patch reorder_pages_path, params: { ordered_recording_ids: reversed }, as: :json
+
+    assert_response :success
+    children = @folder_recording.reload.recording_studio_orderable_children.to_a
+    assert_equal reversed, children.map(&:id)
+    assert_equal (0...children.length).to_a, children.map(&:recording_studio_orderable_position)
+    event = @folder_recording.events(actions: ["reordered"]).order(occurred_at: :desc).first
+    assert_equal "dummy_modal_reorder", event.metadata.to_h.stringify_keys["source"]
   end
 
   test "moving a page updates sibling position and writes an event" do
@@ -117,6 +145,10 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  def position_cells(container_id)
+    css_select("##{container_id} tbody tr").map { |row| row.at_css("td").text.strip }
+  end
 
   def seed_demo_tree!
     workspace = Workspace.find_or_create_by!(name: "Studio Workspace")

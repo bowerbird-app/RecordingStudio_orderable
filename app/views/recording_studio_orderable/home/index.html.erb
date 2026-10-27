@@ -1,17 +1,14 @@
-<% recording_studio_page_nav(
-  title: t("recording_studio.orderable.home.title", default: "Orderable"),
-  page_nav_anchor_url: main_app.root_path,
-  page_nav_anchor_label: t("recording_studio.orderable.home.page_nav_anchor_label", default: "Home")
+<% content_for :title, t("recording_studio.orderable.home.page_title", default: "Recording Studio Orderable") %>
+<% content_for :subtitle, t("recording_studio.orderable.home.subtitle", default: "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object.") %>
+<% flat_pack_page_nav(
+  round: true,
+  style: :default,
+  anchor_href: main_app.root_path,
+  anchor_tooltip: t("recording_studio.orderable.home.page_nav_anchor_label", default: "Home")
 ) %>
 
 <div class="flex flex-col gap-8">
-  <%= render FlatPack::PageTitle::Component.new(
-    title: t("recording_studio.orderable.home.page_title", default: "Recording Studio Orderable"),
-    subtitle: t("recording_studio.orderable.home.subtitle", default: "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."),
-    variant: :h1
-  ) %>
-
-  <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
+  <%= render FlatPack::Card::Component.new(background: :default) do |card| %>
     <% card.body do %>
       <p>
         <%= t("recording_studio.orderable.home.body_before", default: "Host apps enable ordering with") %>

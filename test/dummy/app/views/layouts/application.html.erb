@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="rounded">
   <head>
     <title><%= content_for(:title) || "Orderable Demo" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Orderable Demo">
     <meta name="mobile-web-app-capable" content="yes">
@@ -19,7 +19,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-(--surface-page-background-color) text-(--surface-content-color)" data-theme="rounded">
+  <body class="bg-(--surface-page-background-color) text-(--surface-content-color)">
     <%= render "layouts/icon_sprite" %>
 
     <div class="h-screen overflow-y-auto overscroll-y-contain">

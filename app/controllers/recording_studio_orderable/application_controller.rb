@@ -2,7 +2,7 @@
 
 module RecordingStudioOrderable
   class ApplicationController < ActionController::Base
-    include RecordingStudio::UsesDefaultLayout
+    recording_studio_layout { RecordingStudioOrderable.configuration.layout }
 
     protect_from_forgery with: :exception
   end

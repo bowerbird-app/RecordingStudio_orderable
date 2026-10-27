@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-27
+
+### Breaking
+
+- Requires `recording_studio` >= 6.1.0 and `flat_pack` >= 0.1.315. Development pins Recording Studio tag `v6.1.0` and Flatpack commit `1fcbafe94f8eb118f0a22182f63f5110fcc97a56` (`FlatPack::VERSION` 0.1.319). `view_component` stays >= 4.14 and < 5.
+- `RecordingStudioOrderable::Configuration#layout` is the Orderable layout setting. `nil` follows `RecordingStudio.configuration.layout`, then `"recording_studio/default_layout"`. A String is a layout name. `false` renders with no layout. A callable is invoked as `call(controller:)` and returns a String, `nil`, or `false`. Anything else raises `ArgumentError`.
+- Orderable controllers call `recording_studio_layout`. `RecordingStudio::UsesDefaultLayout` and `layout "recording_studio/default_layout"` are gone.
+- The overview sets `content_for :title` and `content_for :subtitle`. Back and close use `flat_pack_page_nav`. `recording_studio_page_nav` is gone. Cards use `background:`, `border:`, or `shadow:`.
+
+### Upgrade Notes
+
+- Bump to `0.4.0`. No migration.
+- Require Recording Studio 6.1.0 or newer and Flatpack 0.1.315 or newer before booting.
+- Remove `include RecordingStudio::UsesDefaultLayout` from host controllers. Set `RecordingStudio.configuration.layout` for every gem whose own layout is nil, or set `RecordingStudioOrderable.configuration.layout` when Orderable screens should differ.
+- Rewrite copied views that call `recording_studio_page_nav` or `FlatPack::Card::Component.new(style:)`.
+- `recording_studio.orderable.home.title` is no longer rendered. The heading is `page_title`.
+- Sibling position writes, Accessible and resolver checks, and `reordered` event metadata are unchanged.
+
 ## [0.3.0] - 2026-10-13
 
 ### Added
