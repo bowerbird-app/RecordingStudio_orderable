@@ -5,7 +5,7 @@ This Rails app exists to validate Recording Studio Orderable inside a realistic 
 ## What It Covers
 
 - Devise authentication with a seeded admin user
-- `Current.actor` wiring for Recording Studio 4.1 and addon events
+- `Current.actor` wiring for Recording Studio 6.1 and addon events
 - Workspace, project, folder, and page examples
 - Explicit orderable opt-in on `Folder` only, limited to `Page` children
 - Sibling reorder on the home page through Flatpack buttons

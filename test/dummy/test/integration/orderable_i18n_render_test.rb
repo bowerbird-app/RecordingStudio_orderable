@@ -19,6 +19,8 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     get "/recording_studio_orderable"
 
     assert_response :success
+    assert_select "h1", count: 1, text: "Recording Studio Orderable"
+    assert_select "body[data-recording-studio-default-layout='true']"
     assert_includes response.body, "Orderable"
     assert_includes response.body, "Home"
     assert_includes response.body, "Recording Studio Orderable"

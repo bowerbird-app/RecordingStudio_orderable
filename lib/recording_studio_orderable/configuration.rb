@@ -9,6 +9,7 @@ module RecordingStudioOrderable
                   :authorization_resolver,
                   :use_recording_studio_accessible,
                   :authorization_role
+    attr_reader :layout
 
     def initialize
       @log_order_events = true
@@ -16,6 +17,11 @@ module RecordingStudioOrderable
       @authorization_resolver = nil
       @use_recording_studio_accessible = true
       @authorization_role = :edit
+      @layout = nil
+    end
+
+    def layout=(value)
+      @layout = RecordingStudio::Layout.accept(value)
     end
 
     def to_h
@@ -24,7 +30,8 @@ module RecordingStudioOrderable
         event_action: event_action,
         authorization_resolver: authorization_resolver,
         use_recording_studio_accessible: use_recording_studio_accessible,
-        authorization_role: authorization_role
+        authorization_role: authorization_role,
+        layout: layout
       }
     end
 

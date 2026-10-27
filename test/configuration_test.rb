@@ -13,6 +13,29 @@ class ConfigurationTest < Minitest::Test
     assert_equal true, @configuration.use_recording_studio_accessible
     assert_equal :edit, @configuration.authorization_role
     assert_nil @configuration.authorization_resolver
+    assert_nil @configuration.layout
+  end
+
+  def test_layout_accepts_nil_string_false_and_keyword_callable
+    callable = ->(controller:) { controller }
+
+    @configuration.layout = "orderable_pages"
+    assert_equal "orderable_pages", @configuration.layout
+
+    @configuration.layout = false
+    assert_equal false, @configuration.layout
+
+    @configuration.layout = callable
+    assert_equal callable, @configuration.layout
+
+    @configuration.layout = nil
+    assert_nil @configuration.layout
+  end
+
+  def test_layout_rejects_invalid_values
+    assert_raises(ArgumentError) { @configuration.layout = Object.new }
+    assert_raises(ArgumentError) { @configuration.layout = "" }
+    assert_raises(ArgumentError) { @configuration.layout = ->(controller) { controller.class.name } }
   end
 
   def test_merge_updates_known_attributes

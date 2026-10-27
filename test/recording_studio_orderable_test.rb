@@ -7,14 +7,22 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_nil RecordingStudioOrderable::VERSION
   end
 
-  def test_recording_studio_dependency_is_4_1_or_newer
+  def test_recording_studio_dependency_is_6_1_or_newer
     spec = Gem.loaded_specs.fetch("recording_studio")
+    flat_pack = Gem.loaded_specs.fetch("flat_pack")
+    view_component = Gem.loaded_specs.fetch("view_component")
     gemspec = File.read(File.expand_path("../recording_studio_orderable.gemspec", __dir__))
 
-    assert spec.version >= Gem::Version.new("4.1.0"),
-           "expected recording_studio >= 4.1.0, got #{spec.version}"
-    assert_includes gemspec, 'spec.add_dependency "recording_studio", "~> 4.1"'
-    assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.74"'
+    assert spec.version >= Gem::Version.new("6.1.0"),
+           "expected recording_studio >= 6.1.0, got #{spec.version}"
+    assert flat_pack.version >= Gem::Version.new("0.1.315"),
+           "expected flat_pack >= 0.1.315, got #{flat_pack.version}"
+    assert view_component.version >= Gem::Version.new("4.14"),
+           "expected view_component >= 4.14, got #{view_component.version}"
+    assert view_component.version < Gem::Version.new("5"),
+           "expected view_component < 5, got #{view_component.version}"
+    assert_includes gemspec, 'spec.add_dependency "recording_studio", ">= 6.1.0"'
+    assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_accessible"
   end
@@ -41,12 +49,18 @@ class RecordingStudioOrderableTest < Minitest::Test
     home_source = File.read(home_path)
     login_source = File.read(login_path)
 
-    assert_includes controller_source, "RecordingStudio::UsesDefaultLayout"
-    assert_includes controller_source, '"recording_studio/default_layout"'
+    assert_includes controller_source, "recording_studio_layout"
+    refute_includes controller_source, "UsesDefaultLayout"
+    refute_includes controller_source, "recording_studio/default_layout"
     refute_includes controller_source, "flat_pack_sidebar"
     refute File.exist?(File.expand_path("dummy/app/views/layouts/flat_pack_sidebar.html.erb", __dir__))
-    assert_includes home_source, "recording_studio_page_nav("
-    assert_includes home_source, "FlatPack::PageTitle::Component"
+    refute File.exist?(File.expand_path("dummy/config/initializers/recording_studio_default_layout.rb", __dir__))
+    assert_includes home_source, "content_for :title"
+    assert_includes home_source, "flat_pack_page_nav("
+    assert_includes home_source, "register_page_nav"
+    refute_includes home_source, "recording_studio_page_nav("
+    refute_includes home_source, "FlatPack::PageTitle::Component"
+    refute_includes home_source, "Card::Component.new(style:"
     assert_includes home_source, "FlatPack::Table::Component"
     assert_includes home_source, "FlatPack::Button::Component"
     demo_nav = File.read(File.expand_path("dummy/app/views/home/_demo_nav.html.erb", __dir__))
@@ -54,7 +68,16 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes demo_nav, "url: link.fetch"
     assert_includes login_source, "admin@admin.com"
     assert_includes login_source, "FlatPack::Card::Component"
+    assert_includes login_source, "background: :shaded"
+    refute_includes login_source, "style: :elevated"
     assert_includes login_source, "FlatPack::Grid::Component"
+    stylesheets = File.read(File.expand_path("dummy/app/views/layouts/_flat_pack_stylesheets.html.erb", __dir__))
+    variables_at = stylesheets.index("flat_pack/variables")
+    tailwind_at = stylesheets.index("tailwind")
+    assert variables_at && tailwind_at && variables_at < tailwind_at
+    assert_includes stylesheets, "flat_pack/application"
+    assert_empty RecordingStudio::Layout.hardcoded_layout_paths(File.expand_path("..", __dir__))
+    assert_empty RecordingStudio::Layout.hardcoded_layout_paths(File.expand_path("dummy", __dir__))
   end
 
   def test_dummy_tailwind_sources_scan_vendor_bundle_and_split_globs

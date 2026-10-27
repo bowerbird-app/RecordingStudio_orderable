@@ -41,6 +41,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
 
     get events_path
     assert_response :success
+    assert_select "h1", count: 1, text: "Events"
     assert_match "Events", response.body
     assert_select "a[href=?]", root_path, text: /Home/
   end
@@ -50,6 +51,8 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
+    assert_select "h1", count: 1, text: "Order demo"
+    assert_select "body[data-recording-studio-default-layout='true']"
     assert_match "Order demo", response.body
     assert_match "Mix Notes", response.body
     assert_match "Move down", response.body
