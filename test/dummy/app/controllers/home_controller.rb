@@ -27,6 +27,30 @@ class HomeController < ApplicationController
     redirect_to root_path, notice: "Updated page order."
   end
 
+  def reorder
+    load_home_demo_state
+
+    unless @folder_recording
+      render json: { ok: false, error: "No orderable folder is available." }, status: :unprocessable_entity
+      return
+    end
+
+    ordered_ids = Array(params[:ordered_recording_ids]).map(&:to_s).reject(&:blank?)
+    if ordered_ids.empty?
+      render json: { ok: false, error: "Choose an order." }, status: :unprocessable_entity
+      return
+    end
+
+    @folder_recording.recording_studio_orderable_reorder!(
+      ordered_recording_ids: ordered_ids,
+      actor: current_user,
+      metadata: { source: "dummy_modal_reorder" }
+    )
+
+    flash[:notice] = "Updated page order."
+    render json: { ok: true }
+  end
+
   private
 
   def load_home_demo_state

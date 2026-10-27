@@ -8,7 +8,7 @@ This Rails app exists to validate Recording Studio Orderable inside a realistic 
 - `Current.actor` wiring for Recording Studio 6.1 and addon events
 - Workspace, project, folder, and page examples
 - Explicit orderable opt-in on `Folder` only, limited to `Page` children
-- Sibling reorder on the home page through Flatpack buttons
+- Sibling reorder on the home page through Flatpack buttons and a drag-and-drop modal
 - Events page for `log_event!` reorder history
 - Recording Studio core default layout, not a sidebar shell
 

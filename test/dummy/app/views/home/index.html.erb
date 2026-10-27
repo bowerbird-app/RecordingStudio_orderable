@@ -12,10 +12,19 @@
       subtitle: "These siblings share a parent that included RecordingStudio::Capabilities::Orderable.to."
     ) %>
 
+    <%= render FlatPack::Button::Component.new(
+      text: "Reorder in modal",
+      style: :secondary,
+      data: { modal_id: "reorder-pages-modal" }
+    ) %>
+
+    <div id="order-demo-table">
     <%= render FlatPack::Table::Component.new(data: @ordered_pages) do |table| %>
       <% table.column(
            title: "position",
-           html: ->(recording) { recording.recording_studio_orderable_position }
+           html: lambda { |recording|
+             (recording.recording_studio_orderable_position || @ordered_pages.index(recording)).to_s
+           }
          ) %>
       <% table.column(
            title: "name",
@@ -61,6 +70,46 @@
              content_tag(:div, safe_join(actions), class: "flex flex-wrap items-center gap-2")
            }
          ) %>
+    <% end %>
+    </div>
+
+    <%= render FlatPack::Modal::Component.new(id: "reorder-pages-modal", title: "Reorder pages", size: :lg) do |modal| %>
+      <% modal.body do %>
+        <div
+          class="flex flex-col gap-4"
+          data-controller="page-reorder"
+          data-page-reorder-url-value="<%= reorder_pages_path %>"
+          data-action="table:reordered->page-reorder#save"
+        >
+          <p>Drag a page into place.</p>
+          <%= render FlatPack::Table::Component.new(
+            data: @ordered_pages,
+            draggable_rows: true,
+            min_width: :none,
+            row_id: ->(recording) { recording.id }
+          ) do |table| %>
+            <% table.column(
+                 title: "position",
+                 html: lambda { |recording|
+                   (recording.recording_studio_orderable_position || @ordered_pages.index(recording)).to_s
+                 }
+               ) %>
+            <% table.column(
+                 title: "name",
+                 html: lambda { |recording|
+                   recording.recordable.respond_to?(:title) ? recording.recordable.title : recording.recordable_type
+                 }
+               ) %>
+          <% end %>
+        </div>
+      <% end %>
+      <% modal.footer do %>
+        <%= render FlatPack::Button::Component.new(
+          text: "Close",
+          style: :secondary,
+          data: { action: "click->flat-pack--modal#close" }
+        ) %>
+      <% end %>
     <% end %>
   <% else %>
     <%= render FlatPack::Alert::Component.new(
