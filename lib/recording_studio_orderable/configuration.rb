@@ -8,7 +8,8 @@ module RecordingStudioOrderable
                   :event_action,
                   :authorization_resolver,
                   :use_recording_studio_accessible,
-                  :authorization_role
+                  :authorization_role,
+                  :accessible_module
     attr_reader :layout
 
     def initialize
@@ -17,6 +18,7 @@ module RecordingStudioOrderable
       @authorization_resolver = nil
       @use_recording_studio_accessible = true
       @authorization_role = :edit
+      @accessible_module = nil
       @layout = nil
     end
 
@@ -31,6 +33,7 @@ module RecordingStudioOrderable
         authorization_resolver: authorization_resolver,
         use_recording_studio_accessible: use_recording_studio_accessible,
         authorization_role: authorization_role,
+        accessible_module: accessible_module,
         layout: layout
       }
     end

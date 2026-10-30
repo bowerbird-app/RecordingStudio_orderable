@@ -103,14 +103,14 @@ class SiblingOrderTest < Minitest::Test
     FakeRecording.records = {}
     FakeRecording.in_transaction = false
     FakeRecording.child_read_in_transaction = []
-    @original_configuration = RecordingStudioOrderable.instance_variable_get(:@configuration)
-    RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
+    @original_configuration = RecordingStudioOrderable.configuration
+    RecordingStudioOrderable.reset_configuration!
   end
 
   def teardown
     FakeRecording.records = {}
     FakeRecording.child_read_in_transaction = []
-    RecordingStudioOrderable.instance_variable_set(:@configuration, @original_configuration)
+    RecordingStudioOrderable.configuration = @original_configuration
   end
 
   def test_ignores_stale_ids_and_appends_missing_children
