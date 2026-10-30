@@ -4,7 +4,7 @@ require_relative "../test_helper"
 
 class OrderableHostLocaleOverrideTest < ActionDispatch::IntegrationTest
   GEM_BODY_AFTER = "Add this to the parent type whose children should be sortable."
-  HOST_BODY_AFTER = "HOST Add this to the parent type whose children should be sortable."
+  HOST_BODY_AFTER = "[host override] Add this to the parent type whose children should be sortable."
   HOST_SUBTITLE =
     "HOST Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
   OVERRIDE_KEY = "recording_studio.orderable.home.body_after"
