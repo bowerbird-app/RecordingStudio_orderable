@@ -3,8 +3,9 @@
 require_relative "../test_helper"
 
 # Render-level literal-English asserts for orderable overview copy.
-# English output must match main. Boot-order HOST override for body_after is
-# asserted in OrderableHostLocaleOverrideTest, not here.
+# English output must match main, except body_after: the dummy host file
+# marks that key so a boot-order override is visible. OrderableHostLocaleOverrideTest
+# asserts the marker wins.
 class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
   setup do
     @user = User.find_or_create_by!(email: "admin@admin.com") do |user|
@@ -27,7 +28,7 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
     assert_includes response.body, "Enable ordering"
     assert_includes response.body, "include RecordingStudio::Capabilities::Orderable.to HOST"
-    assert_includes response.body, "Add this to the parent type whose children should be sortable."
+    assert_includes response.body, "HOST Add this to the parent type whose children should be sortable."
     refute_includes response.body, "translation missing"
   end
 
@@ -45,6 +46,7 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
     assert_includes response.body, "Enable ordering"
     assert_includes response.body, "Add this to the parent type whose children should be sortable."
+    refute_includes response.body, "HOST Add this to the parent type whose children should be sortable."
     refute_includes response.body, "translation missing"
   ensure
     I18n.locale = previous_locale if previous_locale
