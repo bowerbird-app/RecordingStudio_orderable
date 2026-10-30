@@ -45,6 +45,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_includes response.body, formatted
     assert_select "td.whitespace-nowrap"
     assert_select "pre.overflow-x-auto"
+    assert_select "[tabindex=?]", "0"
     assert_select "table.table-fixed .max-w-full"
     refute_match "width: 24rem", response.body
     assert_match "width: 10rem", response.body
