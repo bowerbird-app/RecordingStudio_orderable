@@ -7,14 +7,27 @@
   anchor_tooltip: t("recording_studio.orderable.home.page_nav_anchor_label", default: "Home")
 ) %>
 
-<div class="flex flex-col gap-8">
+<%= render FlatPack::Stack::Component.new(gap: :lg) do %>
   <%= render FlatPack::Card::Component.new(background: :default) do |card| %>
     <% card.body do %>
-      <p>
-        <%= t("recording_studio.orderable.home.body_before", default: "Host apps enable ordering with") %>
-        <code>include RecordingStudio::Capabilities::Orderable.to</code>
-        <%= t("recording_studio.orderable.home.body_after", default: "on the parent type whose children should be sortable.") %>
-      </p>
+      <%= render FlatPack::Stack::Component.new(gap: :md) do %>
+        <%= render FlatPack::SectionTitle::Component.new(
+          title: t("recording_studio.orderable.home.body_before", default: "Enable ordering"),
+          spacing: :none
+        ) %>
+        <%= render FlatPack::Text::Component.new(
+          text: t(
+            "recording_studio.orderable.home.body_after",
+            default: "Add this to the parent type whose children should be sortable."
+          )
+        ) %>
+        <%= render FlatPack::CodeBlock::Component.new(
+          code: "include RecordingStudio::Capabilities::Orderable.to HOST",
+          language: "ruby",
+          title: "Parent type",
+          separated: false
+        ) %>
+      <% end %>
     <% end %>
   <% end %>
-</div>
+<% end %>

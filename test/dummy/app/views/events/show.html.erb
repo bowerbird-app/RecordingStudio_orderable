@@ -9,34 +9,40 @@
   anchor_tooltip: "Close"
 ) %>
 
-<div class="flex flex-col gap-8">
+<%= render FlatPack::Stack::Component.new(gap: :lg) do %>
   <%= render "home/demo_nav" %>
 
   <% if @events.empty? %>
     <%= render FlatPack::Alert::Component.new(description: "No events recorded yet.", style: :info) %>
   <% else %>
-    <%= render FlatPack::Table::Component.new(data: @events) do |table| %>
-      <% table.column(title: "action", html: ->(event) { event.action }) %>
+    <%= render FlatPack::Table::Component.new(data: @events, min_width: :none) do |table| %>
+      <% table.column(title: "action", width: "7rem", wrap: :nowrap, html: ->(event) { event.action }) %>
       <% table.column(
            title: "item",
+           width: "12rem",
+           wrap: :nowrap,
            html: ->(event) { safe_join([event_recording_label(event), tag.br, event.recordable_type]) }
          ) %>
-      <% table.column(title: "actor", html: ->(event) { event_actor_label(event) }) %>
+      <% table.column(title: "actor", width: "10rem", wrap: :nowrap, html: ->(event) { event_actor_label(event) }) %>
       <% table.column(
            title: "when",
+           width: "8.5rem",
+           wrap: :nowrap,
+           html: ->(event) { render(FlatPack::Timestamp::Component.new(timestamp: event.occurred_at, tooltip_placement: :top)) }
+         ) %>
+      <% table.column(
+           title: "metadata",
            html: lambda { |event|
-             trigger_id = "event-occurred-at-#{event.id}"
-             safe_join([
-               button_tag("#{time_ago_in_words(event.occurred_at)} ago", id: trigger_id, type: "button"),
-               render(
-                 FlatPack::Popover::Component.new(trigger_id: trigger_id, placement: :top) do |popover|
-                   popover.content { l(event.occurred_at, format: :long) }
-                 end
-               )
-             ])
+             render(FlatPack::CodeBlock::Component.new(
+               code: event_metadata(event),
+               language: "json",
+               title: "JSON",
+               separated: false,
+               tabindex: 0,
+               class: "w-full max-w-full min-w-0"
+             ))
            }
          ) %>
-      <% table.column(title: "metadata", html: ->(event) { tag.pre(event_metadata(event)) }) %>
     <% end %>
   <% end %>
-</div>
+<% end %>

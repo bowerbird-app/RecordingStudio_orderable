@@ -76,12 +76,14 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes home_source, "FlatPack::Button::Component"
     demo_nav = File.read(File.expand_path("dummy/app/views/home/_demo_nav.html.erb", __dir__))
     assert_includes demo_nav, "href: link.fetch(:href)"
+    assert_includes demo_nav, "current: current_page?(link.fetch(:href))"
     refute_includes demo_nav, "url: link.fetch"
     assert_includes login_source, "admin@admin.com"
     assert_includes login_source, "FlatPack::Card::Component"
-    assert_includes login_source, "background: :shaded"
+    assert_includes login_source, "background: :default"
+    refute_includes login_source, "background: :shaded"
     refute_includes login_source, "style: :elevated"
-    assert_includes login_source, "FlatPack::Grid::Component"
+    assert_includes login_source, "FlatPack::Stack::Component"
     stylesheets = File.read(File.expand_path("dummy/app/views/layouts/_flat_pack_stylesheets.html.erb", __dir__))
     variables_at = stylesheets.index("flat_pack/variables")
     tailwind_at = stylesheets.index("tailwind")
@@ -89,6 +91,66 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes stylesheets, "flat_pack/application"
     assert_empty RecordingStudio::Layout.hardcoded_layout_paths(File.expand_path("..", __dir__))
     assert_empty RecordingStudio::Layout.hardcoded_layout_paths(File.expand_path("dummy", __dir__))
+  end
+
+  def test_screens_use_flatpack_layout_and_drop_the_reorder_shim
+    engine_home = File.read(File.expand_path("../app/views/recording_studio_orderable/home/index.html.erb", __dir__))
+    dummy_home = File.read(File.expand_path("dummy/app/views/home/index.html.erb", __dir__))
+    events = File.read(File.expand_path("dummy/app/views/events/show.html.erb", __dir__))
+    login = File.read(File.expand_path("dummy/app/views/devise/sessions/new.html.erb", __dir__))
+    layout = File.read(File.expand_path("dummy/app/views/layouts/application.html.erb", __dir__))
+
+    assert_includes engine_home, "FlatPack::Stack::Component.new(gap: :lg)"
+    assert_includes engine_home, "FlatPack::SectionTitle::Component"
+    assert_includes engine_home, "FlatPack::Text::Component"
+    assert_includes engine_home, "FlatPack::CodeBlock::Component"
+    assert_includes engine_home, "Enable ordering"
+    assert_includes engine_home, "include RecordingStudio::Capabilities::Orderable.to HOST"
+    assert_includes engine_home, "Add this to the parent type whose children should be sortable."
+    refute_includes engine_home, "FlatPack::Grid::Component"
+    refute_includes engine_home, "flex flex-col"
+    refute_includes engine_home, "<p>"
+    refute_includes engine_home, "<code>"
+    refute_includes engine_home, "FlatPack::PageTitle::Component"
+
+    assert_includes dummy_home, "reorder_url: reorder_pages_path"
+    assert_includes dummy_home, "justify: :between"
+    assert_includes dummy_home, "order-refresh"
+    assert_includes dummy_home, "flat-pack--table-sortable:saved->order-refresh#refresh"
+    assert_includes dummy_home, "id: \"order-demo-table\""
+    assert_includes dummy_home, "FlatPack::Shared::IconComponent.new(name: \"bars-3\""
+    refute_includes dummy_home, "icon_only"
+    refute_includes dummy_home, "<div id=\"order-demo-table\">"
+    assert_includes dummy_home, "FlatPack::CodeBlock::Component"
+    assert_includes dummy_home, "FlatPack::Cluster::Component"
+    refute_includes dummy_home, "page-reorder"
+    refute_includes dummy_home, "<p>"
+    refute_includes dummy_home, "<code>"
+    refute_includes dummy_home, "flex flex-col"
+    refute_includes dummy_home, "flex flex-wrap"
+    refute File.exist?(File.expand_path("dummy/app/javascript/controllers/page_reorder_controller.js", __dir__))
+
+    assert_includes events, "FlatPack::Timestamp::Component.new"
+    assert_includes events, "tooltip_placement: :top"
+    refute_includes events, "button_tag"
+    refute_includes events, "tag.pre"
+    refute_includes events, "Popover::Component"
+    assert_includes events, "FlatPack::CodeBlock::Component"
+    assert_includes events, "min_width: :none"
+    assert_includes events, "width: \"12rem\""
+    assert_includes events, "width: \"10rem\""
+    assert_includes events, "width: \"8.5rem\""
+    assert_includes events, "max-w-full"
+    assert_includes events, "tabindex: 0"
+    refute_includes events, "width: \"24rem\""
+    refute_includes events, "width: \"9rem\""
+    assert_includes events, "wrap: :nowrap"
+
+    refute_includes login, "space-y-4"
+    refute_includes login, "mx-auto"
+    refute_includes layout, "mb-6"
+    refute_includes layout, "icon_sprite"
+    refute File.exist?(File.expand_path("dummy/app/views/layouts/_icon_sprite.html.erb", __dir__))
   end
 
   def test_dummy_tailwind_sources_scan_vendor_bundle_and_split_globs
