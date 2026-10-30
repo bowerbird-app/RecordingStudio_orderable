@@ -7,15 +7,57 @@ require "recording_studio_orderable/version"
 require "recording_studio_orderable/configuration"
 require "recording_studio_orderable/authorization"
 require "recording_studio_orderable/sibling_order"
+require "recording_studio_orderable/parent_position"
 require "recording_studio_orderable/engine"
 require "recording_studio/orderable/capabilities/orderable"
 
 module RecordingStudioOrderable
+  PARENT_POSITION_EXTENSION = proc do
+    unless method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
+      before_update :recording_studio_orderable_sync_position_on_parent_change,
+                    if: :will_save_change_to_parent_recording_id?
+      before_update :recording_studio_orderable_normalize_restored_position,
+                    if: :recording_studio_orderable_restoring_from_trash?
+
+      define_method(:recording_studio_orderable_sync_position_on_parent_change) do
+        RecordingStudioOrderable::ParentPosition.sync(self)
+      end
+
+      define_method(:recording_studio_orderable_restoring_from_trash?) do
+        return false unless respond_to?(:will_save_change_to_trashed_at?)
+        return false unless will_save_change_to_trashed_at?
+
+        trashed_at.nil?
+      end
+
+      define_method(:recording_studio_orderable_normalize_restored_position) do
+        parent = parent_recording if respond_to?(:parent_recording)
+        next unless parent
+        next unless defined?(RecordingStudio)
+        next unless RecordingStudio.capability_enabled?(:orderable, for: parent.recordable_type)
+
+        RecordingStudioOrderable::SiblingOrder.new(parent).normalize_restored_position!(self)
+      end
+    end
+  end
+
   class << self
     def install_recording_capabilities!
       return unless defined?(RecordingStudio::Recording)
 
       RecordingStudio.apply_capabilities!
+      install_parent_position_hook!
+    end
+
+    def install_parent_position_hook!
+      return unless defined?(RecordingStudio::Recording)
+      return unless RecordingStudio.configuration.respond_to?(:hooks)
+
+      hooks = RecordingStudio.configuration.hooks
+      unless hooks.model_extensions_for(:recording).include?(PARENT_POSITION_EXTENSION)
+        hooks.extend_model(:recording, &PARENT_POSITION_EXTENSION)
+      end
+      RecordingStudio::Engine.apply_model_extensions! if RecordingStudio::Engine.respond_to?(:apply_model_extensions!)
     end
 
     attr_writer :configuration

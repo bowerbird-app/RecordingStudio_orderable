@@ -3,18 +3,83 @@
 require "test_helper"
 
 class SiblingOrderTest < Minitest::Test
+  class WhereChain
+    def initialize(relation)
+      @relation = relation
+    end
+
+    def not(conditions)
+      @relation.reject_ids(Array(conditions[:id]))
+    end
+  end
+
   class FakeRelation
+    class << self
+      attr_accessor :maximum_columns
+    end
+
     def initialize(records)
       @records = records
     end
 
-    def where(conditions)
+    def where(conditions = nil)
+      return WhereChain.new(self) if conditions.nil?
+
+      selected = select_types(@records, conditions)
+      selected = select_ids(selected, conditions)
+      selected = select_position(selected, conditions)
+      selected = reject_trashed(selected) if conditions.key?(:trashed_at) && conditions[:trashed_at].nil?
+      relation = self.class.new(selected)
+      relation.klass = klass
+      relation
+    end
+
+    def reject_ids(ids)
+      wanted = ids.map(&:to_s)
+      selected = @records.reject { |record| wanted.include?(record.id.to_s) }
+      relation = self.class.new(selected)
+      relation.klass = klass
+      relation
+    end
+
+    def merge(other)
+      other
+    end
+
+    def maximum(column)
+      self.class.maximum_columns << column
+      @records.filter_map { |record| record.public_send(column) }.max
+    end
+
+    def exists?
+      @records.any?
+    end
+
+    def select_types(records, conditions)
       types = Array(conditions[:recordable_type])
+      return records if types.empty?
+
+      records.select { |record| types.include?(record.recordable_type) }
+    end
+
+    def select_ids(records, conditions)
+      return records unless conditions.key?(:id)
+
       ids = Array(conditions[:id])
-      selected = @records
-      selected = selected.select { |record| types.include?(record.recordable_type) } if types.any?
-      selected = selected.select { |record| ids.include?(record.id) } if ids.any? && conditions.key?(:id)
-      self.class.new(selected)
+      return records if ids.empty?
+
+      records.select { |record| ids.include?(record.id) }
+    end
+
+    def select_position(records, conditions)
+      return records unless conditions.key?(:recording_studio_orderable_position)
+
+      position = conditions[:recording_studio_orderable_position]
+      records.select { |record| record.recording_studio_orderable_position == position }
+    end
+
+    def reject_trashed(records)
+      records.reject { |record| record.respond_to?(:trashed_at) && record.trashed_at }
     end
 
     def reorder(*)
@@ -23,6 +88,8 @@ class SiblingOrderTest < Minitest::Test
       end
       self.class.new(ordered)
     end
+
+    attr_accessor :klass
 
     def to_a
       @records
@@ -35,7 +102,7 @@ class SiblingOrderTest < Minitest::Test
 
   class FakeRecording
     class << self
-      attr_accessor :records, :in_transaction, :child_read_in_transaction
+      attr_accessor :records, :in_transaction, :child_read_in_transaction, :writes
 
       def transaction
         self.in_transaction = true
@@ -54,7 +121,7 @@ class SiblingOrderTest < Minitest::Test
     end
 
     attr_accessor :id, :recordable_type, :created_at, :recording_studio_orderable_position,
-                  :logged_events, :child_records, :lock_count
+                  :logged_events, :child_records, :lock_count, :trashed_at, :parent_recording
 
     def initialize(id:, recordable_type: "Page", created_at: Time.at(id.to_s.ord),
                    recording_studio_orderable_position: nil, child_records: [])
@@ -65,12 +132,15 @@ class SiblingOrderTest < Minitest::Test
       @logged_events = []
       @child_records = child_records
       @lock_count = 0
+      @trashed_at = nil
+      @parent_recording = nil
       self.class.records ||= {}
       self.class.records[id] = self
     end
 
     def with_lock(&)
       self.lock_count += 1
+      self.class.writes << :parent
       self.class.transaction(&)
     end
 
@@ -92,6 +162,12 @@ class SiblingOrderTest < Minitest::Test
       self
     end
 
+    def update_columns(attributes)
+      self.class.writes << :child
+      self.recording_studio_orderable_position = attributes[:recording_studio_orderable_position]
+      self
+    end
+
     def log_event!(**attributes)
       logged_events << attributes
     end
@@ -101,6 +177,8 @@ class SiblingOrderTest < Minitest::Test
     FakeRecording.records = {}
     FakeRecording.in_transaction = false
     FakeRecording.child_read_in_transaction = []
+    FakeRecording.writes = []
+    FakeRelation.maximum_columns = []
     @original_configuration = RecordingStudioOrderable.configuration
     RecordingStudioOrderable.reset_configuration!
   end
@@ -352,5 +430,187 @@ class SiblingOrderTest < Minitest::Test
     RecordingStudio.stub(:capability_options, { allows: ["Page"] }) do
       assert_equal [child], RecordingStudioOrderable::SiblingOrder.new(parent).children.to_a
     end
+  end
+
+  def test_children_skip_trashed_siblings_when_the_column_exists
+    active = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    trashed.trashed_at = Time.current
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
+    model = Class.new do
+      def self.column_names
+        %w[id trashed_at]
+      end
+    end
+    parent.define_singleton_method(:child_recordings) do
+      relation = SiblingOrderTest::FakeRelation.new(child_records)
+      relation.klass = model
+      relation
+    end
+
+    assert_equal [active], RecordingStudioOrderable::SiblingOrder.new(parent).children.to_a
+  end
+
+  def test_assign_end_position_follows_the_highest_sibling_position
+    first = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", recording_studio_orderable_position: 4)
+    moving = FakeRecording.new(id: "c", recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, moving])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).assign_end_position!(moving)
+
+    assert_equal 5, moving.recording_studio_orderable_position
+    assert_equal 0, first.recording_studio_orderable_position
+    assert_equal 4, second.recording_studio_orderable_position
+  end
+
+  def test_parent_change_appends_on_an_orderable_parent
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
+    child = FakeRecording.new(id: "page", recording_studio_orderable_position: 3)
+    child.parent_recording = parent
+    parent.child_records = [child]
+
+    RecordingStudio.stub(:capability_enabled?, true) do
+      RecordingStudio.stub(:capability_options, { allows: ["Page"] }) do
+        RecordingStudioOrderable::ParentPosition.sync(child)
+      end
+    end
+
+    assert_equal 0, child.recording_studio_orderable_position
+  end
+
+  def test_parent_change_clears_position_when_the_parent_is_not_orderable
+    parent = FakeRecording.new(id: "project", recordable_type: "Project")
+    child = FakeRecording.new(id: "page", recording_studio_orderable_position: 2)
+    child.parent_recording = parent
+
+    RecordingStudio.stub(:capability_enabled?, false) do
+      RecordingStudioOrderable::ParentPosition.sync(child)
+    end
+
+    assert_nil child.recording_studio_orderable_position
+  end
+
+  def test_parent_position_extension_defines_the_callback
+    host = Class.new do
+      class << self
+        attr_reader :callback_names
+
+        def before_update(*)
+          @callback_names ||= []
+          @callback_names << :before_update
+        end
+
+        def after_update(*)
+          @callback_names ||= []
+          @callback_names << :after_update
+        end
+      end
+    end
+
+    host.class_eval(&RecordingStudioOrderable::PARENT_POSITION_EXTENSION)
+    host.class_eval(&RecordingStudioOrderable::PARENT_POSITION_EXTENSION)
+
+    assert host.method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
+    assert host.method_defined?(:recording_studio_orderable_normalize_restored_position)
+    assert_equal %i[before_update before_update], host.callback_names
+    host.new.recording_studio_orderable_sync_position_on_parent_change
+    assert_nil RecordingStudioOrderable.install_parent_position_hook!
+  end
+
+  def test_restore_callback_moves_a_colliding_position_on_an_orderable_parent
+    host = Class.new(FakeRecording) do
+      class << self
+        def before_update(*); end
+      end
+    end
+    host.class_eval(&RecordingStudioOrderable::PARENT_POSITION_EXTENSION)
+
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
+    keeper = FakeRecording.new(id: "keeper", recording_studio_orderable_position: 0)
+    child = host.new(id: "page", recording_studio_orderable_position: 0)
+    child.parent_recording = parent
+    parent.child_records = [keeper, child]
+    def child.will_save_change_to_trashed_at?
+      true
+    end
+
+    def child.trashed_at
+      nil
+    end
+
+    assert child.recording_studio_orderable_restoring_from_trash?
+
+    RecordingStudio.stub(:capability_enabled?, true) do
+      child.recording_studio_orderable_normalize_restored_position
+    end
+
+    assert_equal 1, child.recording_studio_orderable_position
+  end
+
+  def test_assign_end_position_uses_maximum_and_locks_the_parent_before_the_child
+    first = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", recording_studio_orderable_position: 4)
+    moving = FakeRecording.new(id: "c", recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, moving])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).assign_end_position!(moving)
+
+    assert_equal %i[recording_studio_orderable_position], FakeRelation.maximum_columns
+    assert_equal %i[parent child], FakeRecording.writes
+    assert_equal 5, moving.recording_studio_orderable_position
+  end
+
+  def test_children_use_the_trashable_active_scope_when_the_model_defines_it
+    active = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    trashed.trashed_at = Time.current
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
+    active_scope = FakeRelation.new([active])
+    model = Class.new do
+      define_singleton_method(:recording_studio_trashable_active) { active_scope }
+    end
+    parent.define_singleton_method(:child_recordings) do
+      relation = SiblingOrderTest::FakeRelation.new(child_records)
+      relation.klass = model
+      relation
+    end
+
+    assert_equal [active], RecordingStudioOrderable::SiblingOrder.new(parent).children.to_a
+  end
+
+  def test_restore_moves_a_colliding_or_blank_position_to_the_end
+    keeper = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    restored = FakeRecording.new(id: "b", recording_studio_orderable_position: 0)
+    blank = FakeRecording.new(id: "c", recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [keeper, restored, blank])
+    order = RecordingStudioOrderable::SiblingOrder.new(parent)
+
+    order.normalize_restored_position!(restored)
+    order.normalize_restored_position!(blank)
+    order.normalize_restored_position!(keeper)
+
+    assert_equal 0, keeper.recording_studio_orderable_position
+    assert_equal 1, restored.recording_studio_orderable_position
+    assert_equal 2, blank.recording_studio_orderable_position
+  end
+
+  def test_parent_change_during_a_save_assigns_position_without_a_second_write
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
+    child = FakeRecording.new(id: "page", recording_studio_orderable_position: 3)
+    child.parent_recording = parent
+    parent.child_records = [child]
+    def child.will_save_change_to_parent_recording_id?
+      true
+    end
+
+    RecordingStudio.stub(:capability_enabled?, true) do
+      RecordingStudio.stub(:capability_options, { allows: ["Page"] }) do
+        RecordingStudioOrderable::ParentPosition.sync(child)
+      end
+    end
+
+    assert_equal 0, child.recording_studio_orderable_position
+    assert_equal [:parent], FakeRecording.writes
   end
 end
