@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The engine overview and the dummy screens use FlatPack Stack, Cluster, Card, Button, Text, and CodeBlock. The dummy no longer ships a hand-rolled icon sprite.
 - The reorder modal saves through FlatPack's table `reorder_url`. Row ids stay strings, including UUIDs. The page-reorder Stimulus shim is gone. After that save, the dummy home reloads so the list behind the modal shows the new order.
 - The dummy events "when" column uses FlatPack Timestamp. Its tooltip shows the full time. Metadata is a CodeBlock in the leftover table column. The code scrolls inside the block, and the block stays inside the table.
-- The overview code sample is `include RecordingStudio::Capabilities::Orderable.to HOST`. The line above it is "Add this to the parent type whose children should be sortable."
+- The overview code sample is `include RecordingStudio::Capabilities::Orderable.to HOST`. The line above it is "Add this to the parent type whose children should be sortable." The dummy host locale prefixes that line with `HOST` so a boot-order override is visible on the overview.
 
 ### Upgrade Notes
 

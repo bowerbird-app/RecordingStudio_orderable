@@ -23,10 +23,10 @@
            wrap: :nowrap,
            html: ->(event) { safe_join([event_recording_label(event), tag.br, event.recordable_type]) }
          ) %>
-      <% table.column(title: "actor", width: "12rem", wrap: :nowrap, html: ->(event) { event_actor_label(event) }) %>
+      <% table.column(title: "actor", width: "10rem", wrap: :nowrap, html: ->(event) { event_actor_label(event) }) %>
       <% table.column(
            title: "when",
-           width: "9rem",
+           width: "8.5rem",
            wrap: :nowrap,
            html: ->(event) { render(FlatPack::Timestamp::Component.new(timestamp: event.occurred_at, tooltip_placement: :top)) }
          ) %>
