@@ -31,6 +31,15 @@ module RecordingStudioOrderable
       end
     end
 
+    def assign_end_position!(recording)
+      with_parent_lock do
+        siblings = current_eligible_recordings.reject { |child| child.id.to_s == recording.id.to_s }
+        positions = siblings.filter_map(&:recording_studio_orderable_position)
+        recording.update!(recording_studio_orderable_position: positions.empty? ? 0 : positions.max + 1)
+        parent_recording.reload
+      end
+    end
+
     private
 
     attr_reader :parent_recording
@@ -75,11 +84,22 @@ module RecordingStudioOrderable
     end
 
     def child_scope
-      scope = parent_recording.child_recordings
+      scope = exclude_trashed(parent_recording.child_recordings)
       allowed_types = allowed_child_types
       return scope if allowed_types.empty?
 
       scope.where(recordable_type: allowed_types)
+    end
+
+    def exclude_trashed(scope)
+      return scope unless trashed_column?(scope)
+
+      scope.where(trashed_at: nil)
+    end
+
+    def trashed_column?(scope)
+      model = scope.klass if scope.respond_to?(:klass)
+      model.respond_to?(:column_names) && model.column_names.include?("trashed_at")
     end
 
     def allowed_child_types

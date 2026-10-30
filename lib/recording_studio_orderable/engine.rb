@@ -17,6 +17,7 @@ module RecordingStudioOrderable
 
     config.to_prepare do
       RecordingStudioOrderable.install_recording_capabilities!
+      RecordingStudioOrderable.install_parent_position_hook!
     end
 
     initializer "recording_studio_orderable.load_config" do |app|

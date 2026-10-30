@@ -25,6 +25,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_accessible"
+    refute_includes gemspec, "recording_studio_trashable"
+    refute_includes gemspec, "recording_studio_admin"
     assert_equal Gem::Version.new("6.3.0"), spec.version
     assert_equal Gem::Version.new("0.1.332"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
@@ -151,6 +153,14 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes layout, "mb-6"
     refute_includes layout, "icon_sprite"
     refute File.exist?(File.expand_path("dummy/app/views/layouts/_icon_sprite.html.erb", __dir__))
+
+    seeds = File.read(File.expand_path("dummy/db/seeds.rb", __dir__))
+    lookup = File.read(File.expand_path("dummy/app/models/demo_recording_lookup.rb", __dir__))
+    assert_includes seeds, "recording_studio_orderable_append!"
+    refute_includes seeds, "recording_studio_orderable_position:"
+    assert_includes lookup, "RecordingStudio.root_recording_for"
+    assert_includes lookup, "recording_for"
+    refute_includes lookup, "INNER JOIN"
   end
 
   def test_dummy_tailwind_sources_scan_vendor_bundle_and_split_globs

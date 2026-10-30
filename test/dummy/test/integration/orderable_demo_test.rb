@@ -167,6 +167,34 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_equal 0, page_recording.reload.recording_studio_orderable_position
   end
 
+  test "trashed siblings stay out of the order list" do
+    sign_in @user
+    trashed = @folder_recording.recording_studio_orderable_children.to_a.last
+    trashed.update!(trashed_at: Time.current)
+
+    ids = @folder_recording.recording_studio_orderable_children.map(&:id)
+
+    refute_includes ids, trashed.id
+  end
+
+  test "changing parent appends on an orderable folder and clears on a project" do
+    sign_in @user
+    workspace_recording = RecordingStudio.root_recording_for(Workspace.first)
+    other_folder = find_or_record!(workspace_recording, Folder, "second-order-folder", parent: @project_recording) do |folder|
+      folder.name = "Second Order Folder"
+      folder.slug = "second-order-folder"
+    end
+    moving = @folder_recording.recording_studio_orderable_children.to_a.first
+
+    moving.update!(parent_recording: other_folder)
+
+    assert_equal moving.id, other_folder.reload.recording_studio_orderable_children.last.id
+
+    moving.update!(parent_recording: @project_recording)
+
+    assert_nil moving.reload.recording_studio_orderable_position
+  end
+
   test "project does not receive the orderable capability" do
     refute RecordingStudio.capability_enabled?(:orderable, for: "Project")
     assert RecordingStudio.capability_enabled?(:orderable, for: "Folder")

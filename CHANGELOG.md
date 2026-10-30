@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-10-30
+
+### Changed
+
+- Sibling lists skip recordings with `trashed_at` set when that column exists. Orderable does not depend on RecordingStudio_trashable.
+- When a recording's parent changes, Orderable appends it on an orderable parent that allows that child type. Any other parent clears `recording_studio_orderable_position`. Orderable does not change the parent.
+- Dummy seeds append pages with `recording_studio_orderable_append!`. Demo lookup uses `RecordingStudio.root_recording_for` and `recording_for`.
+
+### Upgrade Notes
+
+- Bump to `0.4.7`. No migration.
+- A host that stores `trashed_at` on `recording_studio_recordings` will no longer see trashed children in order. Hosts without that column are unchanged.
+- Moving a recording to a new parent now changes its sibling position. Do not also set `recording_studio_orderable_position` in that same save.
+
 ## [0.4.6] - 2026-10-30
 
 ### Changed
@@ -215,7 +229,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.6...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.7...HEAD
+[0.4.7]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.3...v0.4.4
