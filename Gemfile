@@ -4,8 +4,8 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "flat_pack", github: "bowerbird-app/flatpack", ref: "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
-gem "recording_studio", github: "bowerbird-app/RecordingStudio", tag: "v6.1.0"
+gem "flat_pack", github: "bowerbird-app/flatpack", tag: "v0.1.332"
+gem "recording_studio", github: "bowerbird-app/RecordingStudio", tag: "v6.3.0"
 
 gem "puma"
 gem "sprockets-rails"
