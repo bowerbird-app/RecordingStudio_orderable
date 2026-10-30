@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-10-30
+
+### Changed
+
+- The engine overview and the dummy screens use FlatPack Grid, Cluster, Card, and Button. The dummy no longer ships a hand-rolled icon sprite.
+- The reorder modal saves through FlatPack's table `reorder_url`. Row ids stay strings, including UUIDs. The page-reorder Stimulus shim is gone.
+
+### Upgrade Notes
+
+- Bump to `0.4.6`. No migration and no host API change.
+- Hosts that copied `page_reorder_controller.js` can delete it and set `reorder_url:` on `FlatPack::Table`. The PATCH body is FlatPack's `reorder.items` list. Each `id` is the row id string.
+
 ## [0.4.5] - 2026-10-30
 
 ### Changed
@@ -200,7 +212,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.2...v0.4.3

@@ -91,6 +91,39 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_empty RecordingStudio::Layout.hardcoded_layout_paths(File.expand_path("dummy", __dir__))
   end
 
+  def test_screens_use_flatpack_layout_and_drop_the_reorder_shim
+    engine_home = File.read(File.expand_path("../app/views/recording_studio_orderable/home/index.html.erb", __dir__))
+    dummy_home = File.read(File.expand_path("dummy/app/views/home/index.html.erb", __dir__))
+    events = File.read(File.expand_path("dummy/app/views/events/show.html.erb", __dir__))
+    login = File.read(File.expand_path("dummy/app/views/devise/sessions/new.html.erb", __dir__))
+    layout = File.read(File.expand_path("dummy/app/views/layouts/application.html.erb", __dir__))
+
+    assert_includes engine_home, "FlatPack::Grid::Component.new(cols: 1, gap: :lg)"
+    assert_includes engine_home, "FlatPack::SectionTitle::Component"
+    refute_includes engine_home, "flex flex-col"
+    refute_includes engine_home, "<p>"
+    refute_includes engine_home, "<code>"
+    refute_includes engine_home, "FlatPack::PageTitle::Component"
+
+    assert_includes dummy_home, "reorder_url: reorder_pages_path"
+    assert_includes dummy_home, "FlatPack::Cluster::Component"
+    refute_includes dummy_home, "page-reorder"
+    refute_includes dummy_home, "flex flex-col"
+    refute_includes dummy_home, "flex flex-wrap"
+    refute File.exist?(File.expand_path("dummy/app/javascript/controllers/page_reorder_controller.js", __dir__))
+
+    assert_includes events, "FlatPack::Button::Component.new("
+    assert_includes events, "id: trigger_id"
+    refute_includes events, "button_tag"
+    assert_includes events, "tag.pre"
+
+    refute_includes login, "space-y-4"
+    refute_includes login, "mx-auto"
+    refute_includes layout, "mb-6"
+    refute_includes layout, "icon_sprite"
+    refute File.exist?(File.expand_path("dummy/app/views/layouts/_icon_sprite.html.erb", __dir__))
+  end
+
   def test_dummy_tailwind_sources_scan_vendor_bundle_and_split_globs
     css = File.read(File.expand_path("dummy/app/assets/tailwind/application.css", __dir__))
 

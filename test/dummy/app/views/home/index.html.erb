@@ -3,7 +3,7 @@
 <% flat_pack_page_nav(round: true, style: :default, anchor_href: main_app.root_path, anchor_tooltip: "Home") %>
 <% register_page_nav "Sign out", main_app.destroy_user_session_path, role: :secondary, data: { turbo_method: :delete } %>
 
-<div class="flex flex-col gap-8">
+<%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
   <%= render "home/demo_nav" %>
 
   <% if @folder_recording %>
@@ -43,8 +43,7 @@
                actions << form_with(
                  url: main_app.move_page_path(recording),
                  method: :patch,
-                 data: { turbo: false },
-                 html: { class: "shrink-0" }
+                 data: { turbo: false }
                ) do
                  safe_join([
                    hidden_field_tag(:to_index, index - 1),
@@ -57,8 +56,7 @@
                actions << form_with(
                  url: main_app.move_page_path(recording),
                  method: :patch,
-                 data: { turbo: false },
-                 html: { class: "shrink-0" }
+                 data: { turbo: false }
                ) do
                  safe_join([
                    hidden_field_tag(:to_index, index + 1),
@@ -67,7 +65,7 @@
                end
              end
 
-             content_tag(:div, safe_join(actions), class: "flex flex-wrap items-center gap-2")
+             render(FlatPack::Cluster::Component.new(gap: :sm)) { safe_join(actions) }
            }
          ) %>
     <% end %>
@@ -75,17 +73,14 @@
 
     <%= render FlatPack::Modal::Component.new(id: "reorder-pages-modal", title: "Reorder pages", size: :lg) do |modal| %>
       <% modal.body do %>
-        <div
-          class="flex flex-col gap-4"
-          data-controller="page-reorder"
-          data-page-reorder-url-value="<%= reorder_pages_path %>"
-          data-action="table:reordered->page-reorder#save"
-        >
+        <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
           <p>Drag a page into place.</p>
           <%= render FlatPack::Table::Component.new(
             data: @ordered_pages,
             draggable_rows: true,
             min_width: :none,
+            reorder_url: reorder_pages_path,
+            reorder_resource: "pages",
             row_id: ->(recording) { recording.id }
           ) do |table| %>
             <% table.column(
@@ -101,7 +96,7 @@
                  }
                ) %>
           <% end %>
-        </div>
+        <% end %>
       <% end %>
       <% modal.footer do %>
         <%= render FlatPack::Button::Component.new(
@@ -119,7 +114,7 @@
   <% end %>
 
   <% if @unordered_project_recording %>
-    <section class="flex flex-col gap-4">
+    <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
       <%= render FlatPack::SectionTitle::Component.new(
         title: "Project is not orderable",
         subtitle: "Installing the gem does not enable order on every recordable."
@@ -135,6 +130,6 @@
           </p>
         <% end %>
       <% end %>
-    </section>
+    <% end %>
   <% end %>
-</div>
+<% end %>

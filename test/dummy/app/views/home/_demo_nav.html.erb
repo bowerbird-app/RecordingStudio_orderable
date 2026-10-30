@@ -1,4 +1,4 @@
-<div class="flex flex-wrap gap-3">
+<%= render FlatPack::Cluster::Component.new(gap: :md) do %>
   <% demo_nav_links.each do |link| %>
     <%= render FlatPack::Button::Component.new(
       text: link.fetch(:text),
@@ -6,4 +6,4 @@
       href: link.fetch(:href)
     ) %>
   <% end %>
-</div>
+<% end %>

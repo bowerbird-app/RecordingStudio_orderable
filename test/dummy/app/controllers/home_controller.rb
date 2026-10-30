@@ -35,7 +35,7 @@ class HomeController < ApplicationController
       return
     end
 
-    ordered_ids = Array(params[:ordered_recording_ids]).map(&:to_s).reject(&:blank?)
+    ordered_ids = ordered_recording_ids_from_request
     if ordered_ids.empty?
       render json: { ok: false, error: "Choose an order." }, status: :unprocessable_entity
       return
@@ -52,6 +52,16 @@ class HomeController < ApplicationController
   end
 
   private
+
+  def ordered_recording_ids_from_request
+    items = params.dig(:reorder, :items)
+    ids = if items.present?
+      Array(items).map { |item| item[:id].to_s }
+    else
+      Array(params[:ordered_recording_ids]).map(&:to_s)
+    end
+    ids.reject(&:blank?)
+  end
 
   def load_home_demo_state
     @workspace = Workspace.first
