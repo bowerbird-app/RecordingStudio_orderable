@@ -76,13 +76,11 @@ class OrderableCapabilitiesTest < Minitest::Test
       self
     end
 
-    # rubocop:disable Naming/PredicateMethod
     def update!(attributes)
       self.updated_with = attributes
       self.recording_studio_orderable_position = attributes[:recording_studio_orderable_position]
-      true
+      self
     end
-    # rubocop:enable Naming/PredicateMethod
 
     def log_event!(**attributes)
       logged_events << attributes

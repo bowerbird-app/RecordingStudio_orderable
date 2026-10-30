@@ -149,6 +149,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes readme, "OrderableRecordable"
     refute_includes readme, "Welcome to the template"
     assert_includes readme, "allow every caller"
+    assert_includes readme, "Do not call Moveable to reorder siblings"
+    assert_includes readme, "Do not use Orderable move! to change parent"
   end
 
   def test_engine_does_not_register_an_order_recordable
@@ -173,15 +175,21 @@ class RecordingStudioOrderableTest < Minitest::Test
     end
   end
 
-  def test_capability_options_for_accepts_class_and_recording
+  def test_capability_options_for_accepts_string_class_recording_and_nil
     recording = Struct.new(:recordable_type).new("Folder")
+    seen = []
 
-    RecordingStudio.stub(:capability_options, ->(*args, **kwargs) { { args: args, kwargs: kwargs } }) do
-      assert_equal "Folder", RecordingStudioOrderable.send(:capability_type_name, FolderType)
-      assert_equal "Folder", RecordingStudioOrderable.send(:capability_type_name, :Folder)
-      assert_equal "Folder", RecordingStudioOrderable.send(:capability_type_name, recording)
-      assert_nil RecordingStudioOrderable.send(:capability_type_name, nil)
+    RecordingStudio.stub(:capability_options, lambda { |*args, **kwargs|
+      seen << [args, kwargs]
+      { allows: ["Page"] }
+    }) do
+      assert_equal({ allows: ["Page"] }, RecordingStudioOrderable.capability_options_for("Folder"))
+      assert_equal({ allows: ["Page"] }, RecordingStudioOrderable.capability_options_for(FolderType))
+      assert_equal({ allows: ["Page"] }, RecordingStudioOrderable.capability_options_for(recording))
+      assert_equal({}, RecordingStudioOrderable.capability_options_for(nil))
     end
+
+    assert_equal [[[:orderable], { for: "Folder" }]], seen.uniq
   end
 
   def test_authorized_delegates_to_authorization

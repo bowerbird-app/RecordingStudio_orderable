@@ -54,10 +54,10 @@ class EngineTest < Minitest::Test
     assert_equal true, RecordingStudioOrderable.configuration.log_order_events
   end
 
-  def test_load_config_raises_for_invalid_configuration
+  def test_load_config_wraps_invalid_layout
     app = Struct.new(:config) do
       def config_for(_name)
-        raise "boom"
+        { layout: Object.new }
       end
     end.new(Struct.new(:x).new(nil))
 
@@ -66,7 +66,41 @@ class EngineTest < Minitest::Test
     end
 
     assert_includes error.message, "Invalid recording_studio_orderable configuration"
-    assert_includes error.message, "boom"
+  end
+
+  def test_load_config_wraps_psych_and_type_errors
+    failures = [
+      psych_syntax_error,
+      Psych::Exception.new("bad yaml"),
+      Psych::DisallowedClass.new("load", "Date"),
+      TypeError.new("bad type"),
+      ArgumentError.new("bad argument")
+    ]
+    failures.each do |failure|
+      app = Struct.new(:config) do
+        define_method(:config_for) { |_name| raise failure }
+      end.new(Struct.new(:x).new(nil))
+
+      error = assert_raises(RecordingStudioOrderable::ConfigurationLoadError) do
+        find_initializer("recording_studio_orderable.load_config").block.call(app)
+      end
+
+      assert_includes error.message, failure.message
+    end
+  end
+
+  def test_load_config_does_not_wrap_unrelated_errors
+    app = Struct.new(:config) do
+      def config_for(_name)
+        raise "boom"
+      end
+    end.new(Struct.new(:x).new(nil))
+
+    error = assert_raises(RuntimeError) do
+      find_initializer("recording_studio_orderable.load_config").block.call(app)
+    end
+
+    assert_equal "boom", error.message
   end
 
   def test_load_yaml_config_returns_nil_when_file_is_missing
@@ -88,5 +122,9 @@ class EngineTest < Minitest::Test
 
   def find_initializer(name)
     RecordingStudioOrderable::Engine.initializers.find { |initializer| initializer.name == name }
+  end
+
+  def psych_syntax_error
+    Psych::SyntaxError.new("recording_studio_orderable.yml", 1, 1, 0, "bad indent", "context")
   end
 end

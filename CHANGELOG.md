@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-10-30
+
+### Changed
+
+- Configuration loading wraps `Psych::Exception`, `TypeError`, and `ArgumentError` as `ConfigurationLoadError`. That includes YAML syntax errors and disallowed classes. An invalid `layout` is still wrapped, because `layout=` raises `ArgumentError`. Other errors propagate.
+- The README states that `recording_studio_orderable_move!` is a sibling index. Do not call Moveable to reorder siblings. Do not use Orderable move! to change parent.
+
+### Upgrade Notes
+
+- Bump to `0.4.4`. No migration and no rename of `recording_studio_orderable_move!`.
+- A configuration failure that is not `Psych::Exception`, `TypeError`, or `ArgumentError` is no longer wrapped.
+
 ## [0.4.3] - 2026-10-30
 
 ### Changed
@@ -176,7 +188,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.0...v0.4.1

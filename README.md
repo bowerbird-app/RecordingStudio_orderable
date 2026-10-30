@@ -139,6 +139,8 @@ folder_recording.recording_studio_orderable_append!(
 
 `recording_studio_orderable_move!` and `recording_studio_orderable_append!` require that recording to be an eligible direct child. If it is missing, not a direct child, or excluded by `allows:`, they raise `RecordingStudioOrderable::InvalidChild`.
 
+`recording_studio_orderable_move!` changes the sibling index on the same parent. Do not call Moveable to reorder siblings. Do not use Orderable move! to change parent.
+
 `recording_studio_orderable_reorder!` stays resilient for bulk updates:
 
 - requested ids that are not eligible children are ignored
