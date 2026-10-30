@@ -116,6 +116,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes events, "id: trigger_id"
     refute_includes events, "button_tag"
     assert_includes events, "tag.pre"
+    assert_includes events, "Popover::Component.new(trigger_id: trigger_id, placement: :top)) do |popover|"
+    assert_includes events, "concat l(event.occurred_at, format: :long)"
 
     refute_includes login, "space-y-4"
     refute_includes login, "mx-auto"

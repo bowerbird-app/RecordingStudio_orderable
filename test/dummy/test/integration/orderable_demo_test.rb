@@ -33,6 +33,18 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_includes css, 'min-w-\\[40rem'
   end
 
+  test "event time control renders the full timestamp in the popover" do
+    sign_in @user
+    event = RecordingStudio::Event.order(occurred_at: :desc).first
+    trigger_id = "event-occurred-at-#{event.id}"
+
+    get events_path
+
+    assert_response :success
+    assert_select "button##{trigger_id}[type='button']", text: /ago/
+    assert_select "[data-flat-pack--popover-trigger-id-value='#{trigger_id}']", text: I18n.l(event.occurred_at, format: :long)
+  end
+
   test "events nav is a real link from home" do
     sign_in @user
     get root_path

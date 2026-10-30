@@ -216,7 +216,7 @@ Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with t
 - Sign in as `admin@admin.com` / `Password`
 - Folder is the only orderable type (`allows: ["Page"]`)
 - Home shows that folder's pages with move controls
-- Events lists reorder history from `log_event!`
+- Events lists reorder history from `log_event!`. The "when" control opens the full timestamp.
 
 ## Cloud Agent boot
 
