@@ -69,7 +69,14 @@ class EngineTest < Minitest::Test
   end
 
   def test_load_config_wraps_psych_and_type_errors
-    [psych_syntax_error, TypeError.new("bad type")].each do |failure|
+    failures = [
+      psych_syntax_error,
+      Psych::Exception.new("bad yaml"),
+      Psych::DisallowedClass.new("load", "Date"),
+      TypeError.new("bad type"),
+      ArgumentError.new("bad argument")
+    ]
+    failures.each do |failure|
       app = Struct.new(:config) do
         define_method(:config_for) { |_name| raise failure }
       end.new(Struct.new(:x).new(nil))

@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Configuration loading wraps `Psych::SyntaxError`, `TypeError`, and `ArgumentError` as `ConfigurationLoadError`. An invalid `layout` is still wrapped, because `layout=` raises `ArgumentError`. Other errors propagate.
+- Configuration loading wraps `Psych::Exception`, `TypeError`, and `ArgumentError` as `ConfigurationLoadError`. That includes YAML syntax errors and disallowed classes. An invalid `layout` is still wrapped, because `layout=` raises `ArgumentError`. Other errors propagate.
 - The README states that `recording_studio_orderable_move!` is a sibling index. Do not call Moveable to reorder siblings. Do not use Orderable move! to change parent.
 
 ### Upgrade Notes
 
 - Bump to `0.4.4`. No migration and no rename of `recording_studio_orderable_move!`.
-- A configuration failure that is not `Psych::SyntaxError`, `TypeError`, or `ArgumentError` is no longer wrapped.
+- A configuration failure that is not `Psych::Exception`, `TypeError`, or `ArgumentError` is no longer wrapped.
 
 ## [0.4.3] - 2026-10-30
 

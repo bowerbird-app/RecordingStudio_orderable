@@ -27,7 +27,7 @@ module RecordingStudioOrderable
 
       x_config = app.config.x.try(:recording_studio_orderable)
       RecordingStudioOrderable.configuration.merge!(x_config.to_h) if x_config.respond_to?(:to_h)
-    rescue Psych::SyntaxError, TypeError, ArgumentError => e
+    rescue Psych::Exception, TypeError, ArgumentError => e
       raise RecordingStudioOrderable::ConfigurationLoadError,
             "Invalid recording_studio_orderable configuration: #{e.message}"
     end
