@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The engine overview and the dummy screens use FlatPack Grid, Cluster, Card, and Button. The dummy no longer ships a hand-rolled icon sprite.
-- The reorder modal saves through FlatPack's table `reorder_url`. Row ids stay strings, including UUIDs. The page-reorder Stimulus shim is gone.
-- The dummy events "when" control opens a FlatPack popover with the full timestamp.
+- The engine overview and the dummy screens use FlatPack Stack, Cluster, Card, Button, Text, and CodeBlock. The dummy no longer ships a hand-rolled icon sprite.
+- The reorder modal saves through FlatPack's table `reorder_url`. Row ids stay strings, including UUIDs. The page-reorder Stimulus shim is gone. After that save, the dummy home reloads so the list behind the modal shows the new order.
+- The dummy events "when" column uses FlatPack Timestamp. Its tooltip shows the full time. Metadata is a CodeBlock that scrolls sideways inside the table.
 
 ### Upgrade Notes
 

@@ -25,7 +25,7 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Home"
     assert_includes response.body, "Recording Studio Orderable"
     assert_includes response.body, "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
-    assert_includes response.body, "Host apps enable ordering with"
+    assert_includes response.body, "Enable ordering"
     assert_includes response.body, "include RecordingStudio::Capabilities::Orderable.to"
     # Always-loaded host override wins for the rarely shown body_after key.
     assert_includes response.body, "HOST on the parent type whose children should be sortable."
@@ -44,8 +44,8 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Recording Studio Orderable"
     assert_includes response.body, "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
-    assert_includes response.body, "Host apps enable ordering with"
-    assert_includes response.body, "on the parent type whose children should be sortable."
+    assert_includes response.body, "Enable ordering"
+    assert_includes response.body, "Add this on the parent type whose children should be sortable."
     refute_includes response.body, "translation missing"
   ensure
     I18n.locale = previous_locale if previous_locale

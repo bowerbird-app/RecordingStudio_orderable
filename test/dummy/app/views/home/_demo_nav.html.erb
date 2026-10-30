@@ -3,7 +3,8 @@
     <%= render FlatPack::Button::Component.new(
       text: link.fetch(:text),
       style: :secondary,
-      href: link.fetch(:href)
+      href: link.fetch(:href),
+      current: current_page?(link.fetch(:href))
     ) %>
   <% end %>
 <% end %>
