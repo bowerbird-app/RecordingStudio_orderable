@@ -15,29 +15,30 @@
   <% if @events.empty? %>
     <%= render FlatPack::Alert::Component.new(description: "No events recorded yet.", style: :info) %>
   <% else %>
-    <%= render FlatPack::Table::Component.new(data: @events) do |table| %>
-      <% table.column(title: "action", html: ->(event) { event.action }) %>
+    <%= render FlatPack::Table::Component.new(data: @events, min_width: :none) do |table| %>
+      <% table.column(title: "action", width: "7rem", wrap: :nowrap, html: ->(event) { event.action }) %>
       <% table.column(
            title: "item",
-           width: :fit,
+           width: "12rem",
            wrap: :nowrap,
            html: ->(event) { safe_join([event_recording_label(event), tag.br, event.recordable_type]) }
          ) %>
-      <% table.column(title: "actor", html: ->(event) { event_actor_label(event) }) %>
+      <% table.column(title: "actor", width: "12rem", wrap: :nowrap, html: ->(event) { event_actor_label(event) }) %>
       <% table.column(
            title: "when",
+           width: "9rem",
            wrap: :nowrap,
            html: ->(event) { render(FlatPack::Timestamp::Component.new(timestamp: event.occurred_at, tooltip_placement: :top)) }
          ) %>
       <% table.column(
            title: "metadata",
-           width: "24rem",
            html: lambda { |event|
              render(FlatPack::CodeBlock::Component.new(
                code: event_metadata(event),
                language: "json",
                title: "JSON",
-               separated: false
+               separated: false,
+               class: "w-full max-w-full min-w-0"
              ))
            }
          ) %>

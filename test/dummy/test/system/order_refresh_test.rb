@@ -24,29 +24,12 @@ class OrderRefreshTest < ApplicationSystemTestCase
     result = page.evaluate_async_script(<<~JS)
       const done = arguments[arguments.length - 1]
       const table = document.querySelector("#reorder-pages-modal [data-controller~='flat-pack--table-sortable']")
-      const rows = Array.from(table.querySelectorAll("[data-flat-pack--table-sortable-target='row']"))
-      const ids = rows.map((row) => row.dataset.id).reverse()
-      const token = document.querySelector("meta[name='csrf-token']")?.content || ""
-      const url = table.getAttribute("data-flat-pack--table-sortable-reorder-url-value")
-      fetch(url, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-Token": token
-        },
-        body: JSON.stringify({
-          reorder: {
-            resource: "pages",
-            strategy: "dense_integer",
-            items: ids.map((id, index) => ({ id: id, position: index + 1 }))
-          }
-        })
-      }).then((response) => {
-        if (!response.ok) throw new Error("reorder failed")
-        table.dispatchEvent(new CustomEvent("flat-pack--table-sortable:saved", { bubbles: true }))
-        done("saved")
-      }).catch((error) => done(error && error.message ? error.message : "reorder failed"))
+      const controller = window.Stimulus.getControllerForElementAndIdentifier(table, "flat-pack--table-sortable")
+      const tbody = controller.rowTargets[0].parentNode
+      controller.rowTargets.slice().reverse().forEach((row) => tbody.appendChild(row))
+      controller.saveOrder().then(() => done("saved")).catch((error) => {
+        done(error && error.message ? error.message : "reorder failed")
+      })
     JS
 
     assert_equal "saved", result
