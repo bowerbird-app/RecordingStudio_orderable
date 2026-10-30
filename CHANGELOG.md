@@ -11,15 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Sibling lists skip recordings with `trashed_at` set when that column exists. Orderable does not depend on RecordingStudio_trashable.
-- When a recording's parent changes, Orderable appends it on an orderable parent that allows that child type. Any other parent clears `recording_studio_orderable_position`. Orderable does not change the parent.
-- Dummy seeds append pages with `recording_studio_orderable_append!`. Demo lookup uses `RecordingStudio.root_recording_for` and `recording_for`.
+- Sibling lists skip recordings with `trashed_at` set when that column exists. If the recording model defines `recording_studio_trashable_active`, that scope is used instead. Orderable does not depend on RecordingStudio_trashable.
+- When a recording's parent changes, Orderable assigns the end position, or clears it, in `before_update`. The parent change stays in `saved_changes`, and the recording row is written once. Orderable does not change the parent.
+- Restoring a trashed child on an orderable parent keeps a free position. A blank or colliding position moves to one past `maximum(:recording_studio_orderable_position)`.
+- Placing a child locks the parent before the child write, the same order as `reorder!`.
 
 ### Upgrade Notes
 
 - Bump to `0.4.7`. No migration.
 - A host that stores `trashed_at` on `recording_studio_recordings` will no longer see trashed children in order. Hosts without that column are unchanged.
-- Moving a recording to a new parent now changes its sibling position. Do not also set `recording_studio_orderable_position` in that same save.
+- Moving a recording to a new parent now changes its sibling position in that same save. A position passed in the same save is replaced. Restoring a trashed child can move it to the end when its old position is blank or already taken.
 
 ## [0.4.6] - 2026-10-30
 

@@ -24,7 +24,7 @@ unless folder_recording
   end
 end
 
-%w[mix-notes release-checklist session-notes artwork-brief].each do |slug|
+%w[mix-notes release-checklist session-notes artwork-brief].each_with_index do |slug, index|
   page_recording = DemoRecordingLookup.by_slug(type: "Page", slug: slug)
   next if page_recording
 
@@ -34,7 +34,7 @@ end
     page.slug = slug
     page.body = "Seeded page used for the sibling order demo."
   end
-  folder_recording.recording_studio_orderable_append!(page_recording, actor: user)
+  page_recording.update!(recording_studio_orderable_position: index)
 end
 
 unless DemoRecordingLookup.by_slug(type: "Page", slug: "project-overview")

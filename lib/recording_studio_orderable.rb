@@ -14,11 +14,29 @@ require "recording_studio/orderable/capabilities/orderable"
 module RecordingStudioOrderable
   PARENT_POSITION_EXTENSION = proc do
     unless method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
-      after_update :recording_studio_orderable_sync_position_on_parent_change,
-                   if: :saved_change_to_parent_recording_id?
+      before_update :recording_studio_orderable_sync_position_on_parent_change,
+                    if: :will_save_change_to_parent_recording_id?
+      before_update :recording_studio_orderable_normalize_restored_position,
+                    if: :recording_studio_orderable_restoring_from_trash?
 
       define_method(:recording_studio_orderable_sync_position_on_parent_change) do
         RecordingStudioOrderable::ParentPosition.sync(self)
+      end
+
+      define_method(:recording_studio_orderable_restoring_from_trash?) do
+        return false unless respond_to?(:will_save_change_to_trashed_at?)
+        return false unless will_save_change_to_trashed_at?
+
+        trashed_at.nil?
+      end
+
+      define_method(:recording_studio_orderable_normalize_restored_position) do
+        parent = parent_recording if respond_to?(:parent_recording)
+        next unless parent
+        next unless defined?(RecordingStudio)
+        next unless RecordingStudio.capability_enabled?(:orderable, for: parent.recordable_type)
+
+        RecordingStudioOrderable::SiblingOrder.new(parent).normalize_restored_position!(self)
       end
     end
   end

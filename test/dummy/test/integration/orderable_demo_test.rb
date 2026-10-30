@@ -195,6 +195,39 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_nil moving.reload.recording_studio_orderable_position
   end
 
+  test "a parent change stays in saved changes and updates the recording once" do
+    sign_in @user
+    workspace_recording = RecordingStudio.root_recording_for(Workspace.first)
+    other_folder = find_or_record!(workspace_recording, Folder, "saved-change-folder", parent: @project_recording) do |folder|
+      folder.name = "Saved Change Folder"
+      folder.slug = "saved-change-folder"
+    end
+    moving = @folder_recording.recording_studio_orderable_children.to_a.first
+    statements = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      statements << payload[:sql]
+    end
+
+    moving.update!(parent_recording: other_folder)
+
+    updates = statements.select { |sql| sql.include?('UPDATE "recording_studio_recordings"') }
+    assert_equal 1, updates.length
+    assert moving.previous_changes.key?("parent_recording_id")
+    assert_equal moving.id, other_folder.reload.recording_studio_orderable_children.last.id
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
+  test "restoring a trashed sibling leaves a colliding position" do
+    sign_in @user
+    keeper, restored = @folder_recording.recording_studio_orderable_children.to_a
+    restored.update!(trashed_at: Time.current)
+    restored.update!(recording_studio_orderable_position: keeper.recording_studio_orderable_position, trashed_at: nil)
+
+    refute_equal keeper.reload.recording_studio_orderable_position, restored.reload.recording_studio_orderable_position
+    assert_equal keeper.recording_studio_orderable_position + 1, restored.recording_studio_orderable_position
+  end
+
   test "project does not receive the orderable capability" do
     refute RecordingStudio.capability_enabled?(:orderable, for: "Project")
     assert RecordingStudio.capability_enabled?(:orderable, for: "Folder")
