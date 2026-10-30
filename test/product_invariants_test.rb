@@ -36,7 +36,8 @@ class ProductInvariantsTest < Minitest::Test
   def test_architect_agent_uses_orderable_examples
     agent = File.read(File.join(ROOT, ".github/agents/rails_architect.agent.md"))
 
-    assert_includes agent, "recording_studio_orderable_positions"
+    assert_includes agent, "engine_name_records"
+    refute_includes agent, "recording_studio_orderable_positions"
     assert_includes agent, "/recording_studio_orderable"
     assert_includes agent, "data-flat-pack--table-sortable-target"
     assert_includes agent, "lib/recording_studio_orderable/sibling_order.rb"
