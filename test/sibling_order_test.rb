@@ -79,8 +79,7 @@ class SiblingOrderTest < Minitest::Test
                   :logged_events, :child_records, :lock_count, :trashed_at, :parent_recording
 
     def initialize(id:, recordable_type: "Page", created_at: Time.at(id.to_s.ord),
-                   recording_studio_orderable_position: nil, child_records: [],
-                   trashed_at: nil, parent_recording: nil)
+                   recording_studio_orderable_position: nil, child_records: [])
       @id = id
       @recordable_type = recordable_type
       @created_at = created_at
@@ -88,8 +87,8 @@ class SiblingOrderTest < Minitest::Test
       @logged_events = []
       @child_records = child_records
       @lock_count = 0
-      @trashed_at = trashed_at
-      @parent_recording = parent_recording
+      @trashed_at = nil
+      @parent_recording = nil
       self.class.records ||= {}
       self.class.records[id] = self
     end
@@ -381,7 +380,8 @@ class SiblingOrderTest < Minitest::Test
 
   def test_children_skip_trashed_siblings_when_the_column_exists
     active = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
-    trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1, trashed_at: Time.current)
+    trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    trashed.trashed_at = Time.current
     parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
     model = Class.new do
       def self.column_names
@@ -412,7 +412,8 @@ class SiblingOrderTest < Minitest::Test
 
   def test_parent_change_appends_on_an_orderable_parent
     parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
-    child = FakeRecording.new(id: "page", parent_recording: parent, recording_studio_orderable_position: 3)
+    child = FakeRecording.new(id: "page", recording_studio_orderable_position: 3)
+    child.parent_recording = parent
     parent.child_records = [child]
 
     RecordingStudio.stub(:capability_enabled?, true) do
@@ -426,7 +427,8 @@ class SiblingOrderTest < Minitest::Test
 
   def test_parent_change_clears_position_when_the_parent_is_not_orderable
     parent = FakeRecording.new(id: "project", recordable_type: "Project")
-    child = FakeRecording.new(id: "page", parent_recording: parent, recording_studio_orderable_position: 2)
+    child = FakeRecording.new(id: "page", recording_studio_orderable_position: 2)
+    child.parent_recording = parent
 
     RecordingStudio.stub(:capability_enabled?, false) do
       RecordingStudioOrderable::ParentPosition.sync(child)
@@ -438,8 +440,7 @@ class SiblingOrderTest < Minitest::Test
   def test_parent_position_extension_defines_the_callback
     host = Class.new do
       class << self
-        def after_update(*)
-        end
+        def after_update(*); end
       end
     end
 
