@@ -141,6 +141,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes events, "width: \"10rem\""
     assert_includes events, "width: \"8.5rem\""
     assert_includes events, "max-w-full"
+    assert_includes events, "tabindex: 0"
     refute_includes events, "width: \"24rem\""
     refute_includes events, "width: \"9rem\""
     assert_includes events, "wrap: :nowrap"
