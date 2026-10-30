@@ -86,7 +86,7 @@ module RecordingStudio
               recording: self
             )
 
-            raise ArgumentError, "Not authorized to #{action} #{recordable_type}"
+            raise RecordingStudioOrderable::NotAuthorized, "Not authorized to #{action} #{recordable_type}"
           end
 
           def recording_studio_orderable_current_actor

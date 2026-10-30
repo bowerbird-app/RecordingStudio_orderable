@@ -12,12 +12,18 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :set_current_actor
 
+  rescue_from RecordingStudioOrderable::NotAuthorized, with: :recording_studio_orderable_forbidden
+
   helper_method :demo_nav_links
 
   private
 
   def set_current_actor
     Current.actor = current_user
+  end
+
+  def recording_studio_orderable_forbidden(_error)
+    head :forbidden
   end
 
   def demo_nav_links

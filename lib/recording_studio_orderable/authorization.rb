@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module RecordingStudioOrderable
+  class NotAuthorized < StandardError; end
+
   module Authorization
     module_function
 
@@ -10,27 +12,26 @@ module RecordingStudioOrderable
         return resolver.call(action: action, actor: actor, recording: recording, controller: controller)
       end
 
-      return accessible_authorized?(actor: actor, recording: recording) if use_accessible?
+      return true unless use_accessible?
 
-      true
-    end
-
-    def use_accessible?
-      RecordingStudioOrderable.configuration.use_recording_studio_accessible == true &&
-        defined?(RecordingStudioAccessible) &&
-        RecordingStudioAccessible.respond_to?(:authorized?)
-    end
-
-    def accessible_authorized?(actor:, recording:)
-      return false if actor.blank? || recording.blank?
-
-      RecordingStudioAccessible.authorized?(
+      accessible_module.authorized?(
         actor: actor,
         recording: recording,
         role: RecordingStudioOrderable.configuration.authorization_role
       )
-    rescue StandardError
-      false
+    end
+
+    def use_accessible?
+      RecordingStudioOrderable.configuration.use_recording_studio_accessible == true &&
+        accessible_module.respond_to?(:authorized?)
+    end
+
+    def accessible_module
+      configured = RecordingStudioOrderable.configuration.accessible_module
+      return configured unless configured.nil?
+      return RecordingStudioAccessible if defined?(RecordingStudioAccessible)
+
+      nil
     end
   end
 end

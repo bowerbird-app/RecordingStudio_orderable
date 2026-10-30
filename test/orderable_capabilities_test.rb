@@ -101,14 +101,14 @@ class OrderableCapabilitiesTest < Minitest::Test
 
   def setup
     FakeRecording.records = {}
-    @original_configuration = RecordingStudioOrderable.instance_variable_get(:@configuration)
-    RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
+    @original_configuration = RecordingStudioOrderable.configuration
+    RecordingStudioOrderable.reset_configuration!
     RecordingStudioOrderable.configuration.use_recording_studio_accessible = false
   end
 
   def teardown
     FakeRecording.records = {}
-    RecordingStudioOrderable.instance_variable_set(:@configuration, @original_configuration)
+    RecordingStudioOrderable.configuration = @original_configuration
   end
 
   def test_capability_builder_registers_capability_options
@@ -285,7 +285,7 @@ class OrderableCapabilitiesTest < Minitest::Test
     parent = FakeRecording.new(id: "folder", child_records: [])
 
     RecordingStudioOrderable.stub(:authorized?, false) do
-      error = assert_raises(ArgumentError) do
+      error = assert_raises(RecordingStudioOrderable::NotAuthorized) do
         parent.recording_studio_orderable_append!("a", actor: :admin)
       end
 
@@ -297,7 +297,7 @@ class OrderableCapabilitiesTest < Minitest::Test
     parent = FakeRecording.new(id: "folder", child_records: [])
 
     RecordingStudioOrderable.stub(:authorized?, false) do
-      error = assert_raises(ArgumentError) do
+      error = assert_raises(RecordingStudioOrderable::NotAuthorized) do
         parent.recording_studio_orderable_reorder!(ordered_recording_ids: [], actor: :admin)
       end
 

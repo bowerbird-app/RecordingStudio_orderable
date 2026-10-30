@@ -45,17 +45,18 @@ class OrderableHostLocaleOverrideTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "translation missing"
   end
 
-  # Test-only fixture applied via backend.load_translations(file) on top of the
-  # already-initialized backend — never mutates I18n.load_path (Marshal).
+  # Fixture lives on a fresh backend chained in front of the booted backend.
+  # Teardown puts the original backend back. I18n.load_path stays untouched.
   test "fresh-backend last-file-wins host fixture overrides gem english on overview" do
     assert File.exist?(FRESH_HOST_LOCALE), "expected test-only host override fixture at #{FRESH_HOST_LOCALE}"
     assert_includes File.read(FRESH_HOST_LOCALE), HOST_SUBTITLE
 
     sign_in @user
 
-    snapshot = i18n_backend_translations_snapshot
-    I18n.t(SUBTITLE_KEY)
-    I18n.backend.load_translations(FRESH_HOST_LOCALE.to_s)
+    front = I18n::Backend::Simple.new
+    front.eager_load!
+    front.load_translations(FRESH_HOST_LOCALE.to_s)
+    I18n.backend = front
 
     assert_equal @load_path_before, I18n.load_path
     assert_equal HOST_SUBTITLE, I18n.t(SUBTITLE_KEY)
@@ -65,40 +66,5 @@ class OrderableHostLocaleOverrideTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, HOST_SUBTITLE
     assert_includes response.body, HOST_BODY_AFTER
-  ensure
-    restore_i18n_backend_translations(snapshot) if snapshot
-  end
-
-  private
-
-  def i18n_backend_translations_snapshot
-    backend = I18n.backend
-    backend.send(:init_translations) unless backend.initialized?
-    translations =
-      if backend.respond_to?(:translations)
-        backend.translations
-      else
-        backend.instance_variable_get(:@translations)
-      end
-    return unless translations
-
-    deep_plain_copy(translations)
-  end
-
-  def restore_i18n_backend_translations(snapshot)
-    backend = I18n.backend
-    backend.instance_variable_set(:@translations, snapshot)
-    backend.instance_variable_set(:@initialized, true) if backend.instance_variable_defined?(:@initialized)
-  end
-
-  def deep_plain_copy(value)
-    case value
-    when Hash
-      value.each_with_object({}) { |(key, child), copy| copy[key] = deep_plain_copy(child) }
-    when Array
-      value.map { |child| deep_plain_copy(child) }
-    else
-      value
-    end
   end
 end

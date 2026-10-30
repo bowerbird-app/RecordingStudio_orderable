@@ -148,6 +148,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes readme, "RecordingStudio::RecordingStudioOrder"
     refute_includes readme, "OrderableRecordable"
     refute_includes readme, "Welcome to the template"
+    assert_includes readme, "allow every caller"
   end
 
   def test_engine_does_not_register_an_order_recordable
@@ -164,9 +165,11 @@ class RecordingStudioOrderableTest < Minitest::Test
     end
   end
 
-  def test_capability_options_for_handles_missing_api
-    RecordingStudio.stub(:capability_options, ->(*) { raise NoMethodError }) do
-      assert_equal({}, RecordingStudioOrderable.capability_options_for("Folder"))
+  def test_capability_options_for_does_not_rescue_missing_api
+    RecordingStudio.stub(:capability_options, ->(*) { raise NoMethodError, "missing" }) do
+      assert_raises(NoMethodError) do
+        RecordingStudioOrderable.capability_options_for("Folder")
+      end
     end
   end
 

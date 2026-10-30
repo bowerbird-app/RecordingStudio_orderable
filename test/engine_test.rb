@@ -4,12 +4,12 @@ require "test_helper"
 
 class EngineTest < Minitest::Test
   def setup
-    @original_configuration = RecordingStudioOrderable.instance_variable_get(:@configuration)
-    RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
+    @original_configuration = RecordingStudioOrderable.configuration
+    RecordingStudioOrderable.reset_configuration!
   end
 
   def teardown
-    RecordingStudioOrderable.instance_variable_set(:@configuration, @original_configuration)
+    RecordingStudioOrderable.configuration = @original_configuration
   end
 
   def test_load_config_merges_x_configuration

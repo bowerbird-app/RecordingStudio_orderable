@@ -13,6 +13,7 @@ class ConfigurationTest < Minitest::Test
     assert_equal true, @configuration.use_recording_studio_accessible
     assert_equal :edit, @configuration.authorization_role
     assert_nil @configuration.authorization_resolver
+    assert_nil @configuration.accessible_module
     assert_nil @configuration.layout
   end
 

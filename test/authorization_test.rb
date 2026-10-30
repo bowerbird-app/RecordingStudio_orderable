@@ -4,100 +4,91 @@ require "test_helper"
 
 class AuthorizationTest < Minitest::Test
   def setup
-    @original_configuration = RecordingStudioOrderable.instance_variable_get(:@configuration)
-    RecordingStudioOrderable.instance_variable_set(:@configuration, RecordingStudioOrderable::Configuration.new)
+    @original_configuration = RecordingStudioOrderable.configuration
+    RecordingStudioOrderable.reset_configuration!
   end
 
   def teardown
-    RecordingStudioOrderable.instance_variable_set(:@configuration, @original_configuration)
+    RecordingStudioOrderable.configuration = @original_configuration
   end
 
-  def test_resolver_wins_when_configured
+  def test_resolver_replaces_accessible
+    called = false
+    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized do
+      called = true
+      false
+    end
     RecordingStudioOrderable.configuration.authorization_resolver = lambda { |action:, actor:, **|
       action == :reorder && actor == :ok
     }
 
     assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :ok, recording: :rec)
     refute RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :no, recording: :rec)
+    refute called
   end
 
-  def test_allows_when_accessible_is_not_used
+  def test_allows_when_accessible_is_turned_off
     RecordingStudioOrderable.configuration.use_recording_studio_accessible = false
 
     assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: nil, recording: :rec)
   end
 
-  def test_accessible_authorization_is_used_when_available
-    accessible = Module.new do
-      def self.authorized?(**)
-        true
-      end
-    end
+  def test_allows_when_resolver_and_accessible_are_missing
+    refute defined?(RecordingStudioAccessible)
+    RecordingStudioOrderable.configuration.authorization_resolver = nil
     RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
+    RecordingStudioOrderable.configuration.accessible_module = nil
 
-    stub_constant("RecordingStudioAccessible", accessible) do
-      assert RecordingStudioOrderable::Authorization.authorized?(
-        action: :reorder,
-        actor: :user,
-        recording: :rec
-      )
-    end
+    refute RecordingStudioOrderable::Authorization.use_accessible?
+    assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: nil, recording: nil)
   end
 
-  def test_accessible_authorization_denies_blank_actor
-    accessible = Module.new do
-      def self.authorized?(**)
-        true
-      end
-    end
+  def test_accessible_module_allows
     RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
+    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized { |**| true }
 
-    stub_constant("RecordingStudioAccessible", accessible) do
-      refute RecordingStudioOrderable::Authorization.authorized?(
-        action: :reorder,
-        actor: nil,
-        recording: :rec
-      )
-    end
+    assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :user, recording: :rec)
   end
 
-  def test_accessible_authorization_rescues_errors
-    accessible = Module.new do
-      def self.authorized?(**)
-        raise "boom"
-      end
-    end
+  def test_accessible_module_denies_and_receives_blank_actor
+    seen = nil
     RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
-
-    stub_constant("RecordingStudioAccessible", accessible) do
-      refute RecordingStudioOrderable::Authorization.authorized?(
-        action: :reorder,
-        actor: :user,
-        recording: :rec
-      )
+    RecordingStudioOrderable.configuration.authorization_role = :edit
+    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized do |**kwargs|
+      seen = kwargs
+      false
     end
+
+    refute RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: nil, recording: nil)
+    assert_nil seen[:actor]
+    assert_nil seen[:recording]
+    assert_equal :edit, seen[:role]
   end
 
-  def test_use_accessible_is_false_without_constant
+  def test_accessible_errors_are_not_rescued
     RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
+    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized { |**| raise "boom" }
 
-    refute RecordingStudioOrderable::Authorization.use_accessible? unless defined?(RecordingStudioAccessible)
+    error = assert_raises(RuntimeError) do
+      RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :user, recording: :rec)
+    end
+    assert_equal "boom", error.message
+  end
+
+  def test_configured_accessible_module_is_used_when_the_constant_is_absent
+    refute defined?(RecordingStudioAccessible)
+    RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
+    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized { |**| true }
+
+    assert_equal RecordingStudioOrderable.configuration.accessible_module,
+                 RecordingStudioOrderable::Authorization.accessible_module
   end
 
   private
 
-  def stub_constant(name, value)
-    if Object.const_defined?(name, false)
-      original = Object.const_get(name, false)
-      Object.send(:remove_const, name)
-      Object.const_set(name, value)
-      yield
-      Object.send(:remove_const, name)
-      Object.const_set(name, original)
-    else
-      Object.const_set(name, value)
-      yield
-      Object.send(:remove_const, name)
+  def module_with_authorized(&block)
+    Module.new do
+      define_singleton_method(:authorized?, &block)
     end
   end
 end

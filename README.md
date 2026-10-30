@@ -167,7 +167,13 @@ Events answer what happened to the parent object. High-churn position lists stay
 
 ## Authorization
 
-If `recording_studio_accessible` is loaded and `config.use_recording_studio_accessible` is true, reorder calls check `config.authorization_role` (default `:edit`). Set an explicit `authorization_resolver` to replace that check. With neither Accessible nor a resolver, reorder is allowed.
+A resolver replaces Accessible. Set `authorization_resolver` to a callable of `action:`, `actor:`, `recording:`, and `controller:`.
+
+When that resolver is unset and `use_recording_studio_accessible` is true, reorder calls `accessible_module` or `RecordingStudioAccessible.authorized?(actor:, recording:, role:)`. `authorization_role` defaults to `:edit`. `accessible_module` defaults to nil, which means the `RecordingStudioAccessible` constant when that gem is loaded. Accessible errors propagate. A blank actor is passed through to Accessible.
+
+**Warning:** with no `authorization_resolver` and Accessible not in use, `reorder!`, `move!`, and `append!` allow every caller. Load Accessible and leave `use_recording_studio_accessible` true, or set a resolver, before a request can reach those methods.
+
+A denial raises `RecordingStudioOrderable::NotAuthorized`. The engine controller answers that with HTTP 403. Host controllers that call the ordering methods need the same rescue.
 
 ## Internationalization
 

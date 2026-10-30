@@ -18,8 +18,14 @@ module RecordingStudioOrderable
       RecordingStudio.apply_capabilities!
     end
 
+    attr_writer :configuration
+
     def configuration
       @configuration ||= Configuration.new
+    end
+
+    def reset_configuration!
+      self.configuration = Configuration.new
     end
 
     def configure
@@ -41,8 +47,6 @@ module RecordingStudioOrderable
       return {} if type_name.blank?
 
       RecordingStudio.capability_options(:orderable, for: type_name).to_h.symbolize_keys
-    rescue NoMethodError
-      {}
     end
 
     private
