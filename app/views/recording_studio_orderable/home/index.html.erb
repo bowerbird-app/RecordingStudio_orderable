@@ -18,11 +18,11 @@
         <%= render FlatPack::Text::Component.new(
           text: t(
             "recording_studio.orderable.home.body_after",
-            default: "Add this on the parent type whose children should be sortable."
+            default: "Add this to the parent type whose children should be sortable."
           )
         ) %>
         <%= render FlatPack::CodeBlock::Component.new(
-          code: "include RecordingStudio::Capabilities::Orderable.to",
+          code: "include RecordingStudio::Capabilities::Orderable.to HOST",
           language: "ruby",
           title: "Parent type",
           separated: false

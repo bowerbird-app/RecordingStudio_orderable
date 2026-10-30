@@ -13,11 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The engine overview and the dummy screens use FlatPack Stack, Cluster, Card, Button, Text, and CodeBlock. The dummy no longer ships a hand-rolled icon sprite.
 - The reorder modal saves through FlatPack's table `reorder_url`. Row ids stay strings, including UUIDs. The page-reorder Stimulus shim is gone. After that save, the dummy home reloads so the list behind the modal shows the new order.
-- The dummy events "when" column uses FlatPack Timestamp. Its tooltip shows the full time. Metadata is a CodeBlock that scrolls sideways inside the table.
+- The dummy events "when" column uses FlatPack Timestamp. Its tooltip shows the full time. Metadata is a CodeBlock in the leftover table column. The code scrolls inside the block, and the block stays inside the table.
+- The overview code sample is `include RecordingStudio::Capabilities::Orderable.to HOST`. The line above it is "Add this to the parent type whose children should be sortable."
 
 ### Upgrade Notes
 
-- Bump to `0.4.6`. No migration and no host API change.
+- Bump to `0.4.6`. No migration. The locale keys are unchanged.
+- `recording_studio.orderable.home.body_before` is now "Enable ordering". `body_after` is now "Add this to the parent type whose children should be sortable." A host override of those keys still wins, and it keeps the previous English until the host updates the override.
 - Hosts that copied `page_reorder_controller.js` can delete it and set `reorder_url:` on `FlatPack::Table`. The PATCH body is FlatPack's `reorder.items` list. Each `id` is the row id string.
 
 ## [0.4.5] - 2026-10-30

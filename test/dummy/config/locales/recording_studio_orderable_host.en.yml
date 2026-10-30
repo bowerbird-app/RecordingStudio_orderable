@@ -5,4 +5,4 @@ en:
   recording_studio:
     orderable:
       home:
-        body_after: "HOST on the parent type whose children should be sortable."
+        body_after: "Add this to the parent type whose children should be sortable."

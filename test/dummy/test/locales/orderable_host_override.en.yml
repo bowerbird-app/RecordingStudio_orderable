@@ -6,4 +6,4 @@ en:
     orderable:
       home:
         subtitle: "HOST Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
-        body_after: "HOST on the parent type whose children should be sortable."
+        body_after: "Add this to the parent type whose children should be sortable."

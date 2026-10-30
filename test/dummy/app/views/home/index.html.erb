@@ -26,8 +26,7 @@
       ) %>
     <% end %>
 
-    <div id="order-demo-table">
-    <%= render FlatPack::Table::Component.new(data: @ordered_pages) do |table| %>
+    <%= render FlatPack::Table::Component.new(id: "order-demo-table", data: @ordered_pages) do |table| %>
       <% table.column(
            title: "position",
            html: lambda { |recording|
@@ -78,7 +77,6 @@
            }
          ) %>
     <% end %>
-    </div>
 
     <%= render FlatPack::Modal::Component.new(id: "reorder-pages-modal", title: "Reorder pages", size: :lg) do |modal| %>
       <% modal.body do %>
@@ -93,19 +91,12 @@
             row_id: ->(recording) { recording.id }
           ) do |table| %>
             <% table.column(
-                 title: "Reorder",
+                 title: "reorder",
                  width: :fit,
                  wrap: :nowrap,
                  align: :center,
                  html: lambda { |_recording|
-                   render(FlatPack::Button::Component.new(
-                     icon: "bars-3",
-                     icon_only: true,
-                     text: "Drag to reorder",
-                     style: :secondary,
-                     size: :sm,
-                     type: "button"
-                   ))
+                   render(FlatPack::Shared::IconComponent.new(name: "bars-3", size: :md))
                  }
                ) %>
             <% table.column(

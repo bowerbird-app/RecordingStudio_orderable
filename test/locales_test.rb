@@ -13,7 +13,7 @@ class LocalesTest < Minitest::Test
       "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object.",
     "recording_studio.orderable.home.body_before" => "Enable ordering",
     "recording_studio.orderable.home.body_after" =>
-      "Add this on the parent type whose children should be sortable."
+      "Add this to the parent type whose children should be sortable."
   }.freeze
 
   def setup

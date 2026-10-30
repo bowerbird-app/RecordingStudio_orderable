@@ -45,6 +45,8 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_includes response.body, formatted
     assert_select "td.whitespace-nowrap"
     assert_select "pre.overflow-x-auto"
+    assert_select "table.table-fixed .max-w-full"
+    refute_match "width: 24rem", response.body
     refute_match "flat-pack--popover", response.body
   end
 
@@ -88,6 +90,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
+    assert_select "#reorder-pages-modal th", text: "reorder"
     assert_select "#reorder-pages-modal[data-controller~=?]", "flat-pack--modal"
     assert_select "#reorder-pages-modal [data-controller~=?]", "flat-pack--table-sortable"
     assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-reorder-url-value=?]", reorder_pages_path
