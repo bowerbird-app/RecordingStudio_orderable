@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-10-30
+
+### Removed
+
+- `docs/gem_template` is gone. Copilot instructions point at the top-level README.
+
+### Upgrade Notes
+
+- Bump to `0.4.8`. No migration and no host API change.
+
 ## [0.4.7] - 2026-10-30
 
 ### Changed
@@ -230,7 +240,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.7...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.8...HEAD
+[0.4.8]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.4...v0.4.5
