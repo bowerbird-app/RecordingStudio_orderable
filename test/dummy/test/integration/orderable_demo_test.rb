@@ -218,7 +218,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
   end
 
-  test "restoring a trashed sibling leaves a colliding position" do
+  test "restoring a trashed sibling moves it off a colliding position" do
     sign_in @user
     keeper, restored = @folder_recording.recording_studio_orderable_children.to_a
     restored.update!(trashed_at: Time.current)
