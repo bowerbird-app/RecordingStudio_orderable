@@ -38,6 +38,18 @@ class ProductInvariantsTest < Minitest::Test
     refute_includes config, "test/services"
   end
 
+  def test_ci_uses_the_addon_database_and_runs_security_scans
+    workflow = File.read(File.join(ROOT, ".github/workflows/ci.yml"))
+
+    assert_includes workflow, "recording_studio_orderable_test"
+    refute_includes workflow, "gem_template_test"
+    assert_includes workflow, "bin/bundler-audit"
+    assert_includes workflow, "bin/brakeman"
+    assert_includes workflow, "bundle exec rubocop"
+    assert_includes workflow, "bundle exec rake app:test"
+    assert_includes workflow, "bundle exec rails test"
+  end
+
   def test_dummy_database_defaults_use_the_addon_name
     database = File.read(File.join(ROOT, "test/dummy/config/database.yml"))
 
