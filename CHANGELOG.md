@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - `docs/gem_template` is gone. Copilot instructions point at the top-level README.
+- The Rails architect agent no longer uses gem-template paths, and `bin/rename_gem` is gone.
 
 ### Upgrade Notes
 

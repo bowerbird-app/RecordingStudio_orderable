@@ -30,6 +30,17 @@ class ProductInvariantsTest < Minitest::Test
     refute File.directory?(File.join(ROOT, "test/dummy/app/views/pwa"))
     refute File.directory?(File.join(ROOT, "test/dummy/app/views/makeup_artist"))
     refute File.directory?(File.join(ROOT, "docs/gem_template"))
+    refute File.exist?(File.join(ROOT, "bin/rename_gem"))
+  end
+
+  def test_architect_agent_uses_orderable_examples
+    agent = File.read(File.join(ROOT, ".github/agents/rails_architect.agent.md"))
+
+    assert_includes agent, "recording_studio_orderable_positions"
+    assert_includes agent, "/recording_studio_orderable"
+    assert_includes agent, "data-flat-pack--table-sortable-target"
+    assert_includes agent, "lib/recording_studio_orderable/sibling_order.rb"
+    refute_includes agent, "gem_template"
   end
 
   def test_rubocop_does_not_exclude_template_paths
