@@ -28,7 +28,7 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
     assert_includes response.body, "Enable ordering"
     assert_includes response.body, "include RecordingStudio::Capabilities::Orderable.to HOST"
-    assert_includes response.body, "HOST Add this to the parent type whose children should be sortable."
+    assert_includes response.body, "[host override] Add this to the parent type whose children should be sortable."
     refute_includes response.body, "translation missing"
   end
 
@@ -46,7 +46,7 @@ class OrderableI18nRenderTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
     assert_includes response.body, "Enable ordering"
     assert_includes response.body, "Add this to the parent type whose children should be sortable."
-    refute_includes response.body, "HOST Add this to the parent type whose children should be sortable."
+    refute_includes response.body, "[host override] Add this to the parent type whose children should be sortable."
     refute_includes response.body, "translation missing"
   ensure
     I18n.locale = previous_locale if previous_locale
