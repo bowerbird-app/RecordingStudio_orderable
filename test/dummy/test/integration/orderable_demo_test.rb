@@ -74,10 +74,22 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#reorder-pages-modal[data-controller~=?]", "flat-pack--modal"
     assert_select "#reorder-pages-modal [data-controller~=?]", "flat-pack--table-sortable"
+    assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-reorder-url-value=?]", reorder_pages_path
     assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-target=?]", "row", count: pages.length
     assert_equal pages.map { |page| page.recording_studio_orderable_position.to_s }, position_cells("reorder-pages-modal")
+    reversed.each do |recording_id|
+      assert_match(/\A[0-9a-f-]{36}\z/i, recording_id)
+      assert_select "#reorder-pages-modal [data-id=?]", recording_id
+    end
+    refute_match(/page-reorder/, response.body)
 
-    patch reorder_pages_path, params: { ordered_recording_ids: reversed }, as: :json
+    patch reorder_pages_path, params: {
+      reorder: {
+        resource: "pages",
+        strategy: "dense_integer",
+        items: reversed.each_with_index.map { |recording_id, index| { id: recording_id, position: index + 1 } }
+      }
+    }, as: :json
 
     assert_response :success
     children = @folder_recording.reload.recording_studio_orderable_children.to_a
