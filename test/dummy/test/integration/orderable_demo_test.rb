@@ -47,6 +47,9 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_select "pre.overflow-x-auto"
     assert_select "table.table-fixed .max-w-full"
     refute_match "width: 24rem", response.body
+    assert_match "width: 10rem", response.body
+    assert_match "width: 8.5rem", response.body
+    refute_match "width: 9rem", response.body
     refute_match "flat-pack--popover", response.body
   end
 
@@ -96,6 +99,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-reorder-url-value=?]", reorder_pages_path
     assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-target=?]", "row", count: pages.length
     assert_select "#reorder-pages-modal [data-flat-pack--icon-name-value=?]", "bars-3", count: pages.length
+    assert_select "#reorder-pages-modal col[style=?]", "width: 1%", count: 2
     assert_equal pages.map { |page| page.recording_studio_orderable_position.to_s }, position_cells("reorder-pages-modal")
     reversed.each do |recording_id|
       assert_match(/\A[0-9a-f-]{36}\z/i, recording_id)

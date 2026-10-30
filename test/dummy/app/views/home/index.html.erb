@@ -101,13 +101,15 @@
                ) %>
             <% table.column(
                  title: "position",
+                 width: :fit,
+                 wrap: :nowrap,
+                 align: :center,
                  html: lambda { |recording|
                    (recording.recording_studio_orderable_position || @ordered_pages.index(recording)).to_s
                  }
                ) %>
             <% table.column(
                  title: "name",
-                 wrap: :nowrap,
                  html: lambda { |recording|
                    recording.recordable.respond_to?(:title) ? recording.recordable.title : recording.recordable_type
                  }

@@ -138,8 +138,11 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes events, "FlatPack::CodeBlock::Component"
     assert_includes events, "min_width: :none"
     assert_includes events, "width: \"12rem\""
+    assert_includes events, "width: \"10rem\""
+    assert_includes events, "width: \"8.5rem\""
     assert_includes events, "max-w-full"
     refute_includes events, "width: \"24rem\""
+    refute_includes events, "width: \"9rem\""
     assert_includes events, "wrap: :nowrap"
 
     refute_includes login, "space-y-4"
