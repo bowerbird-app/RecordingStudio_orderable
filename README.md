@@ -141,6 +141,8 @@ folder_recording.recording_studio_orderable_append!(
 
 `recording_studio_orderable_move!` changes the sibling index on the same parent. Do not call Moveable to reorder siblings. Do not use Orderable move! to change parent.
 
+When a recording's parent changes, Orderable appends that child on the new parent if the parent is orderable and allows the child type. Otherwise it clears `recording_studio_orderable_position`. Orderable does not assign the parent. Sibling lists omit recordings with `trashed_at` set when that column exists. That check does not load RecordingStudio_trashable.
+
 `recording_studio_orderable_reorder!` stays resilient for bulk updates:
 
 - requested ids that are not eligible children are ignored
