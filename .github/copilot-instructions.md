@@ -2,9 +2,9 @@
 
 ## Architecture
 
-- This repository is a Rails mountable engine template for building Recording Studio addons.
-- Preserve engine namespace isolation under `GemTemplate` unless the task is explicitly about renaming the gem.
-- Treat `docs/gem_template/` as architectural reference material. For current addon workflow, prefer the top-level README and the dummy app.
+- This repository is the Recording Studio Orderable addon, a Rails mountable engine.
+- Keep the engine namespace `RecordingStudioOrderable`.
+- Follow the top-level README for how the addon works. The dummy app is the host that proves it.
 - Keep changes small and scoped. Do not rewrite template surfaces unless the request requires it.
 
 ## UI Conventions

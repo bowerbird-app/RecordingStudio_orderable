@@ -29,6 +29,7 @@ class ProductInvariantsTest < Minitest::Test
     refute File.exist?(File.join(ROOT, "test/dummy/bin/thrust"))
     refute File.directory?(File.join(ROOT, "test/dummy/app/views/pwa"))
     refute File.directory?(File.join(ROOT, "test/dummy/app/views/makeup_artist"))
+    refute File.directory?(File.join(ROOT, "docs/gem_template"))
   end
 
   def test_rubocop_does_not_exclude_template_paths
@@ -77,5 +78,13 @@ class ProductInvariantsTest < Minitest::Test
     assert_includes changelog, "## [0.4.1]"
     assert_includes changelog, "compare/v0.3.1...v0.4.0"
     refute_includes changelog, "## [0.3.1]"
+  end
+
+  def test_copilot_instructions_follow_the_readme
+    instructions = File.read(File.join(ROOT, ".github/copilot-instructions.md"))
+
+    assert_includes instructions, "top-level README"
+    refute_includes instructions, "docs/gem_template"
+    refute_includes instructions, "GemTemplate"
   end
 end
