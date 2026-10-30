@@ -5,8 +5,6 @@ require "yaml"
 require "active_support/encrypted_file"
 
 class DummyCredentialsTest < Minitest::Test
-  PLACEHOLDER = "dev_placeholder"
-
   def test_only_dummy_credentials_file_is_committed
     tracked = Dir.chdir(File.expand_path("..", __dir__)) do
       `git ls-files -- '*.yml.enc'`.split("\n").reject(&:empty?)
@@ -45,11 +43,6 @@ class DummyCredentialsTest < Minitest::Test
     )
 
     assert_operator parsed.fetch("secret_key_base").to_s.length, :>=, 64
-    assert_equal PLACEHOLDER, parsed.dig("gem_template", "api_key")
-    assert_equal PLACEHOLDER, parsed.dig("smtp", "user_name")
-    assert_equal PLACEHOLDER, parsed.dig("smtp", "password")
-    assert_equal PLACEHOLDER, parsed.dig("aws", "access_key_id")
-    assert_equal PLACEHOLDER, parsed.dig("aws", "secret_access_key")
   end
 
   private

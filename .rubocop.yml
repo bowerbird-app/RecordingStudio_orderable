@@ -19,7 +19,6 @@ Layout/LineLength:
 Metrics/ClassLength:
   Exclude:
     - 'test/**/*'
-    - 'lib/gem_template/hooks.rb'
     - 'lib/recording_studio_orderable/sibling_order.rb'
 
 Metrics/MethodLength:
@@ -44,8 +43,3 @@ Lint/NestedMethodDefinition:
 Naming/VariableNumber:
   Exclude:
     - 'test/**/*'
-
-Lint/MissingSuper:
-  Exclude:
-    - 'lib/gem_template/services/**/*'
-    - 'test/services/**/*'

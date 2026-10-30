@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-30
+
+### Changed
+
+- Dummy database defaults are `recording_studio_orderable_development` and `recording_studio_orderable_test`. The devcontainer uses the same development name.
+- Dummy Gemfile drops unused scaffold gems: `jbuilder`, `image_processing`, `solid_cache`, `solid_queue`, `solid_cable`, `kamal`, and `thruster`.
+- RuboCop no longer excludes template paths `lib/gem_template/**` or `test/services/**`.
+
+### Removed
+
+- Dummy Stimulus `hello_controller`, PWA views, the empty makeup-artist examples directory, and `bin/thrust`.
+
+### Notes
+
+These git tags do not match a product release. They stay as they are. This changelog does not retag them.
+
+- `0.2.0` has no `v` prefix. `VERSION` on that tag is `0.2.0`. There is no `v0.2.0` tag.
+- `v0.2.4` through `v0.2.9` are dependency-bump tags. `VERSION` on each is still `0.2.3`.
+- `v0.3.1` is the dependency-bump tag after `0.3.0`. `VERSION` on that tag is still `0.3.0`. There is no `0.3.1` product release.
+
+### Upgrade Notes
+
+- Bump to `0.4.1`. No migration and no host API change.
+- Hosts that copied the dummy database names should use the new defaults, or keep setting `DB_NAME`.
+
 ## [0.4.0] - 2026-10-27
 
 ### Breaking
@@ -121,11 +146,13 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.3.1...v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.2.0
+[0.2.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/0.2.0
 [0.1.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/releases/tag/v0.1.0
