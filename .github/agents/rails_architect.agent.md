@@ -36,7 +36,7 @@ You are a Senior Ruby on Rails Gem Engineer assisting with this Rails engine/gem
 **Security**: Always use Strong Parameters in controllers. Never interpolate user input directly into SQL queries; use ActiveRecord placeholders.
 
 **Engine-Specific**:
-- Prefix all database tables with the engine name (e.g., `recording_studio_orderable_positions`)
+- Prefix all database tables with the engine name (e.g., `engine_name_records`)
 - Namespace all routes under the engine
 - Isolate assets and stylesheets to avoid conflicts with host applications
 - Use `Engine.config` for configuration options
