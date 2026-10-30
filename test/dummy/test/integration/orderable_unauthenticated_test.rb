@@ -3,6 +3,9 @@
 require "test_helper"
 
 class OrderableUnauthenticatedTest < ActionDispatch::IntegrationTest
+  # 200 records current behaviour. The engine overview has no authenticate_user!.
+  # The auth pull request does not flip this page. It maps a denied reorder to
+  # HTTP 403 on the host actions, and this overview stays open.
   test "overview is reachable without a signed-in user" do
     get "/recording_studio_orderable"
 

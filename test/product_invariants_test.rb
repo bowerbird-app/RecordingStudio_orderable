@@ -26,6 +26,7 @@ class ProductInvariantsTest < Minitest::Test
     refute File.directory?(File.join(ROOT, "lib/gem_template"))
     refute File.directory?(File.join(ROOT, "app/controllers/gem_template"))
     refute File.exist?(File.join(ROOT, "test/dummy/app/javascript/controllers/hello_controller.js"))
+    refute File.exist?(File.join(ROOT, "test/dummy/bin/thrust"))
     refute File.directory?(File.join(ROOT, "test/dummy/app/views/pwa"))
     refute File.directory?(File.join(ROOT, "test/dummy/app/views/makeup_artist"))
   end
@@ -44,6 +45,10 @@ class ProductInvariantsTest < Minitest::Test
     assert_includes database, "recording_studio_orderable_test"
     refute_includes database, "app_development"
     refute_includes database, "app_test"
+
+    compose = File.read(File.join(ROOT, ".devcontainer/docker-compose.yml"))
+    assert_includes compose, "recording_studio_orderable_development"
+    refute_includes compose, "app_development"
   end
 
   def test_dummy_gemfile_drops_unused_scaffold_gems
@@ -54,13 +59,10 @@ class ProductInvariantsTest < Minitest::Test
     end
   end
 
-  def test_changelog_documents_botched_tags_without_retagging
+  def test_changelog_links_releases_without_a_031_heading
     changelog = File.read(File.join(ROOT, "CHANGELOG.md"))
 
-    assert_includes changelog, "`0.2.0` has no `v` prefix"
-    assert_includes changelog, "`v0.2.4` through `v0.2.9`"
-    assert_includes changelog, "`v0.3.1`"
-    assert_includes changelog, "does not retag"
+    assert_includes changelog, "## [0.4.1]"
     assert_includes changelog, "compare/v0.3.1...v0.4.0"
     refute_includes changelog, "## [0.3.1]"
   end

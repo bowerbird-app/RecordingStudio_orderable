@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Dummy database defaults are `recording_studio_orderable_development` and `recording_studio_orderable_test`.
+- Dummy database defaults are `recording_studio_orderable_development` and `recording_studio_orderable_test`. The devcontainer uses the same development name.
 - Dummy Gemfile drops unused scaffold gems: `jbuilder`, `image_processing`, `solid_cache`, `solid_queue`, `solid_cable`, `kamal`, and `thruster`.
 - RuboCop no longer excludes template paths `lib/gem_template/**` or `test/services/**`.
 
 ### Removed
 
-- Dummy Stimulus `hello_controller`, PWA views, and the empty makeup-artist examples directory.
+- Dummy Stimulus `hello_controller`, PWA views, the empty makeup-artist examples directory, and `bin/thrust`.
 
 ### Notes
 
