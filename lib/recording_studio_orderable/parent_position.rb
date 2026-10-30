@@ -45,7 +45,7 @@ module RecordingStudioOrderable
       return unless recording.respond_to?(:recording_studio_orderable_position)
       return if recording.recording_studio_orderable_position.nil?
 
-      recording.update!(recording_studio_orderable_position: nil)
+      SiblingOrder.write_position!(recording, nil)
     end
   end
 end
