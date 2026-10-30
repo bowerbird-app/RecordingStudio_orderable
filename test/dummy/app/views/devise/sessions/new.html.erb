@@ -1,11 +1,11 @@
-<%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
-  <%= render FlatPack::Card::Component.new(background: :shaded) do |card| %>
+<%= render FlatPack::Stack::Component.new(gap: :lg) do %>
+  <%= render FlatPack::Card::Component.new(background: :default) do |card| %>
     <% card.body do %>
-      <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
+      <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
         <%= render FlatPack::PageTitle::Component.new(title: "Sign In", variant: :h2) %>
 
         <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
-          <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
+          <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
             <%= render FlatPack::EmailInput::Component.new(
               name: "user[email]",
               label: "Email",

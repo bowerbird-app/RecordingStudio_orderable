@@ -11,9 +11,9 @@ class LocalesTest < Minitest::Test
     "recording_studio.orderable.home.page_title" => "Recording Studio Orderable",
     "recording_studio.orderable.home.subtitle" =>
       "Opt in per recordable type. Sibling position lives on the child recording, not as a tree object.",
-    "recording_studio.orderable.home.body_before" => "Host apps enable ordering with",
+    "recording_studio.orderable.home.body_before" => "Enable ordering",
     "recording_studio.orderable.home.body_after" =>
-      "on the parent type whose children should be sortable."
+      "Add this on the parent type whose children should be sortable."
   }.freeze
 
   def setup
@@ -77,7 +77,7 @@ class LocalesTest < Minitest::Test
 
     assert_equal "Orderable", tree.fetch("home").fetch("title")
     assert_equal "Recording Studio Orderable", tree.fetch("home").fetch("page_title")
-    assert_equal "Host apps enable ordering with", tree.fetch("home").fetch("body_before")
+    assert_equal "Enable ordering", tree.fetch("home").fetch("body_before")
   end
 
   def test_yes_no_on_off_locale_keys_resolve_without_default

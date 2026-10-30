@@ -3,20 +3,28 @@
 <% flat_pack_page_nav(round: true, style: :default, anchor_href: main_app.root_path, anchor_tooltip: "Home") %>
 <% register_page_nav "Sign out", main_app.destroy_user_session_path, role: :secondary, data: { turbo_method: :delete } %>
 
-<%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
+<%= render FlatPack::Stack::Component.new(
+  gap: :lg,
+  data: {
+    controller: "order-refresh",
+    action: "flat-pack--table-sortable:saved->order-refresh#refresh"
+  }
+) do %>
   <%= render "home/demo_nav" %>
 
   <% if @folder_recording %>
-    <%= render FlatPack::SectionTitle::Component.new(
-      title: "Pages in #{@folder_recording.recordable.name}",
-      subtitle: "These siblings share a parent that included RecordingStudio::Capabilities::Orderable.to."
-    ) %>
-
-    <%= render FlatPack::Button::Component.new(
-      text: "Reorder in modal",
-      style: :secondary,
-      data: { modal_id: "reorder-pages-modal" }
-    ) %>
+    <%= render FlatPack::Cluster::Component.new(justify: :between, align: :start, gap: :md) do %>
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Pages in #{@folder_recording.recordable.name}",
+        subtitle: "These pages share one parent, so they can be reordered.",
+        spacing: :none
+      ) %>
+      <%= render FlatPack::Button::Component.new(
+        text: "Reorder in modal",
+        style: :secondary,
+        data: { modal_id: "reorder-pages-modal" }
+      ) %>
+    <% end %>
 
     <div id="order-demo-table">
     <%= render FlatPack::Table::Component.new(data: @ordered_pages) do |table| %>
@@ -28,6 +36,7 @@
          ) %>
       <% table.column(
            title: "name",
+           wrap: :nowrap,
            html: lambda { |recording|
              recording.recordable.respond_to?(:title) ? recording.recordable.title : recording.recordable_type
            }
@@ -73,8 +82,8 @@
 
     <%= render FlatPack::Modal::Component.new(id: "reorder-pages-modal", title: "Reorder pages", size: :lg) do |modal| %>
       <% modal.body do %>
-        <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
-          <p>Drag a page into place.</p>
+        <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
+          <%= render FlatPack::Text::Component.new(text: "Drag a page into place.") %>
           <%= render FlatPack::Table::Component.new(
             data: @ordered_pages,
             draggable_rows: true,
@@ -84,6 +93,22 @@
             row_id: ->(recording) { recording.id }
           ) do |table| %>
             <% table.column(
+                 title: "Reorder",
+                 width: :fit,
+                 wrap: :nowrap,
+                 align: :center,
+                 html: lambda { |_recording|
+                   render(FlatPack::Button::Component.new(
+                     icon: "bars-3",
+                     icon_only: true,
+                     text: "Drag to reorder",
+                     style: :secondary,
+                     size: :sm,
+                     type: "button"
+                   ))
+                 }
+               ) %>
+            <% table.column(
                  title: "position",
                  html: lambda { |recording|
                    (recording.recording_studio_orderable_position || @ordered_pages.index(recording)).to_s
@@ -91,6 +116,7 @@
                ) %>
             <% table.column(
                  title: "name",
+                 wrap: :nowrap,
                  html: lambda { |recording|
                    recording.recordable.respond_to?(:title) ? recording.recordable.title : recording.recordable_type
                  }
@@ -114,20 +140,26 @@
   <% end %>
 
   <% if @unordered_project_recording %>
-    <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
+    <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
       <%= render FlatPack::SectionTitle::Component.new(
         title: "Project is not orderable",
-        subtitle: "Installing the gem does not enable order on every recordable."
+        subtitle: "Installing the gem does not enable order on every type.",
+        spacing: :none
       ) %>
 
       <%= render FlatPack::Card::Component.new(background: :default) do |card| %>
         <% card.body do %>
-          <p>
-            <%= @unordered_project_recording.recordable.name %>
-            has not included
-            <code>RecordingStudio::Capabilities::Orderable.to</code>.
-            Only Folder opted in for this demo.
-          </p>
+          <%= render FlatPack::Stack::Component.new(gap: :md) do %>
+            <%= render FlatPack::Text::Component.new(
+              text: "#{@unordered_project_recording.recordable.name} has not opted in. Only Folder did, for this demo."
+            ) %>
+            <%= render FlatPack::CodeBlock::Component.new(
+              code: "include RecordingStudio::Capabilities::Orderable.to",
+              language: "ruby",
+              title: "Opt in",
+              separated: false
+            ) %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>
