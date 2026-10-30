@@ -33,11 +33,10 @@
                  style: :secondary,
                  type: "button"
                )),
-               render(
-                 FlatPack::Popover::Component.new(trigger_id: trigger_id, placement: :top) do |popover|
-                   popover.content { l(event.occurred_at, format: :long) }
-                 end
-               )
+               render(FlatPack::Popover::Component.new(trigger_id: trigger_id, placement: :top)) do |popover|
+                 # The block belongs to render. The slot keeps what the view buffer receives.
+                 popover.content { concat l(event.occurred_at, format: :long) }
+               end
              ])
            }
          ) %>
