@@ -21,7 +21,7 @@ GIT
 PATH
   remote: ../..
   specs:
-    recording_studio_orderable (0.4.1)
+    recording_studio_orderable (0.4.2)
       flat_pack (>= 0.1.315)
       rails (~> 8.1.0)
       recording_studio (>= 6.1.0)
@@ -110,7 +110,7 @@ GEM
     bindex (0.8.1)
     bootsnap (1.25.0)
       msgpack (~> 1.5)
-    brakeman (8.0.6)
+    brakeman (8.1.0)
       racc
     builder (3.3.0)
     bundler-audit (0.9.3)
