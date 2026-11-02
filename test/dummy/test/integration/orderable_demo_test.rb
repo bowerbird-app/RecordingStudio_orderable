@@ -33,6 +33,27 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_includes css, 'min-w-\\[40rem'
   end
 
+  test "event time control renders a timestamp tooltip and metadata scrolls in a code block" do
+    sign_in @user
+    event = RecordingStudio::Event.order(occurred_at: :desc).first
+    formatted = event.occurred_at.strftime("%e %b %Y %l:%M%P")
+
+    get events_path
+
+    assert_response :success
+    assert_select "time.flat-pack-timestamp", text: /ago/
+    assert_includes response.body, formatted
+    assert_select "td.whitespace-nowrap"
+    assert_select "pre.overflow-x-auto"
+    assert_select "[tabindex=?]", "0"
+    assert_select "table.table-fixed .max-w-full"
+    refute_match "width: 24rem", response.body
+    assert_match "width: 10rem", response.body
+    assert_match "width: 8.5rem", response.body
+    refute_match "width: 9rem", response.body
+    refute_match "flat-pack--popover", response.body
+  end
+
   test "events nav is a real link from home" do
     sign_in @user
     get root_path
@@ -58,8 +79,9 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert_match "Move down", response.body
     assert_equal ["0", "1"], position_cells("order-demo-table")
     assert_select "[data-modal-id=?]", "reorder-pages-modal", text: "Reorder in modal"
-    assert_select "a[href=?]", root_path, text: /Home/
+    assert_select "a[href=?][aria-current=?]", root_path, "page", text: /Home/
     assert_select "a[href=?]", events_path, text: /Events/
+    assert_select "[data-controller~=?][data-action*=?]", "order-refresh", "order-refresh#refresh"
     refute_match "flat_pack_sidebar", response.body
     refute_match "Setup", response.body
   end
@@ -72,12 +94,27 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
+    assert_select "#reorder-pages-modal th", text: "reorder"
     assert_select "#reorder-pages-modal[data-controller~=?]", "flat-pack--modal"
     assert_select "#reorder-pages-modal [data-controller~=?]", "flat-pack--table-sortable"
+    assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-reorder-url-value=?]", reorder_pages_path
     assert_select "#reorder-pages-modal [data-flat-pack--table-sortable-target=?]", "row", count: pages.length
+    assert_select "#reorder-pages-modal [data-flat-pack--icon-name-value=?]", "bars-3", count: pages.length
+    assert_select "#reorder-pages-modal col[style=?]", "width: 1%", count: 2
     assert_equal pages.map { |page| page.recording_studio_orderable_position.to_s }, position_cells("reorder-pages-modal")
+    reversed.each do |recording_id|
+      assert_match(/\A[0-9a-f-]{36}\z/i, recording_id)
+      assert_select "#reorder-pages-modal [data-id=?]", recording_id
+    end
+    refute_match(/page-reorder/, response.body)
 
-    patch reorder_pages_path, params: { ordered_recording_ids: reversed }, as: :json
+    patch reorder_pages_path, params: {
+      reorder: {
+        resource: "pages",
+        strategy: "dense_integer",
+        items: reversed.each_with_index.map { |recording_id, index| { id: recording_id, position: index + 1 } }
+      }
+    }, as: :json
 
     assert_response :success
     children = @folder_recording.reload.recording_studio_orderable_children.to_a
@@ -147,7 +184,9 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
   private
 
   def position_cells(container_id)
-    css_select("##{container_id} tbody tr").map { |row| row.at_css("td").text.strip }
+    headers = css_select("##{container_id} thead th").map { |header| header.text.strip }
+    index = headers.index("position") || 0
+    css_select("##{container_id} tbody tr").map { |row| row.css("td")[index].text.strip }
   end
 
   def seed_demo_tree!

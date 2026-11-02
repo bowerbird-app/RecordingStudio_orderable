@@ -3,7 +3,8 @@
 require_relative "../test_helper"
 
 class OrderableHostLocaleOverrideTest < ActionDispatch::IntegrationTest
-  HOST_BODY_AFTER = "HOST on the parent type whose children should be sortable."
+  GEM_BODY_AFTER = "Add this to the parent type whose children should be sortable."
+  HOST_BODY_AFTER = "[host override] Add this to the parent type whose children should be sortable."
   HOST_SUBTITLE =
     "HOST Opt in per recordable type. Sibling position lives on the child recording, not as a tree object."
   OVERRIDE_KEY = "recording_studio.orderable.home.body_after"
@@ -32,7 +33,9 @@ class OrderableHostLocaleOverrideTest < ActionDispatch::IntegrationTest
   test "host locale override for recording_studio.orderable wins on boot order" do
     assert File.exist?(BOOT_HOST_LOCALE)
     assert_includes File.read(BOOT_HOST_LOCALE), HOST_BODY_AFTER
+    refute_includes File.read(BOOT_HOST_LOCALE), "body_after: \"#{GEM_BODY_AFTER}\""
     assert_equal HOST_BODY_AFTER, I18n.t(OVERRIDE_KEY)
+    refute_equal GEM_BODY_AFTER, I18n.t(OVERRIDE_KEY)
     assert_equal @load_path_before, I18n.load_path,
                  "boot-order test must not mutate I18n.load_path"
 
@@ -60,11 +63,11 @@ class OrderableHostLocaleOverrideTest < ActionDispatch::IntegrationTest
 
     assert_equal @load_path_before, I18n.load_path
     assert_equal HOST_SUBTITLE, I18n.t(SUBTITLE_KEY)
-    assert_equal HOST_BODY_AFTER, I18n.t(OVERRIDE_KEY)
+    assert_equal GEM_BODY_AFTER, I18n.t(OVERRIDE_KEY)
 
     get "/recording_studio_orderable"
     assert_response :success
     assert_includes response.body, HOST_SUBTITLE
-    assert_includes response.body, HOST_BODY_AFTER
+    assert_includes response.body, GEM_BODY_AFTER
   end
 end

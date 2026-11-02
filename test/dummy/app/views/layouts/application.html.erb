@@ -20,19 +20,19 @@
   </head>
 
   <body class="bg-(--surface-page-background-color) text-(--surface-content-color)">
-    <%= render "layouts/icon_sprite" %>
-
     <div class="h-screen overflow-y-auto overscroll-y-contain">
       <main class="mx-auto flex min-h-full w-full max-w-6xl items-center justify-center p-6 sm:p-10">
         <div class="w-full">
-          <% flash.each do |type, message| %>
-            <% next if message.blank? %>
+          <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
+            <% flash.each do |type, message| %>
+              <% next if message.blank? %>
 
-            <% style = type.to_sym == :notice ? :success : :danger %>
-            <%= render FlatPack::Alert::Component.new(description: message, style: style, class: "mb-6") %>
+              <% style = type.to_sym == :notice ? :success : :danger %>
+              <%= render FlatPack::Alert::Component.new(description: message, style: style) %>
+            <% end %>
+
+            <%= yield %>
           <% end %>
-
-          <%= yield %>
         </div>
       </main>
     </div>

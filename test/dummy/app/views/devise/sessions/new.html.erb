@@ -1,41 +1,43 @@
-<%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg, class: "mx-auto w-full max-w-md") do %>
-  <%= render FlatPack::Card::Component.new(background: :shaded) do |card| %>
+<%= render FlatPack::Stack::Component.new(gap: :lg) do %>
+  <%= render FlatPack::Card::Component.new(background: :default) do |card| %>
     <% card.body do %>
-      <%= render FlatPack::Grid::Component.new(cols: 1, gap: :lg) do %>
+      <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
         <%= render FlatPack::PageTitle::Component.new(title: "Sign In", variant: :h2) %>
 
-        <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "space-y-4" }) do |f| %>
-          <%= render FlatPack::EmailInput::Component.new(
-            name: "user[email]",
-            label: "Email",
-            value: "admin@admin.com",
-            placeholder: "you@example.com",
-            required: true,
-            autofocus: true,
-            autocomplete: "email"
-          ) %>
+        <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+          <%= render FlatPack::Stack::Component.new(gap: :lg) do %>
+            <%= render FlatPack::EmailInput::Component.new(
+              name: "user[email]",
+              label: "Email",
+              value: "admin@admin.com",
+              placeholder: "you@example.com",
+              required: true,
+              autofocus: true,
+              autocomplete: "email"
+            ) %>
 
-          <%= render FlatPack::PasswordInput::Component.new(
-            name: "user[password]",
-            label: "Password",
-            value: "Password",
-            required: true,
-            autocomplete: "current-password"
-          ) %>
+            <%= render FlatPack::PasswordInput::Component.new(
+              name: "user[password]",
+              label: "Password",
+              value: "Password",
+              required: true,
+              autocomplete: "current-password"
+            ) %>
 
-          <% if devise_mapping.rememberable? %>
-            <%= render FlatPack::Checkbox::Component.new(
-              name: "#{resource_name}[remember_me]",
-              label: "Remember me"
+            <% if devise_mapping.rememberable? %>
+              <%= render FlatPack::Checkbox::Component.new(
+                name: "#{resource_name}[remember_me]",
+                label: "Remember me"
+              ) %>
+            <% end %>
+
+            <%= render FlatPack::Button::Component.new(
+              text: "Sign In",
+              style: :primary,
+              size: :md,
+              type: "submit"
             ) %>
           <% end %>
-
-          <%= render FlatPack::Button::Component.new(
-            text: "Sign In",
-            style: :primary,
-            size: :md,
-            type: "submit"
-          ) %>
         <% end %>
       <% end %>
     <% end %>

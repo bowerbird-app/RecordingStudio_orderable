@@ -209,14 +209,14 @@ configuration load errors, and stored recording names stay English.
 
 `test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.3.0` and Flatpack tag `v0.1.332`. Those pins are for this repository. Hosts still need Recording Studio 6.1.0 or newer and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0.
 
-Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal.
+Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 
 Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with the shared RecordingStudio_* development master key. Set `RAILS_MASTER_KEY` or put that key in `test/dummy/config/master.key` (gitignored). Keep the encrypted file; do not generate a per-repo dummy key.
 
 - Sign in as `admin@admin.com` / `Password`
 - Folder is the only orderable type (`allows: ["Page"]`)
 - Home shows that folder's pages with move controls
-- Events lists reorder history from `log_event!`
+- Events lists reorder history from `log_event!`. The "when" control opens the full timestamp.
 
 ## Cloud Agent boot
 
