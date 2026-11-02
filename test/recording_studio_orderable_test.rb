@@ -25,6 +25,17 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_accessible"
+    assert_equal Gem::Version.new("6.3.0"), spec.version
+    assert_equal Gem::Version.new("0.1.332"), flat_pack.version
+    assert_equal Gem::Version.new("4.19.0"), view_component.version
+
+    %w[Gemfile test/dummy/Gemfile].each do |relative|
+      gemfile = File.read(File.expand_path("../#{relative}", __dir__))
+      assert_includes gemfile, 'gem "recording_studio", github: "bowerbird-app/RecordingStudio", tag: "v6.3.0"'
+      assert_includes gemfile, 'gem "flat_pack", github: "bowerbird-app/flatpack", tag: "v0.1.332"'
+      refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
+      refute_includes gemfile, 'tag: "v6.1.0"'
+    end
   end
 
   def test_version_matches_latest_changelog_release

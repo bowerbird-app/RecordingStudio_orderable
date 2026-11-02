@@ -1,18 +1,18 @@
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio.git
-  revision: 403521dddc141ddb12d1ed8d8b30bd4105a9d6f8
-  tag: v6.1.0
+  revision: 6acc0377fa4c940a2ff7222bbcbdc3ee6d59c591
+  tag: v6.3.0
   specs:
-    recording_studio (6.1.0)
+    recording_studio (6.3.0)
       flat_pack (>= 0.1.315)
       rails (>= 8.1.0)
 
 GIT
   remote: https://github.com/bowerbird-app/flatpack.git
-  revision: 1fcbafe94f8eb118f0a22182f63f5110fcc97a56
-  ref: 1fcbafe94f8eb118f0a22182f63f5110fcc97a56
+  revision: 04bacc3588bb3f7e082fdc3dbe0914e1eb4a4bd4
+  tag: v0.1.332
   specs:
-    flat_pack (0.1.319)
+    flat_pack (0.1.332)
       pagy (~> 9.0)
       rails (>= 7.1, < 9)
       tailwind_merge (~> 0.13)
@@ -21,7 +21,7 @@ GIT
 PATH
   remote: ../..
   specs:
-    recording_studio_orderable (0.4.4)
+    recording_studio_orderable (0.4.5)
       flat_pack (>= 0.1.315)
       rails (~> 8.1.0)
       recording_studio (>= 6.1.0)

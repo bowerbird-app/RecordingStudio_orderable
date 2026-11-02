@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-10-30
+
+### Changed
+
+- Development Gemfiles pin `recording_studio` tag `v6.3.0` and `flat_pack` tag `v0.1.332`.
+- Host floors stay `recording_studio` >= 6.1.0 and `flat_pack` >= 0.1.315. `view_component` stays 4.19.0, inside >= 4.14 and < 5.
+
+### Upgrade Notes
+
+- Bump to `0.4.5`. No migration and no host API change.
+- A host may stay on Recording Studio 6.1.0 and Flatpack 0.1.315. This repository's Gemfiles and the dummy app install the newer tags.
+
 ## [0.4.4] - 2026-10-30
 
 ### Changed
@@ -188,7 +200,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.1...v0.4.2
