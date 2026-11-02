@@ -31,6 +31,39 @@ module RecordingStudioOrderable
       end
     end
 
+    def assign_end_position!(recording)
+      with_parent_lock do
+        self.class.write_position!(recording, next_end_position(recording))
+        parent_recording.reload
+      end
+    end
+
+    def normalize_restored_position!(recording)
+      with_parent_lock do
+        position = recording.recording_studio_orderable_position
+        next unless position.nil? || position_taken?(recording, position)
+
+        self.class.write_position!(recording, next_end_position(recording))
+      end
+    end
+
+    def self.write_position!(recording, position)
+      if save_in_progress?(recording)
+        recording.recording_studio_orderable_position = position
+      else
+        recording.update_columns(recording_studio_orderable_position: position)
+      end
+    end
+
+    def self.save_in_progress?(recording)
+      return true if recording.respond_to?(:will_save_change_to_parent_recording_id?) &&
+                     recording.will_save_change_to_parent_recording_id?
+      return true if recording.respond_to?(:will_save_change_to_trashed_at?) &&
+                     recording.will_save_change_to_trashed_at?
+
+      recording.respond_to?(:changed?) && recording.changed?
+    end
+
     private
 
     attr_reader :parent_recording
@@ -75,11 +108,26 @@ module RecordingStudioOrderable
     end
 
     def child_scope
-      scope = parent_recording.child_recordings
+      scope = exclude_trashed(parent_recording.child_recordings)
       allowed_types = allowed_child_types
       return scope if allowed_types.empty?
 
       scope.where(recordable_type: allowed_types)
+    end
+
+    def exclude_trashed(scope)
+      model = scope.klass if scope.respond_to?(:klass)
+      if model.respond_to?(:recording_studio_trashable_active)
+        return scope.merge(model.recording_studio_trashable_active)
+      end
+      return scope unless trashed_column?(scope)
+
+      scope.where(trashed_at: nil)
+    end
+
+    def trashed_column?(scope)
+      model = scope.klass if scope.respond_to?(:klass)
+      model.respond_to?(:column_names) && model.column_names.include?("trashed_at")
     end
 
     def allowed_child_types
@@ -102,6 +150,15 @@ module RecordingStudioOrderable
 
     def current_eligible_recordings
       ordered_relation(child_scope).to_a
+    end
+
+    def next_end_position(recording)
+      highest = child_scope.where.not(id: recording.id).maximum(:recording_studio_orderable_position)
+      highest.nil? ? 0 : highest + 1
+    end
+
+    def position_taken?(recording, position)
+      child_scope.where(recording_studio_orderable_position: position).where.not(id: recording.id).exists?
     end
 
     def eligible_child!(eligible, moving)

@@ -25,6 +25,8 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_accessible"
+    refute_includes gemspec, "recording_studio_trashable"
+    refute_includes gemspec, "recording_studio_admin"
     assert_equal Gem::Version.new("6.3.0"), spec.version
     assert_equal Gem::Version.new("0.1.332"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
