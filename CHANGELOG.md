@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.9] - 2026-11-05
+
+### Changed
+
+- Lockfiles use Rails 8.1.4.1, rack 3.2.8, nokogiri 1.19.7, loofah 2.25.3, and rails-html-sanitizer 1.7.2.
+
+### Upgrade Notes
+
+- Bump to `0.4.9`. No migration and no host API change. Hosts should `bundle update rails rack nokogiri loofah rails-html-sanitizer`.
+
 ## [0.4.8] - 2026-10-30
 
 ### Removed
@@ -242,7 +252,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.8...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.9...HEAD
+[0.4.9]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.5...v0.4.6
