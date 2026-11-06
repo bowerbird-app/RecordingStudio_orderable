@@ -3,6 +3,8 @@
 require "test_helper"
 
 class AuthorizationTest < Minitest::Test
+  ACTIONS = %i[reorder move append].freeze
+
   def setup
     @original_configuration = RecordingStudioOrderable.configuration
     RecordingStudioOrderable.reset_configuration!
@@ -12,83 +14,94 @@ class AuthorizationTest < Minitest::Test
     RecordingStudioOrderable.configuration = @original_configuration
   end
 
-  def test_resolver_replaces_accessible
-    called = false
-    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized do
-      called = true
-      false
-    end
-    RecordingStudioOrderable.configuration.authorization_resolver = lambda { |action:, actor:, **|
-      action == :reorder && actor == :ok
-    }
-
-    assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :ok, recording: :rec)
-    refute RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :no, recording: :rec)
-    refute called
-  end
-
-  def test_allows_when_accessible_is_turned_off
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = false
-
-    assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: nil, recording: :rec)
-  end
-
-  def test_allows_when_resolver_and_accessible_are_missing
-    refute defined?(RecordingStudioAccessible)
-    RecordingStudioOrderable.configuration.authorization_resolver = nil
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
-    RecordingStudioOrderable.configuration.accessible_module = nil
-
-    refute RecordingStudioOrderable::Authorization.use_accessible?
-    assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: nil, recording: nil)
-  end
-
-  def test_accessible_module_allows
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
-    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized { |**| true }
-
-    assert RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :user, recording: :rec)
-  end
-
-  def test_accessible_module_denies_and_receives_blank_actor
+  def test_delegates_to_accessible_with_configured_role
     seen = nil
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
     RecordingStudioOrderable.configuration.authorization_role = :edit
-    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized do |**kwargs|
+
+    RecordingStudioAccessible.stub(:authorized?, lambda { |**kwargs|
       seen = kwargs
-      false
+      true
+    }) do
+      assert RecordingStudioOrderable::Authorization.authorized?(
+        action: :reorder,
+        actor: :user,
+        recording: :rec,
+        controller: :ctrl
+      )
     end
 
-    refute RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: nil, recording: nil)
-    assert_nil seen[:actor]
-    assert_nil seen[:recording]
+    assert_equal :user, seen[:actor]
+    assert_equal :rec, seen[:recording]
     assert_equal :edit, seen[:role]
+    refute seen.key?(:action)
+    refute seen.key?(:controller)
   end
 
-  def test_accessible_errors_are_not_rescued
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
-    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized { |**| raise "boom" }
+  def test_uses_non_default_authorization_role
+    seen = nil
+    RecordingStudioOrderable.configuration.authorization_role = :admin
 
-    error = assert_raises(RuntimeError) do
-      RecordingStudioOrderable::Authorization.authorized?(action: :reorder, actor: :user, recording: :rec)
+    RecordingStudioAccessible.stub(:authorized?, lambda { |**kwargs|
+      seen = kwargs
+      kwargs[:role] == :edit
+    }) do
+      ACTIONS.each do |action|
+        refute RecordingStudioOrderable::Authorization.authorized?(
+          action: action,
+          actor: :user,
+          recording: :rec
+        )
+      end
     end
-    assert_equal "boom", error.message
+
+    assert_equal :admin, seen[:role]
   end
 
-  def test_configured_accessible_module_is_used_when_the_constant_is_absent
-    refute defined?(RecordingStudioAccessible)
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = true
-    RecordingStudioOrderable.configuration.accessible_module = module_with_authorized { |**| true }
+  ACTIONS.each do |action|
+    define_method("test_denies_#{action}_when_accessible_returns_false") do
+      refute_authorized(action, accessible: false)
+    end
 
-    assert_equal RecordingStudioOrderable.configuration.accessible_module,
-                 RecordingStudioOrderable::Authorization.accessible_module
+    define_method("test_denies_#{action}_when_accessible_returns_nil") do
+      refute_authorized(action, accessible: nil)
+    end
+
+    define_method("test_passes_blank_actor_through_to_accessible_for_#{action}") do
+      assert_blank_actor_passed_through(action)
+    end
+
+    define_method("test_#{action}_does_not_rescue_accessible_errors") do
+      assert_accessible_error_propagates(action)
+    end
   end
 
   private
 
-  def module_with_authorized(&block)
-    Module.new do
-      define_singleton_method(:authorized?, &block)
+  def refute_authorized(action, accessible:)
+    RecordingStudioAccessible.stub(:authorized?, accessible) do
+      refute RecordingStudioOrderable::Authorization.authorized?(action: action, actor: :user, recording: :rec)
+    end
+  end
+
+  def assert_blank_actor_passed_through(action)
+    seen = nil
+    RecordingStudioAccessible.stub(:authorized?, lambda { |**kwargs|
+      seen = kwargs
+      false
+    }) do
+      refute RecordingStudioOrderable::Authorization.authorized?(action: action, actor: nil, recording: nil)
+    end
+
+    assert_nil seen[:actor]
+    assert_nil seen[:recording]
+  end
+
+  def assert_accessible_error_propagates(action)
+    RecordingStudioAccessible.stub(:authorized?, ->(**) { raise "boom" }) do
+      error = assert_raises(RuntimeError) do
+        RecordingStudioOrderable::Authorization.authorized?(action: action, actor: :user, recording: :rec)
+      end
+      assert_equal "boom", error.message
     end
   end
 end

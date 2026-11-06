@@ -3,8 +3,9 @@ RecordingStudioOrderable install complete.
 Next steps:
 
 1. Review `config/initializers/recording_studio_orderable.rb`.
-2. Run `bin/rails generate recording_studio_orderable:migrations` and `bin/rails db:migrate`.
-3. Opt parent recordables into sibling ordering:
+2. Install Recording Studio Accessible, enable `:accessible` on roots, and grant `:edit` to actors who may reorder.
+3. Run `bin/rails generate recording_studio_orderable:migrations` and `bin/rails db:migrate`.
+4. Opt parent recordables into sibling ordering:
 
    ```ruby
    class Folder < ApplicationRecord
@@ -16,4 +17,4 @@ Next steps:
    ```
 
    Installing the gem does not enable order on every recordable.
-4. Run `bin/rails tailwindcss:build` if you use Tailwind CSS.
+5. Run `bin/rails tailwindcss:build` if you use Tailwind CSS.

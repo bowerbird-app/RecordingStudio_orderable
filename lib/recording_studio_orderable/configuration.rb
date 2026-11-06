@@ -6,19 +6,13 @@ module RecordingStudioOrderable
   class Configuration
     attr_accessor :log_order_events,
                   :event_action,
-                  :authorization_resolver,
-                  :use_recording_studio_accessible,
-                  :authorization_role,
-                  :accessible_module
+                  :authorization_role
     attr_reader :layout
 
     def initialize
       @log_order_events = true
       @event_action = "reordered"
-      @authorization_resolver = nil
-      @use_recording_studio_accessible = true
       @authorization_role = :edit
-      @accessible_module = nil
       @layout = nil
     end
 
@@ -30,10 +24,7 @@ module RecordingStudioOrderable
       {
         log_order_events: log_order_events,
         event_action: event_action,
-        authorization_resolver: authorization_resolver,
-        use_recording_studio_accessible: use_recording_studio_accessible,
         authorization_role: authorization_role,
-        accessible_module: accessible_module,
         layout: layout
       }
     end

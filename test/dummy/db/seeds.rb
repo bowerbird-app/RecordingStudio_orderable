@@ -7,6 +7,7 @@ Current.actor = user
 
 workspace = Workspace.find_or_create_by!(name: "Studio Workspace")
 workspace_recording = RecordingStudio.root_recording_for(workspace)
+DemoAccess.ensure_owner!(recording: workspace_recording, actor: user)
 
 project_recording = DemoRecordingLookup.by_slug(type: "Project", slug: "album-launch")
 unless project_recording

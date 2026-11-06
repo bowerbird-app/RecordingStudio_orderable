@@ -1,11 +1,41 @@
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio.git
-  revision: 6acc0377fa4c940a2ff7222bbcbdc3ee6d59c591
-  tag: v6.3.0
+  revision: 0636ad905f8cfd0725dfc028a78187aec67d9968
+  tag: v6.5.0
   specs:
-    recording_studio (6.3.0)
+    recording_studio (6.5.0)
       flat_pack (>= 0.1.315)
-      rails (>= 8.1.0)
+      rails (>= 8.1.4.1)
+
+GIT
+  remote: https://github.com/bowerbird-app/RecordingStudio_accessible.git
+  revision: 5c4f24b830f80fb30c4c88640895ab43149eb1c6
+  tag: v0.24.2
+  specs:
+    recording_studio_accessible (0.24.2)
+      rails (~> 8.1.0)
+      recording_studio (~> 6.1, >= 6.1.0)
+      recording_studio_trashable (~> 0.10)
+
+GIT
+  remote: https://github.com/bowerbird-app/RecordingStudio_metrics.git
+  revision: b1dc3a0c5686d5691e19931afc7893343f24116d
+  tag: v0.7.3
+  specs:
+    recording_studio_metrics (0.7.3)
+      rails (~> 8.1.0)
+      recording_studio (>= 6.1.0)
+
+GIT
+  remote: https://github.com/bowerbird-app/RecordingStudio_trashable.git
+  revision: e5a42e7c843424a34eda1515c3a1700262713dc3
+  tag: v0.12.3
+  specs:
+    recording_studio_trashable (0.12.3)
+      flat_pack (>= 0.1.315)
+      rails (~> 8.1.0)
+      recording_studio (>= 6.1.0)
+      recording_studio_metrics (>= 0.3.0, < 1.0)
 
 GIT
   remote: https://github.com/bowerbird-app/flatpack.git
@@ -21,10 +51,11 @@ GIT
 PATH
   remote: .
   specs:
-    recording_studio_orderable (0.4.9)
+    recording_studio_orderable (0.5.0)
       flat_pack (>= 0.1.315)
       rails (~> 8.1.0)
       recording_studio (>= 6.1.0)
+      recording_studio_accessible (>= 0.24.2)
 
 GEM
   remote: https://rubygems.org/
@@ -311,7 +342,10 @@ DEPENDENCIES
   minitest-mock
   puma
   recording_studio!
+  recording_studio_accessible!
+  recording_studio_metrics!
   recording_studio_orderable!
+  recording_studio_trashable!
   rubocop
   rubocop-rails
   simplecov
@@ -391,8 +425,11 @@ CHECKSUMS
   rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
   rbs (4.2.0) sha256=51f7b886dcc05bc09e10b901daa6a81829f6adc03101d6ca9ea4aac6103e0674
   rdoc (8.1.0) sha256=befc37880a5cfd36dcb176c748b5fd5ee39dd3536a75e81824e4972ce230f60a
-  recording_studio (6.3.0)
-  recording_studio_orderable (0.4.9)
+  recording_studio (6.5.0)
+  recording_studio_accessible (0.24.2)
+  recording_studio_metrics (0.7.3)
+  recording_studio_orderable (0.5.0)
+  recording_studio_trashable (0.12.3)
   regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4
   reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
   rubocop (1.81.7) sha256=6fb5cc298c731691e2a414fe0041a13eb1beed7bab23aec131da1bcc527af094

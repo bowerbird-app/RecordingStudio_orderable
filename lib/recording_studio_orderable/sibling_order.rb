@@ -13,6 +13,7 @@ module RecordingStudioOrderable
     end
 
     def reorder!(ordered_recording_ids:, actor: nil, impersonator: nil, metadata: {})
+      authorize_reorder!(actor)
       with_parent_lock do
         eligible = current_eligible_recordings
         commit_order!(eligible, ordered_recording_ids, actor: actor, impersonator: impersonator, metadata: metadata)
@@ -20,12 +21,14 @@ module RecordingStudioOrderable
     end
 
     def move!(moving, to_index:, actor: nil, impersonator: nil, metadata: {})
+      authorize_reorder!(actor)
       with_parent_lock do
         commit_explicit_move!(moving, to_index, actor: actor, impersonator: impersonator, metadata: metadata)
       end
     end
 
     def append!(moving, actor: nil, impersonator: nil, metadata: {})
+      authorize_reorder!(actor)
       with_parent_lock do
         commit_explicit_move!(moving, :end, actor: actor, impersonator: impersonator, metadata: metadata)
       end
@@ -67,6 +70,24 @@ module RecordingStudioOrderable
     private
 
     attr_reader :parent_recording
+
+    def authorize_reorder!(actor)
+      resolved_actor = actor || current_actor
+      return if RecordingStudioOrderable.authorized?(
+        action: :reorder,
+        actor: resolved_actor,
+        recording: parent_recording
+      )
+
+      raise NotAuthorized, "Not authorized to reorder #{parent_recording.recordable_type}"
+    end
+
+    def current_actor
+      return unless defined?(RecordingStudio)
+
+      resolver = RecordingStudio.configuration.actor
+      resolver.respond_to?(:call) ? resolver.call : nil
+    end
 
     def with_parent_lock(&)
       parent_recording.with_lock(&)

@@ -3,6 +3,15 @@
 require "test_helper"
 
 class OrderableCapabilitiesTest < Minitest::Test
+  ORDER_ACTIONS = %i[reorder move append].freeze
+  DENY_CASES = %i[
+    no_actor
+    accessible_false
+    accessible_nil
+    accessible_raises
+    non_default_authorization_role
+  ].freeze
+
   class FakeRelation
     def initialize(records)
       @records = records
@@ -101,7 +110,6 @@ class OrderableCapabilitiesTest < Minitest::Test
     FakeRecording.records = {}
     @original_configuration = RecordingStudioOrderable.configuration
     RecordingStudioOrderable.reset_configuration!
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = false
   end
 
   def teardown
@@ -308,5 +316,81 @@ class OrderableCapabilitiesTest < Minitest::Test
     parent = FakeRecording.new(id: "folder", child_records: [child])
 
     assert_equal [child], parent.recording_studio_orderable_children.to_a
+  end
+
+  %i[sibling_order recording_methods].each do |caller|
+    ORDER_ACTIONS.each do |action|
+      DENY_CASES.each do |deny_case|
+        define_method("test_#{caller}_#{action}_#{deny_case}_does_not_persist") do
+          assert_denied_order_does_not_persist(caller, action, deny_case)
+        end
+      end
+    end
+  end
+
+  private
+
+  def assert_denied_order_does_not_persist(caller, action, deny_case)
+    children = [
+      FakeRecording.new(id: "a", recordable_type: "Page", recording_studio_orderable_position: 0),
+      FakeRecording.new(id: "b", recordable_type: "Page", recording_studio_orderable_position: 1),
+      FakeRecording.new(id: "c", recordable_type: "Page", recording_studio_orderable_position: 2)
+    ]
+    parent = FakeRecording.new(id: "folder", child_records: children)
+    snapshot = children.map(&:recording_studio_orderable_position)
+    actor = deny_case == :no_actor ? nil : :user
+    role = deny_case == :non_default_authorization_role ? :admin : :edit
+    RecordingStudioOrderable.configuration.authorization_role = role
+
+    RecordingStudio.configuration.stub(:actor, nil) do
+      RecordingStudioAccessible.stub(:authorized?, accessible_stub_for(deny_case)) do
+        if deny_case == :accessible_raises
+          error = assert_raises(RuntimeError) { perform_order_action(caller, action, parent, children, actor: actor) }
+          assert_equal "boom", error.message
+        else
+          error = assert_raises(RecordingStudioOrderable::NotAuthorized) do
+            perform_order_action(caller, action, parent, children, actor: actor)
+          end
+          assert_includes error.message, "Not authorized to reorder"
+        end
+      end
+    end
+
+    assert_equal snapshot, children.map(&:recording_studio_orderable_position)
+    assert_empty parent.logged_events
+    refute parent.reloaded
+  end
+
+  def accessible_stub_for(deny_case)
+    case deny_case
+    when :accessible_raises
+      ->(**) { raise "boom" }
+    when :accessible_nil
+      ->(**) {}
+    when :non_default_authorization_role
+      ->(**kwargs) { kwargs[:role] == :edit }
+    else
+      ->(**) { false }
+    end
+  end
+
+  def perform_order_action(caller, action, parent, children, actor:)
+    moving = children.first
+    reversed_ids = children.map(&:id).reverse
+    order = RecordingStudioOrderable::SiblingOrder.new(parent)
+    probes = {
+      sibling_order: {
+        reorder: -> { order.reorder!(ordered_recording_ids: reversed_ids, actor: actor) },
+        move: -> { order.move!(moving, to_index: 2, actor: actor) },
+        append: -> { order.append!(moving, actor: actor) }
+      },
+      recording_methods: {
+        reorder: -> { parent.recording_studio_orderable_reorder!(ordered_recording_ids: reversed_ids, actor: actor) },
+        move: -> { parent.recording_studio_orderable_move!(moving, to_index: 2, actor: actor) },
+        append: -> { parent.recording_studio_orderable_append!(moving, actor: actor) }
+      }
+    }
+
+    probes.fetch(caller).fetch(action).call
   end
 end

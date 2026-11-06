@@ -40,7 +40,6 @@ module RecordingStudio
 
           def recording_studio_orderable_reorder!(ordered_recording_ids:, actor: nil, impersonator: nil, metadata: {})
             recording_studio_orderable_assert_capability!
-            recording_studio_orderable_authorize!(:reorder, actor: actor)
             RecordingStudioOrderable::SiblingOrder.new(self).reorder!(
               ordered_recording_ids: ordered_recording_ids,
               actor: actor,
@@ -51,7 +50,6 @@ module RecordingStudio
 
           def recording_studio_orderable_move!(moving, to_index:, actor: nil, impersonator: nil, metadata: {})
             recording_studio_orderable_assert_capability!
-            recording_studio_orderable_authorize!(:reorder, actor: actor)
             RecordingStudioOrderable::SiblingOrder.new(self).move!(
               moving,
               to_index: to_index,
@@ -63,7 +61,6 @@ module RecordingStudio
 
           def recording_studio_orderable_append!(moving, actor: nil, impersonator: nil, metadata: {})
             recording_studio_orderable_assert_capability!
-            recording_studio_orderable_authorize!(:reorder, actor: actor)
             RecordingStudioOrderable::SiblingOrder.new(self).append!(
               moving,
               actor: actor,
@@ -76,24 +73,6 @@ module RecordingStudio
 
           def recording_studio_orderable_assert_capability!
             assert_capability!(:orderable)
-          end
-
-          def recording_studio_orderable_authorize!(action, actor: nil)
-            resolved_actor = actor || recording_studio_orderable_current_actor
-            return if RecordingStudioOrderable.authorized?(
-              action: action,
-              actor: resolved_actor,
-              recording: self
-            )
-
-            raise RecordingStudioOrderable::NotAuthorized, "Not authorized to #{action} #{recordable_type}"
-          end
-
-          def recording_studio_orderable_current_actor
-            return unless defined?(RecordingStudioOrderable::Authorization)
-
-            resolver = RecordingStudio.configuration.actor if defined?(RecordingStudio)
-            resolver.respond_to?(:call) ? resolver.call : nil
           end
         end
       end

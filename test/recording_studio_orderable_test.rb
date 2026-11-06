@@ -13,6 +13,10 @@ class RecordingStudioOrderableTest < Minitest::Test
     view_component = Gem.loaded_specs.fetch("view_component")
     gemspec = File.read(File.expand_path("../recording_studio_orderable.gemspec", __dir__))
 
+    accessible = Gem.loaded_specs.fetch("recording_studio_accessible")
+    trashable = Gem.loaded_specs.fetch("recording_studio_trashable")
+    metrics = Gem.loaded_specs.fetch("recording_studio_metrics")
+
     assert spec.version >= Gem::Version.new("6.1.0"),
            "expected recording_studio >= 6.1.0, got #{spec.version}"
     assert flat_pack.version >= Gem::Version.new("0.1.315"),
@@ -22,20 +26,27 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert view_component.version < Gem::Version.new("5"),
            "expected view_component < 5, got #{view_component.version}"
     assert_includes gemspec, 'spec.add_dependency "recording_studio", ">= 6.1.0"'
+    assert_includes gemspec, 'spec.add_dependency "recording_studio_accessible", ">= 0.24.2"'
     assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
-    refute_includes gemspec, "recording_studio_accessible"
-    refute_includes gemspec, "recording_studio_trashable"
     refute_includes gemspec, "recording_studio_admin"
-    assert_equal Gem::Version.new("6.3.0"), spec.version
+    refute_includes gemspec, "recording_studio_trashable"
+    assert_equal Gem::Version.new("6.5.0"), spec.version
+    assert_equal Gem::Version.new("0.24.2"), accessible.version
+    assert_equal Gem::Version.new("0.12.3"), trashable.version
+    assert_equal Gem::Version.new("0.7.3"), metrics.version
     assert_equal Gem::Version.new("0.1.332"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
 
     %w[Gemfile test/dummy/Gemfile].each do |relative|
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
-      assert_includes gemfile, 'gem "recording_studio", github: "bowerbird-app/RecordingStudio", tag: "v6.3.0"'
-      assert_includes gemfile, 'gem "flat_pack", github: "bowerbird-app/flatpack", tag: "v0.1.332"'
+      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v6.5.0")
+      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.24.2")
+      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.7.3")
+      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.12.3")
+      assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.332")
       refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
+      refute_includes gemfile, 'tag: "v6.3.0"'
       refute_includes gemfile, 'tag: "v6.1.0"'
     end
   end
@@ -169,6 +180,26 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes css, "*.{rb,erb}"
   end
 
+  def test_install_initializer_uses_accessible_without_a_resolver
+    initializer_path = File.expand_path(
+      "../lib/generators/recording_studio_orderable/install/templates/recording_studio_orderable_initializer.rb",
+      __dir__
+    )
+    initializer = File.read(initializer_path)
+    dummy_initializer = File.read(File.expand_path("dummy/config/initializers/recording_studio_orderable.rb", __dir__))
+    dummy_home = File.read(File.expand_path("dummy/app/controllers/home_controller.rb", __dir__))
+
+    assert_includes initializer, "authorization_role = :edit"
+    refute_includes initializer, "authorization_resolver"
+    refute_includes initializer, "use_recording_studio_accessible"
+    refute_includes dummy_initializer, "authorization_resolver"
+    refute_includes dummy_initializer, "use_recording_studio_accessible"
+    refute_includes dummy_home, "Workspace.first"
+    assert_includes dummy_home, "RecordingStudioAccessible.root_recordings_for"
+    dummy_rs = File.read(File.expand_path("dummy/config/initializers/recording_studio.rb", __dir__))
+    assert_includes dummy_rs, "config.authorize_write"
+  end
+
   def test_dummy_enables_orderable_only_on_folder
     folder = File.read(File.expand_path("dummy/app/models/folder.rb", __dir__))
     page = File.read(File.expand_path("dummy/app/models/page.rb", __dir__))
@@ -187,6 +218,7 @@ class RecordingStudioOrderableTest < Minitest::Test
   def test_dummy_recordables_declare_recording_studio_hierarchy
     assert_dummy_model_includes("workspace.rb", 'recording_studio_recordable label: "Workspace"')
     assert_dummy_model_includes("workspace.rb", "root: true")
+    assert_dummy_model_includes("workspace.rb", "RecordingStudio.enable_capability(:accessible, on: self)")
     assert_dummy_model_includes("project.rb", 'recording_studio_recordable label: "Project"')
     assert_dummy_model_includes("folder.rb", 'recording_studio_recordable label: "Folder"')
     assert_dummy_model_includes("page.rb", 'recording_studio_recordable label: "Page"')
@@ -223,7 +255,9 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes readme, "RecordingStudio::RecordingStudioOrder"
     refute_includes readme, "OrderableRecordable"
     refute_includes readme, "Welcome to the template"
-    assert_includes readme, "allow every caller"
+    assert_includes readme, "RecordingStudioAccessible.authorized?"
+    refute_includes readme, "allow every caller"
+    refute_includes readme, "A resolver replaces Accessible"
     assert_includes readme, "Do not call Moveable to reorder siblings"
     assert_includes readme, "Do not use Orderable move! to change parent"
   end
@@ -295,5 +329,9 @@ class RecordingStudioOrderableTest < Minitest::Test
   def assert_dummy_model_includes(filename, snippet)
     source = File.read(File.expand_path("dummy/app/models/#{filename}", __dir__))
     assert_includes source, snippet
+  end
+
+  def github_pin(gem_name, repo, tag)
+    %(gem "#{gem_name}", github: "bowerbird-app/#{repo}", tag: "#{tag}")
   end
 end

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-06
+
+### Breaking
+
+- Reorder, move, and append always call `RecordingStudioAccessible.authorized?` with `authorization_role` (default `:edit`). The check lives on `SiblingOrder` so a direct `reorder!` / `move!` / `append!` cannot skip it. A missing Accessible check, a blank grant, or a false result denies. The previous fail-open path is gone.
+- `authorization_resolver`, `use_recording_studio_accessible`, and `accessible_module` are removed.
+- Runtime dependency `recording_studio_accessible` `>= 0.24.2`. Development pins Recording Studio tag `v6.5.0`, Accessible tag `v0.24.2`, Trashable tag `v0.12.3`, and Metrics tag `v0.7.3`.
+- The dummy app enables `:accessible` on Workspace, grants the seeded admin owner access, and loads home through Accessible instead of `Workspace.first`.
+
+### Upgrade Notes
+
+- Bump to `0.5.0`. No Orderable migration.
+- Install Accessible 0.24.2 or newer. Enable `:accessible` on roots and grant `:edit` (or stronger) to actors who may reorder.
+- Delete Orderable `authorization_resolver` and `use_recording_studio_accessible` settings. A host that authorized reorder itself must grant Accessible roles instead.
+- Callers that reached reorder when Accessible was unloaded, turned off, or replaced by a resolver will now be denied until Accessible allows them.
+
 ## [0.4.9] - 2026-11-05
 
 ### Changed
@@ -252,7 +268,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.9...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.9...v0.5.0
 [0.4.9]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.6...v0.4.7

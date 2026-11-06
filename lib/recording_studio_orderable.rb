@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "recording_studio"
+require "recording_studio_accessible"
 require "flat_pack"
 
 require "recording_studio_orderable/version"

@@ -64,10 +64,24 @@ class HomeController < ApplicationController
   end
 
   def load_home_demo_state
-    @workspace = Workspace.first
-    @workspace_recording = DemoRecordingLookup.workspace_root
-    @folder_recording = DemoRecordingLookup.by_slug(type: "Folder", slug: "reference-assets")
+    @workspace_recording = accessible_workspace_recording
+    @workspace = @workspace_recording&.recordable
+    @folder_recording = accessible_recording(DemoRecordingLookup.by_slug(type: "Folder", slug: "reference-assets"))
     @ordered_pages = @folder_recording&.recording_studio_orderable_children.to_a || []
-    @unordered_project_recording = DemoRecordingLookup.by_slug(type: "Project", slug: "album-launch")
+    @unordered_project_recording = accessible_recording(DemoRecordingLookup.by_slug(type: "Project", slug: "album-launch"))
+  end
+
+  def accessible_workspace_recording
+    return unless current_user
+
+    RecordingStudioAccessible.root_recordings_for(actor: current_user, minimum_role: :view)
+      .find { |recording| recording.recordable_type == "Workspace" }
+  end
+
+  def accessible_recording(recording)
+    return unless recording
+    return unless RecordingStudioAccessible.authorized?(actor: current_user, recording: recording, role: :view)
+
+    recording
   end
 end
