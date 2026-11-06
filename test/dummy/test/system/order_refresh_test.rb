@@ -70,6 +70,7 @@ class OrderRefreshTest < ApplicationSystemTestCase
   def seed_demo_tree!
     workspace = Workspace.find_or_create_by!(name: "Studio Workspace")
     workspace_recording = RecordingStudio.root_recording_for(workspace)
+    grant_demo_owner!(recording: workspace_recording, actor: @user)
     project = find_or_record!(workspace_recording, Project, "album-launch") do |record|
       record.name = "Album Launch"
       record.slug = "album-launch"

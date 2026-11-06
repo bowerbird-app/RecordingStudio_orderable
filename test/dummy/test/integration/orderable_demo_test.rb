@@ -253,6 +253,7 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
   def seed_demo_tree!
     workspace = Workspace.find_or_create_by!(name: "Studio Workspace")
     workspace_recording = RecordingStudio.root_recording_for(workspace)
+    grant_demo_owner!(recording: workspace_recording, actor: @user)
 
     @project_recording = find_or_record!(workspace_recording, Project, "album-launch") do |project|
       project.name = "Album Launch"

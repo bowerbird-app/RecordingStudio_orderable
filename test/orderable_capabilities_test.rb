@@ -101,7 +101,6 @@ class OrderableCapabilitiesTest < Minitest::Test
     FakeRecording.records = {}
     @original_configuration = RecordingStudioOrderable.configuration
     RecordingStudioOrderable.reset_configuration!
-    RecordingStudioOrderable.configuration.use_recording_studio_accessible = false
   end
 
   def teardown

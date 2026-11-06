@@ -5,12 +5,7 @@ RecordingStudioOrderable.configure do |config|
   config.log_order_events = true
   config.event_action = "reordered"
 
-  # When RecordingStudioAccessible is loaded, reorder calls check this role.
-  # Set to false if the host app authorizes reorder itself.
-  # With no resolver and Accessible not in use, reorder allows every caller.
-  config.use_recording_studio_accessible = true
+  # Reorder, move, and append call RecordingStudioAccessible.authorized?
+  # with this role on the parent recording. Missing Accessible denies.
   config.authorization_role = :edit
-
-  # Optional explicit authorizer. When set, Accessible is not consulted.
-  # config.authorization_resolver = ->(action:, actor:, recording:, **) { actor.present? }
 end

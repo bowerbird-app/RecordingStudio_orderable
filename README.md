@@ -16,7 +16,7 @@ It lets a parent recordable type sort its children without creating a product-ma
   - `recording_studio_orderable_append!`
 - addon-owned migration for `recording_studio_orderable_position` on `recording_studio_recordings`
 - optional `log_event!` history when siblings are reordered
-- optional RecordingStudioAccessible authorization when that addon is loaded
+- RecordingStudioAccessible authorization on reorder, move, and append
 
 Installing the gem does not enable order on every recordable.
 
@@ -26,6 +26,7 @@ Add the gems to your host app. This addon requires Recording Studio 6.1.0 or new
 
 ```ruby
 gem "recording_studio"
+gem "recording_studio_accessible"
 gem "recording_studio_orderable"
 ```
 
@@ -56,6 +57,7 @@ end
 
 class Workspace < ApplicationRecord
   recording_studio_recordable label: "Workspace", plural_label: "Workspaces", root: true
+  RecordingStudio.enable_capability(:accessible, on: self)
 end
 
 class Project < ApplicationRecord
@@ -175,13 +177,11 @@ Events answer what happened to the parent object. High-churn position lists stay
 
 ## Authorization
 
-A resolver replaces Accessible. Set `authorization_resolver` to a callable of `action:`, `actor:`, `recording:`, and `controller:`.
-
-When that resolver is unset and `use_recording_studio_accessible` is true, reorder calls `accessible_module` or `RecordingStudioAccessible.authorized?(actor:, recording:, role:)`. `authorization_role` defaults to `:edit`. `accessible_module` defaults to nil, which means the `RecordingStudioAccessible` constant when that gem is loaded. Accessible errors propagate. A blank actor is passed through to Accessible.
-
-**Warning:** with no `authorization_resolver` and Accessible not in use, `reorder!`, `move!`, and `append!` allow every caller. Load Accessible and leave `use_recording_studio_accessible` true, or set a resolver, before a request can reach those methods.
+Reorder, move, and append call `RecordingStudioAccessible.authorized?(actor:, recording:, role:)` on the parent recording. `authorization_role` defaults to `:edit`. A blank actor is passed through to Accessible. Accessible errors propagate. If Accessible is missing, or Accessible does not allow that role, the call is denied.
 
 A denial raises `RecordingStudioOrderable::NotAuthorized`. The engine controller answers that with HTTP 403. Host controllers that call the ordering methods need the same rescue.
+
+There is no host resolver and no fail-open switch. Grant Accessible roles on the parent recording (or an ancestor) instead.
 
 ## Internationalization
 
@@ -211,9 +211,17 @@ configuration load errors, and stored recording names stay English.
 
 `recording_studio.orderable.home.title` was the old page-nav title. The visible heading is `page_title`.
 
+## Upgrading to 0.5.0
+
+1. Add `recording_studio_accessible` `>= 0.24.2`. This repository tests tag `v0.24.2`.
+2. Enable `:accessible` on host roots that should hold grants. Grant `:edit` (or a stronger role) before anyone can reorder.
+3. Remove `authorization_resolver`, `use_recording_studio_accessible`, and `accessible_module` from Orderable configuration. Those keys are ignored.
+4. Do not rely on reorder allowing every caller when Accessible is off or missing. That path now denies.
+5. No database migration from Orderable. Run Accessible install and migrations in the host if they are not already present.
+
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.3.0` and Flatpack tag `v0.1.332`. Those pins are for this repository. Hosts still need Recording Studio 6.1.0 or newer and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0.
+`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.5.0`, Accessible tag `v0.24.2`, Trashable tag `v0.12.3`, Metrics tag `v0.7.3`, and Flatpack tag `v0.1.332`. Those pins are for this repository. Hosts still need Recording Studio 6.1.0 or newer, Accessible 0.24.2 or newer, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Dummy Workspace enables `:accessible`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`.
 
 Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 

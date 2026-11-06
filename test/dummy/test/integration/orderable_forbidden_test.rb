@@ -8,22 +8,33 @@ class OrderableForbiddenTest < ActionDispatch::IntegrationTest
       user.password = "Password"
       user.password_confirmation = "Password"
     end
+    @viewer = User.find_or_create_by!(email: "view@admin.com") do |user|
+      user.password = "Password"
+      user.password_confirmation = "Password"
+    end
+    @stranger = User.find_or_create_by!(email: "none@admin.com") do |user|
+      user.password = "Password"
+      user.password_confirmation = "Password"
+    end
     Current.actor = @user
-    @resolver_before = RecordingStudioOrderable.configuration.authorization_resolver
     seed_demo_tree!
   end
 
-  teardown do
-    RecordingStudioOrderable.configuration.authorization_resolver = @resolver_before
-  end
-
-  test "signed-in reorder denied by the resolver is forbidden" do
-    sign_in @user
-    RecordingStudioOrderable.configuration.authorization_resolver = ->(**) { false }
+  test "signed-in reorder without access is forbidden" do
+    sign_in @viewer
 
     patch reorder_pages_path, params: { ordered_recording_ids: [@page_recording.id.to_s] }
 
     assert_response :forbidden
+  end
+
+  test "signed-in home without access does not list another actor's folder" do
+    sign_in @stranger
+    get root_path
+
+    assert_response :success
+    refute_match "Mix Notes", response.body
+    assert_match "Seed the dummy app to load an orderable folder and its pages.", response.body
   end
 
   test "engine controller maps NotAuthorized to forbidden" do
@@ -37,6 +48,8 @@ class OrderableForbiddenTest < ActionDispatch::IntegrationTest
   def seed_demo_tree!
     workspace = Workspace.find_or_create_by!(name: "Studio Workspace")
     workspace_recording = RecordingStudio.root_recording_for(workspace)
+    grant_demo_owner!(recording: workspace_recording, actor: @user)
+    grant_demo_access!(recording: workspace_recording, actor: @viewer, role: :view, manager_actor: @user)
 
     folder_recording = find_or_record!(workspace_recording, Folder, "reference-assets", parent: workspace_recording) do |folder|
       folder.name = "Reference Assets"
