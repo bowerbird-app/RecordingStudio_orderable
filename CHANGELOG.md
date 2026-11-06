@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
-- Reorder, move, and append always call `RecordingStudioAccessible.authorized?` with `authorization_role` (default `:edit`). A missing Accessible check, a blank grant, or a false result denies. The previous fail-open path is gone.
+- Reorder, move, and append always call `RecordingStudioAccessible.authorized?` with `authorization_role` (default `:edit`). The check lives on `SiblingOrder` so a direct `reorder!` / `move!` / `append!` cannot skip it. A missing Accessible check, a blank grant, or a false result denies. The previous fail-open path is gone.
 - `authorization_resolver`, `use_recording_studio_accessible`, and `accessible_module` are removed.
 - Runtime dependency `recording_studio_accessible` `>= 0.24.2`. Development pins Recording Studio tag `v6.5.0`, Accessible tag `v0.24.2`, Trashable tag `v0.12.3`, and Metrics tag `v0.7.3`.
 - The dummy app enables `:accessible` on Workspace, grants the seeded admin owner access, and loads home through Accessible instead of `Workspace.first`.

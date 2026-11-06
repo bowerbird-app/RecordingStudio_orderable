@@ -173,6 +173,10 @@ class SiblingOrderTest < Minitest::Test
     end
   end
 
+  def run(*)
+    RecordingStudioOrderable.stub(:authorized?, true) { super }
+  end
+
   def setup
     FakeRecording.records = {}
     FakeRecording.in_transaction = false

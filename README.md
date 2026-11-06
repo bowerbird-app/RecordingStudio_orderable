@@ -177,7 +177,7 @@ Events answer what happened to the parent object. High-churn position lists stay
 
 ## Authorization
 
-Reorder, move, and append call `RecordingStudioAccessible.authorized?(actor:, recording:, role:)` on the parent recording. `authorization_role` defaults to `:edit`. A blank actor is passed through to Accessible. Accessible errors propagate. If Accessible is missing, or Accessible does not allow that role, the call is denied.
+Reorder, move, and append authorize at `SiblingOrder` by calling `RecordingStudioAccessible.authorized?(actor:, recording:, role:)` on the parent recording. `authorization_role` defaults to `:edit`. A blank actor is passed through to Accessible after the host `RecordingStudio` actor resolver, if any. Accessible errors propagate. If Accessible is missing, or Accessible does not allow that role, the call is denied and positions are not written.
 
 A denial raises `RecordingStudioOrderable::NotAuthorized`. The engine controller answers that with HTTP 403. Host controllers that call the ordering methods need the same rescue.
 
@@ -216,7 +216,7 @@ configuration load errors, and stored recording names stay English.
 1. Add `recording_studio_accessible` `>= 0.24.2`. This repository tests tag `v0.24.2`.
 2. Enable `:accessible` on host roots that should hold grants. Grant `:edit` (or a stronger role) before anyone can reorder.
 3. Remove `authorization_resolver`, `use_recording_studio_accessible`, and `accessible_module` from Orderable configuration. Those keys are ignored.
-4. Do not rely on reorder allowing every caller when Accessible is off or missing. That path now denies.
+4. Do not rely on reorder allowing every caller when Accessible is off or missing. Direct `SiblingOrder` calls now deny the same way as the recording helpers.
 5. No database migration from Orderable. Run Accessible install and migrations in the host if they are not already present.
 
 ## Dummy app
