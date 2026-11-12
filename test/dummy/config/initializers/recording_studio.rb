@@ -2,13 +2,13 @@
 
 RecordingStudio.configure do |config|
   config.app_name = "Orderable Demo" if config.respond_to?(:app_name=)
-  config.recordable_types = %w[
-    Workspace Project Folder Page
+  config.recordable_types = %w[Workspace Project Folder Page]
+  config.recordable_types += %w[
     RecordingStudio::Access
     RecordingStudioApi::ApiClient
     RecordingStudioApi::ApiCredential
     RecordingStudioApi::ApiAccessToken
-  ]
+  ] if defined?(RecordingStudioApi)
   config.actor = -> { Current.actor }
   config.authorize_write = ->(actor:, **) { actor.present? }
   config.event_notifications_enabled = true

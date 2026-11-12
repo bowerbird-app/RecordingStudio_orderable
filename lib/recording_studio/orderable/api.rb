@@ -16,6 +16,8 @@ module RecordingStudio
           description: "Set the sibling order of children under this recording. " \
                        "Position is not written through create or update.",
           success: "Children reordered.",
+          forbidden: "API access is not authorized to reorder this recording.",
+          invalid: "Reorder request is invalid.",
           fields: {
             ordered_recording_ids: {
               type: :array,
@@ -30,6 +32,8 @@ module RecordingStudio
           description: "Move one child to a sibling index under this recording. " \
                        "This does not change parent. Do not use Moveable.",
           success: "Child moved in sibling order.",
+          forbidden: "API access is not authorized to move this recording.",
+          invalid: "Move request is invalid.",
           fields: {
             recording_id: {
               type: :string,
