@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-12
+
+### Added
+
+- `reorder` and `move_position` Recording Studio API capability actions. They wrap `recording_studio_orderable_reorder!` and `recording_studio_orderable_move!`. MCP uses the generic `capability_action` path. The action is not named `:move`.
+- Dummy mounts Recording Studio API `v0.21.3` and covers 200, 403, 404, and 422.
+
+### Upgrade Notes
+
+- Bump to `0.6.0`. No Orderable migration.
+- There is no runtime gemspec dependency on Recording Studio API. Hosts that already mount API get the actions when this gem loads. List `reorder` and `move_position` on orderable types in `capability_actions`. Do not put `recording_studio_orderable_position` on create or update.
+- Access matches the screens: `required_role` plus `access_grant.authorize!` with `authorization_role` (default `:edit`) on the parent recording.
+
 ## [0.5.0] - 2026-11-06
 
 ### Breaking
@@ -268,7 +281,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.9...v0.5.0
 [0.4.9]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.7...v0.4.8

@@ -3,6 +3,7 @@ Rails.application.routes.draw do
 
   mount RecordingStudio::Engine, at: "/recording_studio"
   mount RecordingStudioOrderable::Engine, at: "/recording_studio_orderable"
+  mount RecordingStudioApi::Engine, at: "/recording_studio_api" if defined?(RecordingStudioApi)
 
   get "up" => "rails/health#show", as: :rails_health_check
   get "events", to: "events#show", as: :events
