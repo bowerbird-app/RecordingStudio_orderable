@@ -12,6 +12,7 @@ This Rails app exists to validate Recording Studio Orderable inside a realistic 
 - Sibling reorder on the home page through Flatpack buttons and a drag-and-drop modal
 - Events page for `log_event!` reorder history
 - Recording Studio core default layout, not a sidebar shell
+- Recording Studio API at `/recording_studio_api` for `reorder` and `move_position`
 
 ## Quick Start
 
@@ -32,3 +33,5 @@ Then sign in with:
 - `/events` - reorder event history
 - `/recording_studio` - mounted Recording Studio engine
 - `/recording_studio_orderable` - addon overview page
+- `/recording_studio_api/api/v1/folders/:id/actions/reorder` - JSON sibling reorder
+- `/recording_studio_api/api/v1/folders/:id/actions/move_position` - JSON sibling index move

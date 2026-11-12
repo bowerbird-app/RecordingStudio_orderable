@@ -17,6 +17,7 @@ It lets a parent recordable type sort its children without creating a product-ma
 - addon-owned migration for `recording_studio_orderable_position` on `recording_studio_recordings`
 - optional `log_event!` history when siblings are reordered
 - RecordingStudioAccessible authorization on reorder, move, and append
+- Recording Studio API capability actions `reorder` and `move_position` when `recording_studio_api` is loaded
 
 Installing the gem does not enable order on every recordable.
 
@@ -183,6 +184,43 @@ A denial raises `RecordingStudioOrderable::NotAuthorized`. The engine controller
 
 There is no host resolver and no fail-open switch. Grant Accessible roles on the parent recording (or an ancestor) instead.
 
+## JSON API and MCP
+
+When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. MCP uses those through the generic `capability_action` path. This gem does not ship an MCP tool.
+
+Hosts list the actions on orderable parent types. Position stays off create and update:
+
+```ruby
+RecordingStudioApi.register_recordable_type_api(
+  "Folder",
+  operations: %i[index show create update],
+  capability_actions: %i[reorder move_position],
+  auto_capability_actions: false,
+  serializer: ->(folder, **) { { name: folder.name, slug: folder.slug } },
+  output_keys: %i[name slug],
+  writable_attributes: %i[name slug]
+)
+```
+
+| Verb | Path | Accessible role |
+|---|---|---|
+| POST | `/recording_studio_api/api/v1/folders/:id/actions/reorder` | `:edit` on the parent |
+| POST | `/recording_studio_api/api/v1/folders/:id/actions/move_position` | `:edit` on the parent |
+
+`reorder` takes `ordered_recording_ids`. `move_position` takes `recording_id` and `to_index`. Do not name the action `:move`; that name belongs to Moveable.
+
+Authorization is Accessible only: Recording Studio API `required_role` plus `access_grant.authorize!` with `authorization_role` (default `:edit`) on the parent recording. The handlers call the same recording methods as the HTML screens.
+
+Install Recording Studio API in the host if you want the JSON surface:
+
+```sh
+bin/rails generate recording_studio_api:install
+bin/rails generate recording_studio_api:migrations
+bin/rails db:migrate
+```
+
+Turn on `:api_access_point` on roots that should hold API clients, and add `RecordingStudioApi::ApiClient` to `access_actor_types`.
+
 ## Internationalization
 
 Static interface copy on the mounted overview page resolves through Rails I18n under
@@ -219,9 +257,15 @@ configuration load errors, and stored recording names stay English.
 4. Do not rely on reorder allowing every caller when Accessible is off or missing. Direct `SiblingOrder` calls now deny the same way as the recording helpers.
 5. No database migration from Orderable. Run Accessible install and migrations in the host if they are not already present.
 
+## Upgrading to 0.6.0
+
+1. Install Orderable `0.6.0`. No Orderable migration.
+2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
+3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.5.0`, Accessible tag `v0.24.2`, Trashable tag `v0.12.3`, Metrics tag `v0.7.3`, and Flatpack tag `v0.1.332`. Those pins are for this repository. Hosts still need Recording Studio 6.1.0 or newer, Accessible 0.24.2 or newer, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Dummy Workspace enables `:accessible`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`.
+`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.5.0`, Accessible tag `v0.24.2`, Trashable tag `v0.12.3`, Metrics tag `v0.7.3`, Flatpack tag `v0.1.341`, Recording Studio API tag `v0.21.3`, Logs tag `v0.7.4`, Moveable tag `v4.1.1`, Icons tag `v0.2.1`, and Admin tag `v2.12.0`. Those pins are for this repository. Hosts still need Recording Studio 6.1.0 or newer, Accessible 0.24.2 or newer, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`.
 
 Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 
@@ -231,6 +275,7 @@ Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with t
 - Folder is the only orderable type (`allows: ["Page"]`)
 - Home shows that folder's pages with move controls
 - Events lists reorder history from `log_event!`. The "when" control opens the full timestamp.
+- `/recording_studio_api/api/v1/folders/:id/actions/reorder` and `move_position` are the JSON actions
 
 ## Cloud Agent boot
 

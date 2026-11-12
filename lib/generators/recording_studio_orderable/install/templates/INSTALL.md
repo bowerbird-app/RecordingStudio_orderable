@@ -18,3 +18,4 @@ Next steps:
 
    Installing the gem does not enable order on every recordable.
 5. Run `bin/rails tailwindcss:build` if you use Tailwind CSS.
+6. Optional: install and mount Recording Studio API. This gem then registers `reorder` and `move_position`. List those actions on orderable types. MCP uses that same API. Turn on `:api_access_point` on roots that hold API clients.

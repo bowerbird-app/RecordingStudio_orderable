@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "psych"
+require "recording_studio/orderable/api"
 
 module RecordingStudioOrderable
   class Engine < ::Rails::Engine
@@ -17,6 +18,10 @@ module RecordingStudioOrderable
 
     config.to_prepare do
       RecordingStudioOrderable.install_recording_capabilities!
+    end
+
+    initializer "recording_studio_orderable.api" do
+      config.to_prepare { RecordingStudio::Orderable::Api.register_capability_action! }
     end
 
     initializer "recording_studio_orderable.load_config" do |app|

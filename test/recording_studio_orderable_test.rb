@@ -31,11 +31,12 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_admin"
     refute_includes gemspec, "recording_studio_trashable"
+    refute_includes gemspec, "recording_studio_api"
     assert_equal Gem::Version.new("6.5.0"), spec.version
     assert_equal Gem::Version.new("0.24.2"), accessible.version
     assert_equal Gem::Version.new("0.12.3"), trashable.version
     assert_equal Gem::Version.new("0.7.3"), metrics.version
-    assert_equal Gem::Version.new("0.1.332"), flat_pack.version
+    assert_equal Gem::Version.new("0.1.341"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
 
     %w[Gemfile test/dummy/Gemfile].each do |relative|
@@ -44,10 +45,12 @@ class RecordingStudioOrderableTest < Minitest::Test
       assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.24.2")
       assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.7.3")
       assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.12.3")
-      assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.332")
+      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v0.21.3")
+      assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.341")
       refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
       refute_includes gemfile, 'tag: "v6.3.0"'
       refute_includes gemfile, 'tag: "v6.1.0"'
+      refute_includes gemfile, 'tag: "v0.1.332"'
     end
   end
 
