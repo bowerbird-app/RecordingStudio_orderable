@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Development Gemfiles pin Recording Studio `v6.7.0`, Accessible `v0.32.0`, Metrics `v0.8.0`, Trashable `v0.14.0`, Admin `v2.13.0`, API `v0.23.0`, and Flatpack `v0.1.356`. Icons, Logs, and Moveable stay on `v0.2.1`, `v0.7.4`, and `v4.1.1`. Host floors in the gemspec are unchanged.
+
 ## [0.7.0] - 2026-11-13
 
 ### Breaking

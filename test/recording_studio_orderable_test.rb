@@ -32,21 +32,21 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes gemspec, "recording_studio_admin"
     refute_includes gemspec, "recording_studio_trashable"
     refute_includes gemspec, "recording_studio_api"
-    assert_equal Gem::Version.new("6.5.0"), spec.version
-    assert_equal Gem::Version.new("0.24.2"), accessible.version
-    assert_equal Gem::Version.new("0.12.3"), trashable.version
-    assert_equal Gem::Version.new("0.7.3"), metrics.version
-    assert_equal Gem::Version.new("0.1.341"), flat_pack.version
+    assert_equal Gem::Version.new("6.7.0"), spec.version
+    assert_equal Gem::Version.new("0.32.0"), accessible.version
+    assert_equal Gem::Version.new("0.14.0"), trashable.version
+    assert_equal Gem::Version.new("0.8.0"), metrics.version
+    assert_equal Gem::Version.new("0.1.356"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
 
     %w[Gemfile test/dummy/Gemfile].each do |relative|
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
-      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v6.5.0")
-      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.24.2")
-      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.7.3")
-      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.12.3")
-      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v0.21.3")
-      assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.341")
+      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v6.7.0")
+      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.32.0")
+      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.8.0")
+      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.14.0")
+      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v0.23.0")
+      assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.356")
       refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
       refute_includes gemfile, 'tag: "v6.3.0"'
       refute_includes gemfile, 'tag: "v6.1.0"'
