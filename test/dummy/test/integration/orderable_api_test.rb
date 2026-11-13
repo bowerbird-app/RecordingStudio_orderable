@@ -87,6 +87,77 @@ class OrderableApiTest < ActionDispatch::IntegrationTest
     assert_response :not_found, response.body
   end
 
+  test "a partial unique eligible list moves listed children to the front" do
+    listed = [@pages.last.id.to_s, @pages.first.id.to_s]
+    omitted = @pages[1].id.to_s
+
+    body = call(:post, "/folders/#{@folder.id}/actions/reorder", @editor_token, ordered_recording_ids: listed)
+
+    assert_response :success, response.body
+    assert_equal @folder.id, body.fetch("id")
+    assert_equal listed + [omitted], @folder.reload.recording_studio_orderable_children.map { |child| child.id.to_s }
+  end
+
+  test "a missing reorder id is unprocessable and leaves positions unchanged" do
+    snapshot = current_positions
+
+    call(
+      :post,
+      "/folders/#{@folder.id}/actions/reorder",
+      @editor_token,
+      ordered_recording_ids: [@pages.first.id.to_s, SecureRandom.uuid]
+    )
+
+    assert_response :unprocessable_entity, response.body
+    assert_equal snapshot, current_positions
+  end
+
+  test "a foreign reorder id is unprocessable and leaves positions unchanged" do
+    snapshot = current_positions
+    other_folder = record_folder(@workspace, "other-api-folder")
+    foreign = record_page(@workspace, other_folder, "page-foreign", "Foreign Page")
+
+    call(
+      :post,
+      "/folders/#{@folder.id}/actions/reorder",
+      @editor_token,
+      ordered_recording_ids: [@pages.first.id.to_s, foreign.id.to_s]
+    )
+
+    assert_response :unprocessable_entity, response.body
+    assert_equal snapshot, current_positions
+  end
+
+  test "a trashed reorder id is unprocessable and leaves positions unchanged" do
+    snapshot = current_positions
+    trashed = @pages.last
+    trashed.update!(trashed_at: Time.current)
+
+    call(
+      :post,
+      "/folders/#{@folder.id}/actions/reorder",
+      @editor_token,
+      ordered_recording_ids: [@pages.first.id.to_s, trashed.id.to_s]
+    )
+
+    assert_response :unprocessable_entity, response.body
+    assert_equal snapshot, current_positions
+  end
+
+  test "a duplicate reorder id is unprocessable and leaves positions unchanged" do
+    snapshot = current_positions
+
+    call(
+      :post,
+      "/folders/#{@folder.id}/actions/reorder",
+      @editor_token,
+      ordered_recording_ids: [@pages.first.id.to_s, @pages.last.id.to_s, @pages.first.id.to_s]
+    )
+
+    assert_response :unprocessable_entity, response.body
+    assert_equal snapshot, current_positions
+  end
+
   test "bad reorder and move_position input is unprocessable" do
     call(:post, "/folders/#{@folder.id}/actions/reorder", @editor_token, ordered_recording_ids: "not-an-array")
     assert_response :unprocessable_entity, response.body
@@ -209,6 +280,10 @@ class OrderableApiTest < ActionDispatch::IntegrationTest
     raise issued.error unless issued.success?
 
     [issued.value.fetch(:access_token), provision.value.fetch(:api_client)]
+  end
+
+  def current_positions
+    @pages.map { |page| [page.id, page.reload.recording_studio_orderable_position] }
   end
 
   def call(method, path, token, params = {})

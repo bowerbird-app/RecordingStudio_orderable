@@ -269,22 +269,28 @@ class OrderableCapabilitiesTest < Minitest::Test
     assert_equal 4, note.recording_studio_orderable_position
   end
 
-  def test_reorder_ignores_stale_and_non_eligible_ids
+  def test_reorder_rejects_stale_and_non_eligible_ids
     page = FakeRecording.new(id: "page", recordable_type: "Page", recording_studio_orderable_position: 1)
     note = FakeRecording.new(id: "note", recordable_type: "Note", recording_studio_orderable_position: 8)
     parent = FakeRecording.new(id: "folder", child_records: [page, note])
 
     RecordingStudioOrderable.stub(:authorized?, true) do
-      parent.recording_studio_orderable_reorder!(
-        ordered_recording_ids: %w[missing note page],
-        actor: :admin
+      error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+        parent.recording_studio_orderable_reorder!(
+          ordered_recording_ids: %w[missing note page],
+          actor: :admin
+        )
+      end
+
+      assert_equal(
+        "ordered_recording_ids includes an id that is missing, foreign, already-trashed, or duplicated.",
+        error.message
       )
     end
 
-    assert_equal 0, page.recording_studio_orderable_position
+    assert_empty parent.logged_events
+    assert_equal 1, page.recording_studio_orderable_position
     assert_equal 8, note.recording_studio_orderable_position
-    assert_equal ["page"], parent.logged_events.first[:metadata][:ordered_recording_ids]
-    assert_equal "reordered", parent.logged_events.first[:action]
   end
 
   def test_append_raises_when_unauthorized
