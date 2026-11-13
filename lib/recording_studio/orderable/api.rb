@@ -22,7 +22,11 @@ module RecordingStudio
             ordered_recording_ids: {
               type: :array,
               required: true,
-              description: "Child recording ids in the new sibling order."
+              description: "Child recording ids in the new sibling order. " \
+                           "A partial list is allowed: listed children move to the front, " \
+                           "and omitted eligible children are appended by created_at then id. " \
+                           "Any missing, foreign, already-trashed, or duplicate id is rejected, " \
+                           "and nothing is changed."
             }
           }
         }.freeze,

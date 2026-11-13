@@ -150,10 +150,13 @@ Sibling lists omit trashed children. When the recording model defines `recording
 
 Restoring a trashed child on an orderable parent keeps its position when no active sibling already has it. A blank or colliding position moves to the end. The parent lock is taken before that write.
 
-`recording_studio_orderable_reorder!` stays resilient for bulk updates:
+`recording_studio_orderable_reorder!` rejects the whole call and leaves positions unchanged when `ordered_recording_ids` includes a missing, foreign, already-trashed, or duplicate id. It raises `RecordingStudioOrderable::InvalidChild`.
 
-- requested ids that are not eligible children are ignored
-- eligible children missing from the list are appended in `created_at`, `id` order
+A partial list of unique eligible ids is allowed:
+
+- listed children move to the front in that order
+- omitted eligible children are appended in `created_at`, `id` order
+- an empty list still appends every eligible child in that same order
 - `NULL` positions sort last
 
 Reorder, move, and append lock the parent recording, then read the current siblings, write positions, and log the reorder event before releasing that lock. Concurrent reorder writes for the same parent run one at a time.
@@ -207,7 +210,7 @@ RecordingStudioApi.register_recordable_type_api(
 | POST | `/recording_studio_api/api/v1/folders/:id/actions/reorder` | `:edit` on the parent |
 | POST | `/recording_studio_api/api/v1/folders/:id/actions/move_position` | `:edit` on the parent |
 
-`reorder` takes `ordered_recording_ids`. `move_position` takes `recording_id` and `to_index`. Do not name the action `:move`; that name belongs to Moveable.
+`reorder` takes `ordered_recording_ids`. A partial list of unique eligible child ids is allowed. Listed children move to the front. Omitted eligible children are appended by `created_at` then id. A missing, foreign, already-trashed, or duplicate id raises `RecordingStudioOrderable::InvalidChild` (HTTP 422 on the JSON action) and does not change positions. `move_position` takes `recording_id` and `to_index`. Do not name the action `:move`; that name belongs to Moveable.
 
 Authorization is Accessible only: Recording Studio API `required_role` plus `access_grant.authorize!` with `authorization_role` (default `:edit`) on the parent recording. The handlers call the same recording methods as the HTML screens.
 
@@ -262,6 +265,13 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.6.0`. No Orderable migration.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
+## Upgrading to 0.7.0
+
+1. Install Orderable `0.7.0`. No Orderable migration.
+2. Send only unique eligible child ids in `ordered_recording_ids`. A missing, foreign, already-trashed, or duplicate id now raises `RecordingStudioOrderable::InvalidChild` and leaves positions unchanged.
+3. Rescue that error as HTTP 422 if the host calls `recording_studio_orderable_reorder!` itself. The JSON `reorder` action already maps it that way.
+4. Partial lists stay valid. Listed children move to the front. Omitted eligible children are appended by `created_at` then id.
 
 ## Dummy app
 

@@ -3,6 +3,9 @@
 require "test_helper"
 
 class SiblingOrderTest < Minitest::Test
+  INVALID_REORDER_IDS_MESSAGE =
+    "ordered_recording_ids includes an id that is missing, foreign, already-trashed, or duplicated."
+
   class WhereChain
     def initialize(relation)
       @relation = relation
@@ -193,18 +196,39 @@ class SiblingOrderTest < Minitest::Test
     RecordingStudioOrderable.configuration = @original_configuration
   end
 
-  def test_ignores_stale_ids_and_appends_missing_children
-    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 2)
+  def test_reorder_partial_list_moves_listed_children_and_appends_the_rest
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
     second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: 1)
-    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second])
+    third = FakeRecording.new(id: "c", created_at: Time.at(3), recording_studio_orderable_position: 2)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, third])
 
     RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
-      ordered_recording_ids: %w[missing b],
+      ordered_recording_ids: %w[c b],
       actor: :admin
     )
 
-    assert_equal 0, second.recording_studio_orderable_position
-    assert_equal 1, first.recording_studio_orderable_position
+    assert_equal 0, third.recording_studio_orderable_position
+    assert_equal 1, second.recording_studio_orderable_position
+    assert_equal 2, first.recording_studio_orderable_position
+    assert_equal %w[c b a], parent.logged_events.first[:metadata][:ordered_recording_ids]
+  end
+
+  def test_reorder_rejects_a_missing_id_and_leaves_positions_unchanged
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second])
+
+    error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+      RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
+        ordered_recording_ids: %w[missing b],
+        actor: :admin
+      )
+    end
+
+    assert_equal INVALID_REORDER_IDS_MESSAGE, error.message
+    assert_empty parent.logged_events
+    assert_equal 0, first.recording_studio_orderable_position
+    assert_equal 1, second.recording_studio_orderable_position
   end
 
   def test_skips_event_when_logging_disabled
@@ -328,19 +352,78 @@ class SiblingOrderTest < Minitest::Test
     assert_equal 1, page.recording_studio_orderable_position
   end
 
-  def test_reorder_ignores_stale_and_disallowed_ids
-    page = FakeRecording.new(id: "page", created_at: Time.at(2), recording_studio_orderable_position: 1)
+  def test_reorder_rejects_a_foreign_id_and_leaves_positions_unchanged
+    page = FakeRecording.new(id: "page", created_at: Time.at(2), recording_studio_orderable_position: 0)
     note = FakeRecording.new(id: "note", recordable_type: "Note", recording_studio_orderable_position: 7)
     parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [page, note])
 
-    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
-      ordered_recording_ids: %w[missing note page]
-    )
+    error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+      RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
+        ordered_recording_ids: %w[note page]
+      )
+    end
 
+    assert_equal INVALID_REORDER_IDS_MESSAGE, error.message
+    assert_empty parent.logged_events
     assert_equal 0, page.recording_studio_orderable_position
     assert_equal 7, note.recording_studio_orderable_position
-    assert_equal ["page"], parent.logged_events.first[:metadata][:ordered_recording_ids]
-    assert_equal ["page"], parent.logged_events.first[:metadata][:previous_ordered_recording_ids]
+  end
+
+  def test_reorder_rejects_a_trashed_id_and_leaves_positions_unchanged
+    active = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    trashed.trashed_at = Time.current
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
+    model = Class.new do
+      def self.column_names
+        %w[id trashed_at]
+      end
+    end
+    parent.define_singleton_method(:child_recordings) do
+      relation = SiblingOrderTest::FakeRelation.new(child_records)
+      relation.klass = model
+      relation
+    end
+
+    error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+      RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
+        ordered_recording_ids: %w[b a]
+      )
+    end
+
+    assert_equal INVALID_REORDER_IDS_MESSAGE, error.message
+    assert_empty parent.logged_events
+    assert_equal 0, active.recording_studio_orderable_position
+    assert_equal 1, trashed.recording_studio_orderable_position
+  end
+
+  def test_reorder_rejects_a_duplicate_id_and_leaves_positions_unchanged
+    first = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second])
+
+    error = assert_raises(RecordingStudioOrderable::InvalidChild) do
+      RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
+        ordered_recording_ids: %w[b a b]
+      )
+    end
+
+    assert_equal INVALID_REORDER_IDS_MESSAGE, error.message
+    assert_empty parent.logged_events
+    assert_equal 0, first.recording_studio_orderable_position
+    assert_equal 1, second.recording_studio_orderable_position
+  end
+
+  def test_reorder_empty_list_appends_eligible_children_by_created_at_then_id
+    later = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: 0)
+    earlier = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [later, earlier])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(ordered_recording_ids: [])
+
+    assert_equal 0, earlier.recording_studio_orderable_position
+    assert_equal 1, later.recording_studio_orderable_position
+    assert_equal %w[a b], parent.logged_events.first[:metadata][:ordered_recording_ids]
   end
 
   def test_reorder_move_and_append_lock_the_parent_once_and_read_siblings_inside_the_transaction

@@ -207,7 +207,12 @@ module RecordingStudioOrderable
     end
 
     def requested_eligible_ids(ordered_recording_ids, eligible_by_id)
-      Array(ordered_recording_ids).map(&:to_s).uniq.select { |id| eligible_by_id.key?(id) }
+      requested_ids = Array(ordered_recording_ids).map(&:to_s)
+      eligible_ids = requested_ids.uniq.select { |id| eligible_by_id.key?(id) }
+      return eligible_ids if requested_ids == eligible_ids
+
+      raise InvalidChild,
+            "ordered_recording_ids includes an id that is missing, foreign, already-trashed, or duplicated."
     end
 
     def remaining_recordings(eligible, requested)

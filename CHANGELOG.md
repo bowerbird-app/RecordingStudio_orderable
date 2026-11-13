@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-13
+
+### Breaking
+
+- `SiblingOrder#reorder!` rejects the whole call before writing positions when `ordered_recording_ids` includes a missing, foreign, already-trashed, or duplicate id. It raises `RecordingStudioOrderable::InvalidChild` with that message. Positions stay unchanged. A partial list of unique eligible ids still moves listed children to the front and appends the rest by `created_at` then id. An empty list is unchanged.
+
+### Upgrade Notes
+
+- Bump to `0.7.0`. No Orderable migration.
+- Stop sending stale, foreign, trashed, or repeated ids in `ordered_recording_ids`. Hosts that mapped `InvalidChild` to HTTP 422 already get that status from `reorder` as well as `move_position`.
+- Callers that relied on bulk reorder ignoring bad ids must send only unique eligible children. Omitting eligible children is still allowed.
+
 ## [0.6.0] - 2026-11-12
 
 ### Added
@@ -281,7 +293,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.9...v0.5.0
 [0.4.9]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.4.8...v0.4.9
