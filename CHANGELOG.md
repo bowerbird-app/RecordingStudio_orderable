@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-14
+
+### Changed
+
+- Sibling position writes follow the rows that move. `move!` shifts the indexes between the old and new position in one `update_all` (`position = position ± 1` on the parent's kept children), then writes the moved row with `update_columns`. `reorder!` writes the changed rows in one `UPDATE ... CASE`. `append!` writes the appended row when the other siblings already have their final positions. Moving a child to the end of a dense list shifts that open tail in one update, then writes the appended row.
+- Those writes skip callbacks and do not change `updated_at`. Positions stay a dense `0..n-1` sequence. Gaps, duplicates, and nils are normalized by rewriting the rows that differ.
+- `idx_rs_recordings_orderable_sibling_position` on `(parent_recording_id, recording_studio_orderable_position)` is unchanged.
+
+### Upgrade Notes
+
+- Bump to `0.9.0`. No Orderable migration.
+- Do not rely on recording callbacks or `updated_at` when a sibling list is reordered.
+- The next reorder, move, or append turns gaps, duplicate positions, or nils into `0..n-1`.
+
 ## [0.8.0] - 2026-11-14
 
 ### Changed

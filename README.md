@@ -161,7 +161,9 @@ A partial list of unique eligible ids is allowed:
 
 Reorder, move, and append lock the parent recording, then read the current siblings, write positions, and log the reorder event before releasing that lock. Concurrent reorder writes for the same parent run one at a time.
 
-Writes update `recording_studio_orderable_position` on the child recordings. They do not create, revise, or nest a `RecordingOrder` recordable.
+Writes set `recording_studio_orderable_position` on the child recordings. They skip callbacks and do not change `updated_at`. They do not create, revise, or nest a `RecordingOrder` recordable.
+
+Positions stay a dense `0..n-1` sequence. A move shifts the indexes between the old and new position in one update, scoped to that parent's kept children, then writes the moved row. Reorder writes one update for the rows whose positions change. Append writes the appended row when the other siblings already have their final positions. Moving a child to the end of a dense list shifts that open tail in one update, then writes the appended row. Gaps, duplicates, and nils are normalized by rewriting the rows that differ. The sibling index is `idx_rs_recordings_orderable_sibling_position` on `(parent_recording_id, recording_studio_orderable_position)`.
 
 ## Events
 
@@ -265,6 +267,12 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.6.0`. No Orderable migration.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
+## Upgrading to 0.9.0
+
+1. Install Orderable `0.9.0`. No new Orderable migration. Hosts that already ran `20250101000001` keep `idx_rs_recordings_orderable_sibling_position` on `(parent_recording_id, recording_studio_orderable_position)`.
+2. Reorder, move, and append still produce the same sibling order and the same `reordered` event. Position writes no longer run recording callbacks and no longer bump `updated_at`.
+3. The next reorder, move, or append turns a list with gaps, duplicate positions, or nils into a dense `0..n-1` sequence.
 
 ## Upgrading to 0.8.0
 

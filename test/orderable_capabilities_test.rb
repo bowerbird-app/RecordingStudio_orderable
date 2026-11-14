@@ -12,15 +12,32 @@ class OrderableCapabilitiesTest < Minitest::Test
     non_default_authorization_role
   ].freeze
 
+  class WhereChain
+    def initialize(relation)
+      @relation = relation
+    end
+
+    def not(*)
+      @relation
+    end
+  end
+
   class FakeRelation
     def initialize(records)
       @records = records
     end
 
-    def where(conditions)
+    def where(conditions = nil)
+      return WhereChain.new(self) if conditions.nil?
+      return self unless conditions.is_a?(Hash)
+
       types = Array(conditions[:recordable_type])
       selected = types.any? ? @records.select { |record| types.include?(record.recordable_type) } : @records
       self.class.new(selected)
+    end
+
+    def update_all(*)
+      0
     end
 
     def kept
@@ -95,6 +112,11 @@ class OrderableCapabilitiesTest < Minitest::Test
 
     def update!(attributes)
       self.updated_with = attributes
+      self.recording_studio_orderable_position = attributes[:recording_studio_orderable_position]
+      self
+    end
+
+    def update_columns(attributes)
       self.recording_studio_orderable_position = attributes[:recording_studio_orderable_position]
       self
     end
