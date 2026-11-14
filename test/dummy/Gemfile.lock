@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio.git
-  revision: 481dfd1f32703bd23a38c4cfd1faf171df42b430
-  tag: v6.7.0
+  revision: 1b20abf63e55e884ab557007fc0f24a013fb1168
+  tag: v6.14.0
   specs:
-    recording_studio (6.7.0)
+    recording_studio (6.14.0)
       flat_pack (>= 0.1.315)
       rails (>= 8.1.4.1)
 
@@ -114,10 +114,10 @@ GIT
 PATH
   remote: ../..
   specs:
-    recording_studio_orderable (0.7.1)
+    recording_studio_orderable (0.8.0)
       flat_pack (>= 0.1.315)
       rails (~> 8.1.0)
-      recording_studio (>= 6.1.0)
+      recording_studio (>= 6.14.0)
       recording_studio_accessible (>= 0.24.2)
 
 GEM
