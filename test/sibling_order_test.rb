@@ -92,7 +92,7 @@ class SiblingOrderTest < Minitest::Test
       self.class.new(ordered)
     end
 
-    def includes(*)
+    def preload(*)
       self
     end
 

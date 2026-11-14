@@ -41,6 +41,7 @@ class OrderableChildrenPreloadTest < ActiveSupport::TestCase
     assert relation.exists?
     assert relation.where(id: @pages.first.id).exists?
     assert_equal @pages.first.id, relation.find_by(id: @pages.first.id).id
+    assert_equal 3, relation.maximum(:recording_studio_orderable_position)
 
     children = nil
     statements = capture_sql do

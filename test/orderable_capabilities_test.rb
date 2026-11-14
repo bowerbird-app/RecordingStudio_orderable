@@ -27,7 +27,7 @@ class OrderableCapabilitiesTest < Minitest::Test
       self
     end
 
-    def includes(*)
+    def preload(*)
       self
     end
 

@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `recording_studio_orderable_children` (`SiblingOrder#children`) includes each child's `recordable`. A view that reads `recording.recordable` loads one query per recordable type. The return value stays an ActiveRecord relation, so hosts can still chain scopes.
+- `recording_studio_orderable_children` (`SiblingOrder#children`) preloads each child's `recordable`. A view that reads `recording.recordable` loads one query per recordable type. The return value stays an ActiveRecord relation, so hosts can still chain scopes and column aggregates such as `maximum`.
 - Development Gemfiles pin Recording Studio `v6.7.0`, Accessible `v0.32.0`, Metrics `v0.8.0`, Trashable `v0.14.0`, Admin `v2.13.0`, API `v0.23.0`, and Flatpack `v0.1.356`. Icons, Logs, and Moveable stay on `v0.2.1`, `v0.7.4`, and `v4.1.1`. Host floors in the gemspec are unchanged.
 
 ### Upgrade Notes
 
 - Bump to `0.7.1`. No Orderable migration and no host API change.
-- `recording_studio_orderable_children` still returns a relation. `where`, `exists?`, and `find_by` keep working. A column aggregate such as `maximum` on that relation raises `ActiveRecord::EagerLoadPolymorphicError`, because Active Record tries to join the polymorphic `recordable`. Position aggregates stay on the child scope used by reorder, move, and append, which does not include recordables.
+- `recording_studio_orderable_children` still returns a relation. `where`, `exists?`, `find_by`, and `maximum` keep working. Recordables load in separate queries, one per type.
 - Reorder, move, and append still read eligible children inside the parent lock. They do not reuse a previously loaded `child_recordings` association, and they do not preload recordables.
 
 ## [0.7.0] - 2026-11-13
