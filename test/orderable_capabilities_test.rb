@@ -23,6 +23,10 @@ class OrderableCapabilitiesTest < Minitest::Test
       self.class.new(selected)
     end
 
+    def kept
+      self
+    end
+
     def reorder(*)
       self
     end

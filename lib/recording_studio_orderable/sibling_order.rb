@@ -129,26 +129,11 @@ module RecordingStudioOrderable
     end
 
     def child_scope
-      scope = exclude_trashed(parent_recording.child_recordings)
+      scope = parent_recording.child_recordings.kept
       allowed_types = allowed_child_types
       return scope if allowed_types.empty?
 
       scope.where(recordable_type: allowed_types)
-    end
-
-    def exclude_trashed(scope)
-      model = scope.klass if scope.respond_to?(:klass)
-      if model.respond_to?(:recording_studio_trashable_active)
-        return scope.merge(model.recording_studio_trashable_active)
-      end
-      return scope unless trashed_column?(scope)
-
-      scope.where(trashed_at: nil)
-    end
-
-    def trashed_column?(scope)
-      model = scope.klass if scope.respond_to?(:klass)
-      model.respond_to?(:column_names) && model.column_names.include?("trashed_at")
     end
 
     def allowed_child_types
