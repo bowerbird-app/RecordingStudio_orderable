@@ -18,7 +18,7 @@ class SiblingOrderTest < Minitest::Test
 
   class FakeRelation
     class << self
-      attr_accessor :maximum_columns
+      attr_accessor :maximum_columns, :updates
     end
 
     def initialize(records)
@@ -76,8 +76,16 @@ class SiblingOrderTest < Minitest::Test
     def select_position(records, conditions)
       return records unless conditions.key?(:recording_studio_orderable_position)
 
-      position = conditions[:recording_studio_orderable_position]
-      records.select { |record| record.recording_studio_orderable_position == position }
+      expected = conditions[:recording_studio_orderable_position]
+      records.select do |record|
+        value = record.recording_studio_orderable_position
+        expected.is_a?(Range) ? !value.nil? && expected.cover?(value) : value == expected
+      end
+    end
+
+    def update_all(assignment)
+      self.class.updates << { assignment: assignment.to_s, ids: @records.map(&:id) }
+      0
     end
 
     def reorder(*)
@@ -113,7 +121,7 @@ class SiblingOrderTest < Minitest::Test
 
   class FakeRecording
     class << self
-      attr_accessor :records, :in_transaction, :child_read_in_transaction, :writes
+      attr_accessor :records, :in_transaction, :child_read_in_transaction, :writes, :column_writes
 
       def transaction
         self.in_transaction = true
@@ -175,6 +183,7 @@ class SiblingOrderTest < Minitest::Test
 
     def update_columns(attributes)
       self.class.writes << :child
+      self.class.column_writes << [id, attributes[:recording_studio_orderable_position]]
       self.recording_studio_orderable_position = attributes[:recording_studio_orderable_position]
       self
     end
@@ -193,7 +202,9 @@ class SiblingOrderTest < Minitest::Test
     FakeRecording.in_transaction = false
     FakeRecording.child_read_in_transaction = []
     FakeRecording.writes = []
+    FakeRecording.column_writes = []
     FakeRelation.maximum_columns = []
+    FakeRelation.updates = []
     @original_configuration = RecordingStudioOrderable.configuration
     RecordingStudioOrderable.reset_configuration!
   end
@@ -701,5 +712,182 @@ class SiblingOrderTest < Minitest::Test
 
     assert_equal 0, child.recording_studio_orderable_position
     assert_equal [:parent], FakeRecording.writes
+  end
+
+  def test_move_up_shifts_only_the_positions_between_the_old_and_new_index
+    pages = dense_pages(5)
+    note = FakeRecording.new(id: "note", recordable_type: "Note", recording_studio_orderable_position: 2)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages + [note])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).move!(pages[3], to_index: 1, actor: :admin)
+
+    assert_equal [0, 2, 3, 1, 4], pages.map(&:recording_studio_orderable_position)
+    assert_equal 2, note.recording_studio_orderable_position
+    assert_equal [["d", 1]], FakeRecording.column_writes
+    assert_equal [{ assignment_includes: "+ 1", ids: %w[b c] }], shift_updates
+    assert_equal %w[a b c d e], parent.logged_events.first[:metadata][:previous_ordered_recording_ids]
+    assert_equal %w[a d b c e], parent.logged_events.first[:metadata][:ordered_recording_ids]
+  end
+
+  def test_move_down_shifts_only_the_positions_between_the_old_and_new_index
+    pages = dense_pages(5)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages)
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).move!(pages[1], to_index: 3)
+
+    assert_equal [0, 3, 1, 2, 4], pages.map(&:recording_studio_orderable_position)
+    assert_equal [["b", 3]], FakeRecording.column_writes
+    assert_equal [{ assignment_includes: "- 1", ids: %w[c d] }], shift_updates
+  end
+
+  def test_move_to_the_same_index_does_not_write_positions
+    pages = dense_pages(3)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages)
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).move!(pages[1], to_index: 1, actor: :admin)
+
+    assert_equal [0, 1, 2], pages.map(&:recording_studio_orderable_position)
+    assert_empty FakeRecording.column_writes
+    assert_empty FakeRelation.updates
+    assert_equal %w[a b c], parent.logged_events.first[:metadata][:ordered_recording_ids]
+  end
+
+  def test_reorder_writes_changed_rows_in_one_statement
+    pages = dense_pages(4)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages)
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(ordered_recording_ids: %w[a c], actor: :admin)
+
+    assert_equal [0, 2, 1, 3], pages.map(&:recording_studio_orderable_position)
+    assert_empty FakeRecording.column_writes
+    assert_equal 1, FakeRelation.updates.size
+    assignment = FakeRelation.updates.first[:assignment]
+    assert_includes assignment, "CASE"
+    assert_includes assignment, "WHEN 'c' THEN 1"
+    assert_includes assignment, "WHEN 'b' THEN 2"
+    refute_includes assignment, "WHEN 'a'"
+    refute_includes assignment, "WHEN 'd'"
+    assert_equal %w[b c], FakeRelation.updates.first[:ids].sort
+  end
+
+  def test_append_writes_only_the_appended_row_when_the_others_already_match
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: 1)
+    third = FakeRecording.new(id: "c", created_at: Time.at(3), recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, third])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!(third, actor: :admin)
+
+    assert_equal [0, 1, 2], [first, second, third].map(&:recording_studio_orderable_position)
+    assert_equal [["c", 2]], FakeRecording.column_writes
+    assert_empty FakeRelation.updates
+  end
+
+  def test_append_from_the_middle_shifts_the_open_tail_and_writes_the_appended_row
+    pages = dense_pages(4)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages)
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!(pages[0])
+
+    assert_equal [3, 0, 1, 2], pages.map(&:recording_studio_orderable_position)
+    assert_equal [["a", 3]], FakeRecording.column_writes
+    assert_equal [{ assignment_includes: "- 1", ids: %w[b c d] }], shift_updates
+  end
+
+  def test_reorder_normalizes_duplicate_and_nil_positions
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: 0)
+    third = FakeRecording.new(id: "c", created_at: Time.at(3), recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, third])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(ordered_recording_ids: %w[c a])
+
+    assert_equal [1, 2, 0], [first, second, third].map(&:recording_studio_orderable_position)
+    assert_empty FakeRecording.column_writes
+    assignment = FakeRelation.updates.first[:assignment]
+    assert_includes assignment, "WHEN 'c' THEN 0"
+    assert_includes assignment, "WHEN 'a' THEN 1"
+    assert_includes assignment, "WHEN 'b' THEN 2"
+    assert_equal([%w[a b c]], FakeRelation.updates.map { |update| update[:ids].sort })
+  end
+
+  def test_reorder_of_an_unchanged_dense_list_does_not_write
+    pages = dense_pages(3)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages)
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(ordered_recording_ids: %w[a b c])
+
+    assert_equal [0, 1, 2], pages.map(&:recording_studio_orderable_position)
+    assert_empty FakeRecording.column_writes
+    assert_empty FakeRelation.updates
+    assert_equal %w[a b c], parent.logged_events.first[:metadata][:ordered_recording_ids]
+  end
+
+  def test_bulk_position_sql_quotes_through_the_recording_connection
+    quoted = []
+    connection = Object.new
+    connection.define_singleton_method(:quote_column_name) { |name| %("#{name}") }
+    connection.define_singleton_method(:quote) do |value|
+      quoted << value
+      "'#{value}'"
+    end
+    FakeRecording.define_singleton_method(:connection) { connection }
+    pages = dense_pages(2)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: pages)
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(ordered_recording_ids: %w[b a])
+
+    assignment = FakeRelation.updates.first[:assignment]
+    assert_includes assignment, '"recording_studio_orderable_position" = CASE "id"'
+    assert_includes assignment, "WHEN 'b' THEN 0"
+    assert_includes assignment, "WHEN 'a' THEN 1"
+    assert_equal %w[b a], quoted
+  ensure
+    singleton = FakeRecording.singleton_class
+    singleton.undef_method(:connection) if singleton.method_defined?(:connection)
+  end
+
+  def test_bulk_position_sql_leaves_integer_ids_unquoted
+    first = FakeRecording.new(id: 1, created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: 2, created_at: Time.at(2), recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: 9, recordable_type: "Folder", child_records: [first, second])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(ordered_recording_ids: [2, 1])
+
+    assignment = FakeRelation.updates.first[:assignment]
+    assert_includes assignment, "WHEN 2 THEN 0"
+    assert_includes assignment, "WHEN 1 THEN 1"
+    assert_equal [1, 0], [first, second].map(&:recording_studio_orderable_position)
+  end
+
+  def test_move_normalizes_gapped_positions_without_a_range_shift
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: 4)
+    third = FakeRecording.new(id: "c", created_at: Time.at(3), recording_studio_orderable_position: 8)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, third])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).move!(first, to_index: 0)
+
+    assert_equal [0, 1, 2], [first, second, third].map(&:recording_studio_orderable_position)
+    assert_empty FakeRecording.column_writes
+    assert_equal([%w[b c]], FakeRelation.updates.map { |update| update[:ids] })
+    assert_includes FakeRelation.updates.first[:assignment], "CASE"
+    refute_match(/ [+-] 1\z/, FakeRelation.updates.first[:assignment])
+  end
+
+  def dense_pages(count)
+    Array.new(count) do |index|
+      FakeRecording.new(
+        id: ("a".ord + index).chr,
+        created_at: Time.at(index + 1),
+        recording_studio_orderable_position: index
+      )
+    end
+  end
+
+  def shift_updates
+    FakeRelation.updates.map do |update|
+      { assignment_includes: update[:assignment][/[+-] 1\z/], ids: update[:ids] }
+    end
   end
 end
