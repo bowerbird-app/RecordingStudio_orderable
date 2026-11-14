@@ -31,7 +31,6 @@ class SiblingOrderTest < Minitest::Test
       selected = select_types(@records, conditions)
       selected = select_ids(selected, conditions)
       selected = select_position(selected, conditions)
-      selected = reject_trashed(selected) if conditions.key?(:trashed_at) && conditions[:trashed_at].nil?
       relation = self.class.new(selected)
       relation.klass = klass
       relation
@@ -81,10 +80,6 @@ class SiblingOrderTest < Minitest::Test
       records.select { |record| record.recording_studio_orderable_position == position }
     end
 
-    def reject_trashed(records)
-      records.reject { |record| record.respond_to?(:trashed_at) && record.trashed_at }
-    end
-
     def reorder(*)
       ordered = @records.sort_by do |record|
         [record.recording_studio_orderable_position || Float::INFINITY, record.created_at || Time.at(0), record.id.to_s]
@@ -92,8 +87,17 @@ class SiblingOrderTest < Minitest::Test
       self.class.new(ordered)
     end
 
-    def preload(*)
+    def kept
       self
+    end
+
+    def preload(*)
+      @preloaded = true
+      self
+    end
+
+    def preloaded?
+      @preloaded == true
     end
 
     attr_accessor :klass
@@ -378,16 +382,7 @@ class SiblingOrderTest < Minitest::Test
     trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
     trashed.trashed_at = Time.current
     parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
-    model = Class.new do
-      def self.column_names
-        %w[id trashed_at]
-      end
-    end
-    parent.define_singleton_method(:child_recordings) do
-      relation = SiblingOrderTest::FakeRelation.new(child_records)
-      relation.klass = model
-      relation
-    end
+    keep_untrashed!(parent)
 
     error = assert_raises(RecordingStudioOrderable::InvalidChild) do
       RecordingStudioOrderable::SiblingOrder.new(parent).reorder!(
@@ -523,23 +518,18 @@ class SiblingOrderTest < Minitest::Test
     end
   end
 
-  def test_children_skip_trashed_siblings_when_the_column_exists
+  def test_children_skip_siblings_the_kept_scope_leaves_out
     active = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
     trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
     trashed.trashed_at = Time.current
     parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
-    model = Class.new do
-      def self.column_names
-        %w[id trashed_at]
-      end
-    end
-    parent.define_singleton_method(:child_recordings) do
-      relation = SiblingOrderTest::FakeRelation.new(child_records)
-      relation.klass = model
-      relation
-    end
+    keep_untrashed!(parent)
 
-    assert_equal [active], RecordingStudioOrderable::SiblingOrder.new(parent).children.to_a
+    children = RecordingStudioOrderable::SiblingOrder.new(parent).children
+
+    assert_equal [active], children.to_a
+    assert_predicate children, :preloaded?
+    assert_respond_to children, :where
   end
 
   def test_assign_end_position_follows_the_highest_sibling_position
@@ -652,22 +642,30 @@ class SiblingOrderTest < Minitest::Test
     assert_equal 5, moving.recording_studio_orderable_position
   end
 
-  def test_children_use_the_trashable_active_scope_when_the_model_defines_it
+  def test_children_follow_a_custom_kept_scope
     active = FakeRecording.new(id: "a", recording_studio_orderable_position: 0)
-    trashed = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
-    trashed.trashed_at = Time.current
-    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, trashed])
-    active_scope = FakeRelation.new([active])
-    model = Class.new do
-      define_singleton_method(:recording_studio_trashable_active) { active_scope }
-    end
+    other = FakeRecording.new(id: "b", recording_studio_orderable_position: 1)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [active, other])
     parent.define_singleton_method(:child_recordings) do
       relation = SiblingOrderTest::FakeRelation.new(child_records)
-      relation.klass = model
+      relation.define_singleton_method(:kept) { SiblingOrderTest::FakeRelation.new([active]) }
       relation
     end
 
-    assert_equal [active], RecordingStudioOrderable::SiblingOrder.new(parent).children.to_a
+    children = RecordingStudioOrderable::SiblingOrder.new(parent).children
+
+    assert_equal [active], children.to_a
+    assert_predicate children, :preloaded?
+  end
+
+  def keep_untrashed!(parent)
+    parent.define_singleton_method(:child_recordings) do
+      relation = SiblingOrderTest::FakeRelation.new(child_records)
+      relation.define_singleton_method(:kept) do
+        SiblingOrderTest::FakeRelation.new(to_a.reject(&:trashed_at))
+      end
+      relation
+    end
   end
 
   def test_restore_moves_a_colliding_or_blank_position_to_the_end

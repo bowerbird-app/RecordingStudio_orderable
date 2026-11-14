@@ -17,3 +17,11 @@ RecordingStudio.configure do |config|
   config.require_actor = true if config.respond_to?(:require_actor=)
   config.max_metadata_bytes = 16_384 if config.respond_to?(:max_metadata_bytes=)
 end
+
+# Trashable 0.16 registers this filter. That tag is not published, so the
+# dummy stays on v0.14.0 and registers the same condition Recording.kept uses.
+RecordingStudio.register_recording_filter(:trashable, sql: lambda { |table|
+  "#{table}.trashed_at IS NULL"
+}) do |recordings|
+  recordings.where(trashed_at: nil)
+end

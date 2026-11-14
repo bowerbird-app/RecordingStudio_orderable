@@ -17,22 +17,22 @@ class RecordingStudioOrderableTest < Minitest::Test
     trashable = Gem.loaded_specs.fetch("recording_studio_trashable")
     metrics = Gem.loaded_specs.fetch("recording_studio_metrics")
 
-    assert spec.version >= Gem::Version.new("6.1.0"),
-           "expected recording_studio >= 6.1.0, got #{spec.version}"
+    assert spec.version >= Gem::Version.new("6.14.0"),
+           "expected recording_studio >= 6.14.0, got #{spec.version}"
     assert flat_pack.version >= Gem::Version.new("0.1.315"),
            "expected flat_pack >= 0.1.315, got #{flat_pack.version}"
     assert view_component.version >= Gem::Version.new("4.14"),
            "expected view_component >= 4.14, got #{view_component.version}"
     assert view_component.version < Gem::Version.new("5"),
            "expected view_component < 5, got #{view_component.version}"
-    assert_includes gemspec, 'spec.add_dependency "recording_studio", ">= 6.1.0"'
+    assert_includes gemspec, 'spec.add_dependency "recording_studio", ">= 6.14.0"'
     assert_includes gemspec, 'spec.add_dependency "recording_studio_accessible", ">= 0.24.2"'
     assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_admin"
     refute_includes gemspec, "recording_studio_trashable"
     refute_includes gemspec, "recording_studio_api"
-    assert_equal Gem::Version.new("6.7.0"), spec.version
+    assert_equal Gem::Version.new("6.14.0"), spec.version
     assert_equal Gem::Version.new("0.32.0"), accessible.version
     assert_equal Gem::Version.new("0.14.0"), trashable.version
     assert_equal Gem::Version.new("0.8.0"), metrics.version
@@ -41,7 +41,7 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     %w[Gemfile test/dummy/Gemfile].each do |relative|
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
-      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v6.7.0")
+      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v6.14.0")
       assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.32.0")
       assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.8.0")
       assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.14.0")

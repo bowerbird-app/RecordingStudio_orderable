@@ -23,7 +23,7 @@ Installing the gem does not enable order on every recordable.
 
 ## Installation
 
-Add the gems to your host app. This addon requires Recording Studio 6.1.0 or newer and Flatpack 0.1.315 or newer:
+Add the gems to your host app. This addon requires Recording Studio 6.14.0 or newer and Flatpack 0.1.315 or newer:
 
 ```ruby
 gem "recording_studio"
@@ -146,7 +146,7 @@ folder_recording.recording_studio_orderable_append!(
 
 When a recording's parent changes, Orderable assigns the end position in that same save if the new parent is orderable and allows the child type. Otherwise it clears `recording_studio_orderable_position`. The parent change stays in `saved_changes`. Orderable does not assign the parent. The end position is one past `maximum(:recording_studio_orderable_position)` among eligible siblings.
 
-Sibling lists omit trashed children. When the recording model defines `recording_studio_trashable_active`, Orderable merges that scope. Otherwise it skips rows with `trashed_at` set when that column exists. That check does not load RecordingStudio_trashable.
+Sibling lists omit recordings that `Recording.kept` leaves out. Core applies the recording filters addons register. Orderable does not check for a `trashed_at` column and does not load RecordingStudio_trashable. Trashable `0.16.0` registers the trash filter. That tag is not published yet.
 
 Restoring a trashed child on an orderable parent keeps its position when no active sibling already has it. A blank or colliding position moves to the end. The parent lock is taken before that write.
 
@@ -266,6 +266,12 @@ configuration load errors, and stored recording names stay English.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
 
+## Upgrading to 0.8.0
+
+1. Install Orderable `0.8.0` and Recording Studio `6.14.0` or newer. No Orderable migration.
+2. Copy core migration `20261114090000_add_root_recording_id_to_recording_studio_events` when the host events table has no `root_recording_id`.
+3. Sibling order follows `Recording.kept`. Install Trashable `0.16.0` when that tag exists so trashed children stay out of order. A host still on Trashable `0.14.0` registers the trash filter itself until then.
+
 ## Upgrading to 0.7.0
 
 1. Install Orderable `0.7.0`. No Orderable migration.
@@ -275,7 +281,7 @@ configuration load errors, and stored recording names stay English.
 
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.7.0`, Accessible tag `v0.32.0`, Trashable tag `v0.14.0`, Metrics tag `v0.8.0`, Flatpack tag `v0.1.356`, Recording Studio API tag `v0.23.0`, Logs tag `v0.7.4`, Moveable tag `v4.1.1`, Icons tag `v0.2.1`, and Admin tag `v2.13.0`. Those pins are for this repository. Hosts still need Recording Studio 6.1.0 or newer, Accessible 0.24.2 or newer, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`.
+`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.14.0`, Accessible tag `v0.32.0`, Trashable tag `v0.14.0`, Metrics tag `v0.8.0`, Flatpack tag `v0.1.356`, Recording Studio API tag `v0.23.0`, Logs tag `v0.7.4`, Moveable tag `v4.1.1`, Icons tag `v0.2.1`, and Admin tag `v2.13.0`. Those pins are for this repository. Hosts still need Recording Studio 6.14.0 or newer, Accessible 0.24.2 or newer, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Trashable `v0.16.0` is not tagged, so the dummy registers the `:trashable` recording filter that release will own. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`.
 
 Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 

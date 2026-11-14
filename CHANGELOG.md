@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-14
+
+### Changed
+
+- Sibling lists, reorder, move, and append read children through `Recording.kept`. Core applies the registered recording filters. Orderable no longer checks for a `trashed_at` column and no longer calls `recording_studio_trashable_active`.
+- Gemspec requires `recording_studio` `>= 6.14.0`. Development Gemfiles pin tag `v6.14.0`. Trashable stays at tag `v0.14.0` because `v0.16.0` is not tagged. Accessible, Admin, and API still need that gem, so the development dependency stays.
+
+### Upgrade Notes
+
+- Bump to `0.8.0`. No Orderable migration. Require Recording Studio `6.14.0` or newer. Copy core migration `20261114090000_add_root_recording_id_to_recording_studio_events` if the host does not have it yet.
+- Trashed children stay out of order when an addon has registered a recording filter. Trashable `0.16.0` registers `:trashable`. Until that tag exists, a host on Trashable `0.14.0` needs that registration itself or trashed rows stay in `Recording.kept`.
+- `recording_studio_orderable_children` still returns a relation and still preloads `recordable`. Reorder, move, and append still read eligible children inside the parent lock.
+
 ## [0.7.1] - 2026-11-14
 
 ### Changed
