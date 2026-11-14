@@ -27,6 +27,10 @@ class OrderableCapabilitiesTest < Minitest::Test
       self
     end
 
+    def preload(*)
+      self
+    end
+
     def to_a
       @records
     end
