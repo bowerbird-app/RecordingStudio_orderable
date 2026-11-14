@@ -92,6 +92,10 @@ class SiblingOrderTest < Minitest::Test
       self.class.new(ordered)
     end
 
+    def includes(*)
+      self
+    end
+
     attr_accessor :klass
 
     def to_a

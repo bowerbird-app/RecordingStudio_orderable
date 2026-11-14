@@ -9,7 +9,7 @@ module RecordingStudioOrderable
     end
 
     def children
-      ordered_relation(child_scope)
+      ordered_relation(child_scope).includes(:recordable)
     end
 
     def reorder!(ordered_recording_ids:, actor: nil, impersonator: nil, metadata: {})

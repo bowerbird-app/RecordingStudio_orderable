@@ -27,6 +27,10 @@ class OrderableCapabilitiesTest < Minitest::Test
       self
     end
 
+    def includes(*)
+      self
+    end
+
     def to_a
       @records
     end
