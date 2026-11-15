@@ -23,7 +23,7 @@ Installing the gem does not enable order on every recordable.
 
 ## Installation
 
-Add the gems to your host app. This addon requires Recording Studio 6.14.0 or newer and Flatpack 0.1.315 or newer:
+Add the gems to your host app. This addon requires Recording Studio 7.0 or newer and below 8, Accessible 0.44.0 or newer and below 1.0, and Flatpack 0.1.315 or newer:
 
 ```ruby
 gem "recording_studio"
@@ -146,7 +146,7 @@ folder_recording.recording_studio_orderable_append!(
 
 When a recording's parent changes, Orderable assigns the end position in that same save if the new parent is orderable and allows the child type. Otherwise it clears `recording_studio_orderable_position`. The parent change stays in `saved_changes`. Orderable does not assign the parent. The end position is one past `maximum(:recording_studio_orderable_position)` among eligible siblings.
 
-Sibling lists omit recordings that `Recording.kept` leaves out. Core applies the recording filters addons register. Orderable does not check for a `trashed_at` column and does not load RecordingStudio_trashable. Trashable `0.16.0` registers the trash filter. That tag is not published yet.
+Sibling lists omit recordings that `Recording.kept` leaves out. Core applies the recording filters addons register. Orderable does not check for a `trashed_at` column and does not load RecordingStudio_trashable. Trashable `0.17.0` registers the trash filter.
 
 Restoring a trashed child on an orderable parent keeps its position when no active sibling already has it. A blank or colliding position moves to the end. The parent lock is taken before that write.
 
@@ -268,6 +268,14 @@ configuration load errors, and stored recording names stay English.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
 
+## Upgrading to 0.10.0
+
+1. Install Orderable `0.10.0`. No Orderable migration.
+2. Require Recording Studio `>= 7.0`, `< 8.0` and Accessible `>= 0.44.0`, `< 1.0`.
+3. Create a root with `RecordingStudio.create_root_recording!(recordable, actor:)`. `root_recording_for` only finds an existing root and returns `nil` when there is none.
+4. Set `config.authorize_write`. Leave `allow_unauthorized_writes` unset.
+5. Sibling order still follows `Recording.kept`. Trashable `0.17.0` registers the trash filter. Hosts do not register it themselves.
+
 ## Upgrading to 0.9.0
 
 1. Install Orderable `0.9.0`. No new Orderable migration. Hosts that already ran `20250101000001` keep `idx_rs_recordings_orderable_sibling_position` on `(parent_recording_id, recording_studio_orderable_position)`.
@@ -289,7 +297,7 @@ configuration load errors, and stored recording names stay English.
 
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v6.14.0`, Accessible tag `v0.32.0`, Trashable tag `v0.14.0`, Metrics tag `v0.8.0`, Flatpack tag `v0.1.356`, Recording Studio API tag `v0.23.0`, Logs tag `v0.7.4`, Moveable tag `v4.1.1`, Icons tag `v0.2.1`, and Admin tag `v2.13.0`. Those pins are for this repository. Hosts still need Recording Studio 6.14.0 or newer, Accessible 0.24.2 or newer, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Trashable `v0.16.0` is not tagged, so the dummy registers the `:trashable` recording filter that release will own. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`.
+`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v7.0.0`, Accessible tag `v0.44.0`, Trashable tag `v0.17.0`, Metrics tag `v0.8.0`, Flatpack tag `v0.1.356`, Recording Studio API tag `v0.23.4`, Logs tag `v0.7.4`, Moveable tag `v4.1.1`, Icons tag `v0.2.1`, and Admin tag `v2.16.0`. Those pins are for this repository. Hosts still need Recording Studio 7.0 or newer and below 8, Accessible 0.44.0 or newer and below 1.0, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Trashable `0.17.0` registers the trash filter, so the dummy does not. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`. Seeds create that root with `create_root_recording!`. The dummy `authorize_write` callback allows a write when an actor is present.
 
 Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 

@@ -7,7 +7,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_nil RecordingStudioOrderable::VERSION
   end
 
-  def test_recording_studio_dependency_is_6_1_or_newer
+  def test_recording_studio_dependency_is_7_0
     spec = Gem.loaded_specs.fetch("recording_studio")
     flat_pack = Gem.loaded_specs.fetch("flat_pack")
     view_component = Gem.loaded_specs.fetch("view_component")
@@ -16,41 +16,50 @@ class RecordingStudioOrderableTest < Minitest::Test
     accessible = Gem.loaded_specs.fetch("recording_studio_accessible")
     trashable = Gem.loaded_specs.fetch("recording_studio_trashable")
     metrics = Gem.loaded_specs.fetch("recording_studio_metrics")
+    admin = Gem.loaded_specs.fetch("recording_studio_admin")
+    api = Gem.loaded_specs.fetch("recording_studio_api")
 
-    assert spec.version >= Gem::Version.new("6.14.0"),
-           "expected recording_studio >= 6.14.0, got #{spec.version}"
+    assert spec.version >= Gem::Version.new("7.0.0"),
+           "expected recording_studio >= 7.0.0, got #{spec.version}"
+    assert spec.version < Gem::Version.new("8.0"),
+           "expected recording_studio < 8.0, got #{spec.version}"
     assert flat_pack.version >= Gem::Version.new("0.1.315"),
            "expected flat_pack >= 0.1.315, got #{flat_pack.version}"
     assert view_component.version >= Gem::Version.new("4.14"),
            "expected view_component >= 4.14, got #{view_component.version}"
     assert view_component.version < Gem::Version.new("5"),
            "expected view_component < 5, got #{view_component.version}"
-    assert_includes gemspec, 'spec.add_dependency "recording_studio", ">= 6.14.0"'
-    assert_includes gemspec, 'spec.add_dependency "recording_studio_accessible", ">= 0.24.2"'
+    assert_includes gemspec, 'spec.add_dependency "recording_studio", ">= 7.0", "< 8.0"'
+    assert_includes gemspec, 'spec.add_dependency "recording_studio_accessible", ">= 0.44.0", "< 1.0"'
     assert_includes gemspec, 'spec.add_dependency "flat_pack", ">= 0.1.315"'
     assert_includes gemspec, 'spec.add_dependency "rails", "~> 8.1.0"'
     refute_includes gemspec, "recording_studio_admin"
     refute_includes gemspec, "recording_studio_trashable"
     refute_includes gemspec, "recording_studio_api"
-    assert_equal Gem::Version.new("6.14.0"), spec.version
-    assert_equal Gem::Version.new("0.32.0"), accessible.version
-    assert_equal Gem::Version.new("0.14.0"), trashable.version
+    assert_equal Gem::Version.new("7.0.0"), spec.version
+    assert_equal Gem::Version.new("0.44.0"), accessible.version
+    assert_equal Gem::Version.new("0.17.0"), trashable.version
     assert_equal Gem::Version.new("0.8.0"), metrics.version
+    assert_equal Gem::Version.new("2.16.0"), admin.version
+    assert_equal Gem::Version.new("0.23.4"), api.version
     assert_equal Gem::Version.new("0.1.356"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
 
     %w[Gemfile test/dummy/Gemfile].each do |relative|
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
-      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v6.14.0")
-      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.32.0")
+      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v7.0.0")
+      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.44.0")
       assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.8.0")
-      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.14.0")
-      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v0.23.0")
+      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v0.17.0")
+      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v0.23.4")
+      assert_includes gemfile, github_pin("recording_studio_admin", "RecordingStudio_admin", "v2.16.0")
       assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.356")
       refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
+      refute_includes gemfile, 'tag: "v6.14.0"'
       refute_includes gemfile, 'tag: "v6.3.0"'
       refute_includes gemfile, 'tag: "v6.1.0"'
       refute_includes gemfile, 'tag: "v0.1.332"'
+      refute_includes gemfile, "allow_unauthorized_writes"
     end
   end
 
@@ -200,7 +209,12 @@ class RecordingStudioOrderableTest < Minitest::Test
     refute_includes dummy_home, "Workspace.first"
     assert_includes dummy_home, "RecordingStudioAccessible.root_recordings_for"
     dummy_rs = File.read(File.expand_path("dummy/config/initializers/recording_studio.rb", __dir__))
-    assert_includes dummy_rs, "config.authorize_write"
+    assert_includes dummy_rs, "config.authorize_write = ->(actor:, **) { actor.present? }"
+    refute_includes dummy_rs, "allow_unauthorized_writes"
+    refute_includes dummy_rs, "register_recording_filter"
+    seeds = File.read(File.expand_path("dummy/db/seeds.rb", __dir__))
+    assert_includes seeds, "RecordingStudio.create_root_recording!(workspace, actor: user)"
+    refute_includes seeds, "root_recording_for"
   end
 
   def test_dummy_enables_orderable_only_on_folder

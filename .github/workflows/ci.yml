@@ -95,6 +95,8 @@ jobs:
       with:
         ruby-version: "3.3"
         bundler-cache: true
+        # The previous dummy cache cannot check out a new Recording Studio git revision.
+        cache-version: 2
       env:
         BUNDLE_GEMFILE: test/dummy/Gemfile
         BUNDLE_GITHUB__COM: x-access-token:${{ secrets.BOWERBIRD_ORG_CI_TOKEN }}

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-15
+
+### Changed
+
+- Gemspec requires `recording_studio` `>= 7.0`, `< 8.0` and `recording_studio_accessible` `>= 0.44.0`, `< 1.0`.
+- Development and dummy Gemfiles pin Recording Studio `v7.0.0`, Accessible `v0.44.0`, Trashable `v0.17.0`, Admin `v2.16.0`, and API `v0.23.4`. Metrics stays `v0.8.0`. Icons, Logs, Moveable, and Flatpack stay on `v0.2.1`, `v0.7.4`, `v4.1.1`, and `v0.1.356`.
+- Seeds and tests that create a root call `RecordingStudio.create_root_recording!`. Lookups stay on `root_recording_for`.
+- The dummy `authorize_write` callback stays `actor.present?`. It does not set `allow_unauthorized_writes`.
+- The dummy no longer registers the `:trashable` recording filter. Trashable `0.17.0` registers it. The installed core migration that adds `root_recording_id` to events stays in the dummy app.
+- Dummy lockfile updates `msgpack` to `1.8.7` and `puma` to `8.1.0`.
+
+### Upgrade Notes
+
+- Bump to `0.10.0`. No Orderable migration.
+- Require Recording Studio `7.0` or newer and below `8.0`, and Accessible `0.44.0` or newer and below `1.0`.
+- Paths that created a root with `root_recording_for` call `create_root_recording!(recordable, actor:)`. Lookups keep `root_recording_for` and handle `nil`.
+- Set `config.authorize_write`. Leave `allow_unauthorized_writes` unset.
+- Sibling order still reads `Recording.kept`. Install Trashable `0.17.0` or newer so trashed children stay out of order. Hosts do not register that filter themselves.
+- Dummy apps that copy this lockfile should `bundle update msgpack puma`. Hosts on current Puma 8 and msgpack should do the same.
+
 ## [0.9.0] - 2026-11-14
 
 ### Changed

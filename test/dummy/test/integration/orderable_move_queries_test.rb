@@ -13,7 +13,7 @@ class OrderableMoveQueriesTest < ActiveSupport::TestCase
     Current.actor = @user
     suffix = SecureRandom.hex(4)
     workspace = Workspace.create!(name: "Move queries #{suffix}")
-    root = RecordingStudio.root_recording_for(workspace)
+    root = RecordingStudio.create_root_recording!(workspace, actor: @user)
     grant_demo_owner!(recording: root, actor: @user)
     @folder = root.record(Folder, actor: @user, parent_recording: root) do |folder|
       folder.name = "Move queries #{suffix}"
