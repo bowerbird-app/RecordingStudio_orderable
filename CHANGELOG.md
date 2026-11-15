@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Seeds and tests that create a root call `RecordingStudio.create_root_recording!`. Lookups stay on `root_recording_for`.
 - The dummy `authorize_write` callback stays `actor.present?`. It does not set `allow_unauthorized_writes`.
 - The dummy no longer registers the `:trashable` recording filter. Trashable `0.17.0` registers it. The installed core migration that adds `root_recording_id` to events stays in the dummy app.
+- Dummy lockfile updates `msgpack` to `1.8.7` and `puma` to `8.1.0`.
 
 ### Upgrade Notes
 
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Paths that created a root with `root_recording_for` call `create_root_recording!(recordable, actor:)`. Lookups keep `root_recording_for` and handle `nil`.
 - Set `config.authorize_write`. Leave `allow_unauthorized_writes` unset.
 - Sibling order still reads `Recording.kept`. Install Trashable `0.17.0` or newer so trashed children stay out of order. Hosts do not register that filter themselves.
+- Dummy apps that copy this lockfile should `bundle update msgpack puma`. Hosts on current Puma 8 and msgpack should do the same.
 
 ## [0.9.0] - 2026-11-14
 
