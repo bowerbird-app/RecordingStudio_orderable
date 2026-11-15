@@ -14,7 +14,7 @@ class OrderableChildrenPreloadTest < ActiveSupport::TestCase
     RecordingStudio.set_capability_options(:orderable, on: "Folder", allows: %w[Page Folder])
 
     workspace = Workspace.create!(name: "Preload Workspace #{@suffix}")
-    @workspace_recording = RecordingStudio.root_recording_for(workspace)
+    @workspace_recording = RecordingStudio.create_root_recording!(workspace, actor: @user)
     grant_demo_owner!(recording: @workspace_recording, actor: @user)
     @folder = @workspace_recording.record(
       Folder, actor: @user, parent_recording: @workspace_recording

@@ -13,7 +13,7 @@ class OrderableLockingTest < ActiveSupport::TestCase
     Current.actor = @user
     @suffix = SecureRandom.hex(4)
     @workspace = Workspace.create!(name: "Lock Workspace #{@suffix}")
-    @workspace_recording = RecordingStudio.root_recording_for(@workspace)
+    @workspace_recording = RecordingStudio.create_root_recording!(@workspace, actor: @user)
     grant_demo_owner!(recording: @workspace_recording, actor: @user)
     @folder_recording = @workspace_recording.record(
       Folder, actor: @user, parent_recording: @workspace_recording

@@ -47,7 +47,7 @@ class OrderableForbiddenTest < ActionDispatch::IntegrationTest
 
   def seed_demo_tree!
     workspace = Workspace.find_or_create_by!(name: "Studio Workspace")
-    workspace_recording = RecordingStudio.root_recording_for(workspace)
+    workspace_recording = RecordingStudio.create_root_recording!(workspace, actor: @user)
     grant_demo_owner!(recording: workspace_recording, actor: @user)
     grant_demo_access!(recording: workspace_recording, actor: @viewer, role: :view, manager_actor: @user)
 
