@@ -207,15 +207,45 @@ class OrderableApiTest < ActionDispatch::IntegrationTest
 
     assert_equal :orderable, reorder.capability
     assert_equal :edit, reorder.required_role
-    assert_equal "Recording - Reorder", reorder.openapi.fetch(:summary)
+    assert_equal RecordingStudio::Orderable::Api::ACTIONS.fetch(:reorder).fetch(:summary),
+                 reorder.openapi.fetch(:summary)
     assert_equal false, reorder.input_contract.as_json.fetch(:reject_unknown)
     assert_equal :orderable, move_position.capability
     assert_equal :edit, move_position.required_role
-    assert_equal "Recording - Move position", move_position.openapi.fetch(:summary)
+    assert_equal RecordingStudio::Orderable::Api::ACTIONS.fetch(:move_position).fetch(:summary),
+                 move_position.openapi.fetch(:summary)
     assert_equal %w[move_position reorder], Array(folder.capability_actions).map(&:to_s).sort
     refute_includes Array(folder.writable_attributes).map(&:to_s), "recording_studio_orderable_position"
     refute_includes Array(RecordingStudioApi.recordable_registration_for("Page").writable_attributes).map(&:to_s),
                     "recording_studio_orderable_position"
+  end
+
+  test "reorder and move_position register this gem's MCP copy without access words" do
+    RecordingStudio::Orderable::Api::ACTIONS.each do |name, spec|
+      action = RecordingStudioApi.capability_action(name)
+      fields = action.input_contract.as_json.fetch(:fields)
+
+      assert_equal spec.fetch(:summary), action.openapi.fetch(:summary)
+      assert_equal spec.fetch(:description), action.openapi.fetch(:description)
+
+      spec.fetch(:fields).each do |field_name, field|
+        registered = fields[field_name] || fields[field_name.to_s]
+        assert registered, "expected #{name} field #{field_name}"
+        assert_equal field.fetch(:description), registered.fetch(:description)
+      end
+
+      blob = [
+        spec.fetch(:summary),
+        spec.fetch(:description),
+        spec.fetch(:fields).values.map { |field| field[:description] }
+      ].join(" ")
+      refute_match(/\baccess\b/i, blob)
+      refute_match(/\brole\b/i, blob)
+      refute_match(/:edit/i, blob)
+      refute_match(/\badmin\b/i, blob)
+      refute_match(/\bauthorized\b/i, blob)
+      refute_match(/\bpermission\b/i, blob)
+    end
   end
 
   private

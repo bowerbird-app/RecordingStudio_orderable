@@ -191,7 +191,7 @@ There is no host resolver and no fail-open switch. Grant Accessible roles on the
 
 ## JSON API and MCP
 
-When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. MCP uses those through the generic `capability_action` path. This gem does not ship an MCP tool.
+When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. MCP uses those through the generic `capability_action` path. This gem does not ship an MCP tool. Summaries, action text, and input field descriptions for those pages live in `RecordingStudio::Orderable::Api::ACTIONS`.
 
 Hosts list the actions on orderable parent types. Position stays off create and update:
 
@@ -267,6 +267,11 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.6.0`. No Orderable migration.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
+## Upgrading to 0.10.1
+
+1. Install Orderable `0.10.1`. No Orderable migration.
+2. Public MCP copy for `reorder` and `move_position` changed. Action names and fields did not.
 
 ## Upgrading to 0.10.0
 
