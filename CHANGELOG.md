@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-17
+
+### Changed
+
+- Public MCP copy for `reorder` and `move_position`. Summaries, action text, and input field descriptions follow the same style as other gem-owned capability actions. Action names, fields, and behavior did not change.
+
+### Upgrade notes
+
+- Bump to `0.10.1`. No migration. MCP and OpenAPI text for this gem's `reorder` and `move_position` actions changed. Action names and fields did not.
+
 ## [0.10.0] - 2026-11-15
 
 ### Changed
