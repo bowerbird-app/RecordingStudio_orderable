@@ -25,20 +25,9 @@ module RecordingStudio
               handler: spec.fetch(:handler),
               serializer: RecordingStudioApi::Serializers::ResourceRecordingSerializer,
               input_contract: { reject_unknown: false, fields: spec.fetch(:fields) },
-              openapi: openapi_for(spec)
+              openapi: Api.openapi_for(action: action_name),
+              openapi_for: ->(type:, action:) { Api.openapi_for(type: type, action: action) }
             )
-          end
-
-          def openapi_for(spec)
-            {
-              summary: spec.fetch(:summary),
-              description: spec.fetch(:description),
-              responses: {
-                "200" => { description: spec.fetch(:success) },
-                "403" => { description: spec.fetch(:forbidden) },
-                "422" => { description: spec.fetch(:invalid) }
-              }
-            }
           end
 
           def action_metadata(spec)

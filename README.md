@@ -18,6 +18,7 @@ It lets a parent recordable type sort its children without creating a product-ma
 - optional `log_event!` history when siblings are reordered
 - RecordingStudioAccessible authorization on reorder, move, and append
 - Recording Studio API capability actions `reorder` and `move_position` when `recording_studio_api` is loaded
+- `RecordingStudio::Orderable::Api.override_openapi` for a per-type title and description on those actions
 
 Installing the gem does not enable order on every recordable.
 
@@ -193,6 +194,26 @@ There is no host resolver and no fail-open switch. Grant Accessible roles on the
 
 When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. MCP uses those through the generic `capability_action` path. This gem does not ship an MCP tool. Summaries, action text, and input field descriptions for those pages live in `RecordingStudio::Orderable::Api::ACTIONS`.
 
+A host can replace the MCP title and description for one recordable type. Other types keep the generic summary and description, and MCP still builds the generic title from the recordable label, such as "Folder - Reorder".
+
+```ruby
+RecordingStudio::Orderable::Api.override_openapi(
+  type: "RecordingStudioPressCenters::PressCenter",
+  action: :reorder,
+  title: "Reorder press center",
+  description: "Sets the order of children in this press center."
+)
+
+RecordingStudio::Orderable::Api.override_openapi(
+  type: "RecordingStudioPressCenters::PressCenter",
+  action: :move_position,
+  title: "Move press center position",
+  description: "Moves one child to a new index in this press center."
+)
+```
+
+`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI and MCP read the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy.
+
 Hosts list the actions on orderable parent types. Position stays off create and update:
 
 ```ruby
@@ -267,6 +288,12 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.6.0`. No Orderable migration.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
+## Upgrading to 0.11.0
+
+1. Install Orderable `0.11.0`. No migration.
+2. Call `RecordingStudio::Orderable::Api.override_openapi(type:, action:, title:, description:)` for each type whose MCP title should name that type, such as "Reorder press center" on `RecordingStudioPressCenters::PressCenter`.
+3. Leave the call out and MCP keeps the generic "Type - Reorder" and "Type - Move Position" titles. Action names, fields, routes, authorization, position writes, and the `reordered` event stay the same.
 
 ## Upgrading to 0.10.1
 
