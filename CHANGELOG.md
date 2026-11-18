@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-11-18
+
+### Changed
+
+- Development and dummy Gemfiles pin Recording Studio `v7.7.1`, Accessible `v0.54.1`, Trashable `v1.2.1`, Metrics `v0.9.2`, Admin `v2.19.0`, API `v1.16.0`, Icons `v0.4.2`, Logs `v0.8.1`, Moveable `v6.0.2`, and Flatpack `v0.1.378`.
+- The dummy app adds `config/recording_studio_api.yml` with `shared: {}` so API `1.12` and newer can boot.
+- The dummy app copies API migration `20261117000024_add_owner_to_recording_studio_api_api_clients` so `ProvisionApiClient` can store `owner`.
+
+### Upgrade notes
+
+- Bump to `0.11.1`. No Orderable migration. Gemspec floors stay Recording Studio `>= 7.0`, `< 8.0` and Accessible `>= 0.44.0`, `< 1.0`.
+- Hosts MUST run the Recording Studio `7.4`, `7.5`, and `7.7` migrations: `add_recording_studio_recordings_root_type_creation_index`, `enforce_recording_studio_recording_root_invariant`, and `replace_recording_studio_recordings_root_index`. This dummy does not copy those migrations.
+- Hosts on Recording Studio API `1.4` or newer run `20261117000024_add_owner_to_recording_studio_api_api_clients` and set `owner` on each existing API client. A key with no owner sees nothing.
+- Hosts that mount API `1.12` or newer need `config/recording_studio_api.yml`. A file with `shared: {}` is enough to boot.
+
 ## [0.11.0] - 2026-11-18
 
 ### Added
@@ -374,7 +389,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.11.0...v0.11.1
 [0.7.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.5.0...v0.6.0
