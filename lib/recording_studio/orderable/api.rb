@@ -3,6 +3,7 @@
 require "recording_studio/orderable/api/errors"
 require "recording_studio/orderable/api/move_position_recording"
 require "recording_studio/orderable/api/reorder_recording"
+require "recording_studio/orderable/api/openapi_overrides"
 require "recording_studio/orderable/api/registration"
 
 module RecordingStudio
@@ -73,6 +74,14 @@ module RecordingStudio
           }
         }.freeze
       }.freeze
+
+      def self.override_openapi(type:, action:, title:, description:)
+        OpenapiOverrides.store(type: type, action: action, title: title, description: description)
+      end
+
+      def self.openapi_for(action:, type: nil)
+        OpenapiOverrides.document(action, type: type)
+      end
 
       def self.register_capability_action!
         Registration.register!

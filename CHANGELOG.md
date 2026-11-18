@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-18
+
+### Added
+
+- `RecordingStudio::Orderable::Api.override_openapi(type:, action:, title:, description:)` sets the OpenAPI title and description for `reorder` or `move_position` on one recordable type. `openapi_for(action:, type: nil)` returns that copy. Another type, the other action, or an unknown type keeps the generic summary and description.
+
+### Upgrade notes
+
+- Bump to `0.11.0`. No migration.
+- Call `override_openapi` when a type's MCP title should differ from the generic "Type - Reorder" or "Type - Move Position" label. Action names, fields, routes, authorization, position writes, and the `reordered` event are unchanged.
+
 ## [0.10.1] - 2026-11-17
 
 ### Changed
