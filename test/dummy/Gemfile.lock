@@ -1,28 +1,27 @@
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio.git
-  revision: a49ee77dd81979f1395117e81e5934f0a1f02efa
-  tag: v7.3.0
+  revision: 332ba217cb0dd610a411f92137a54109673ad026
+  tag: v7.7.1
   specs:
-    recording_studio (7.3.0)
+    recording_studio (7.7.1)
       flat_pack (>= 0.1.315)
       rails (>= 8.1.4.1)
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_accessible.git
-  revision: 9028acd77043e13c0ca63638c83b681778e6b91b
-  tag: v0.45.1
+  revision: c8d637cea060796c86ab0d50af776de98748c190
+  tag: v0.54.1
   specs:
-    recording_studio_accessible (0.45.1)
+    recording_studio_accessible (0.54.1)
       rails (~> 8.1.0)
-      recording_studio (>= 7.0, < 8.0)
-      recording_studio_trashable (>= 0.17.0, < 2.0)
+      recording_studio (>= 7.7.0, < 8.0)
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_admin.git
-  revision: 9e52e83d2f30257d348786a60cdb1ebf15a2cf91
-  tag: v2.18.0
+  revision: eb4a0dd4bb8354b16721b756d86377ad25c05c24
+  tag: v2.19.0
   specs:
-    recording_studio_admin (2.18.0)
+    recording_studio_admin (2.19.0)
       flat_pack (>= 0.1.341)
       rails (~> 8.1.0)
       recording_studio (>= 7.0.0, < 8.0)
@@ -33,14 +32,14 @@ GIT
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_api.git
-  revision: 8f5044181d2d0f49e5cc83ac218ef3099ac94bc8
-  tag: v1.2.1
+  revision: a53979333e5351947c4f82909aa230469ae51448
+  tag: v1.16.0
   specs:
-    recording_studio_api (1.2.1)
+    recording_studio_api (1.16.0)
       flat_pack (>= 0.1.356, < 2.0)
       rails (~> 8.1.0)
-      recording_studio (>= 7.1.0, < 8.0)
-      recording_studio_accessible (>= 0.44.0, < 2.0)
+      recording_studio (>= 7.7.0, < 8.0)
+      recording_studio_accessible (>= 0.50.0, < 2.0)
       recording_studio_logs (>= 0.8.0, < 2.0)
       recording_studio_metrics (>= 0.9.0, < 2.0)
       recording_studio_moveable (>= 5.0, < 7.0)
@@ -50,38 +49,38 @@ GIT
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_icons.git
-  revision: 2c7debd5c0b0691c7d756699137551a0742a5ed2
-  tag: v0.4.0
+  revision: dd5184eaf12113aad49ffa2a2d7e77132653e1b4
+  tag: v0.4.2
   specs:
-    recording_studio_icons (0.4.0)
+    recording_studio_icons (0.4.2)
       rails (>= 8.1.0)
       recording_studio (>= 7.0, < 8.0)
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_logs.git
-  revision: 6dc75b4290f655564f20f96a295b7c1d0c9851dc
-  tag: v0.8.0
+  revision: 5257420b7831b9849ecfaebf4ceecacc6f60b050
+  tag: v0.8.1
   specs:
-    recording_studio_logs (0.8.0)
+    recording_studio_logs (0.8.1)
       rails (~> 8.1.0)
       recording_studio (>= 7.0, < 8.0)
       recording_studio_metrics (>= 0.9.0, < 1.0)
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_metrics.git
-  revision: 765e395019b1814e88b4d9bb2f492dfcb38c67ec
-  tag: v0.9.0
+  revision: d9b9b2074a66a20d463477b83c5c12548830b99d
+  tag: v0.9.2
   specs:
-    recording_studio_metrics (0.9.0)
+    recording_studio_metrics (0.9.2)
       rails (~> 8.1.0)
       recording_studio (>= 7.0, < 8.0)
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_moveable.git
-  revision: 872d9bb97ef31ef9b492ab5d797176fd41ea39ef
-  tag: v6.0.0
+  revision: 020988ef42bd2c782bf708141213f574a46e4fa4
+  tag: v6.0.2
   specs:
-    recording_studio_moveable (6.0.0)
+    recording_studio_moveable (6.0.2)
       flat_pack (>= 0.1.331)
       rails (>= 8.1.0, < 9.0)
       recording_studio (>= 7.0, < 8.0)
@@ -91,10 +90,10 @@ GIT
 
 GIT
   remote: https://github.com/bowerbird-app/RecordingStudio_trashable.git
-  revision: fbec911ee08f1665dcaec9f51570294669c6ccde
-  tag: v1.0.1
+  revision: 279418ccffada261ad771f42e398dd3bb571b9c1
+  tag: v1.2.1
   specs:
-    recording_studio_trashable (1.0.1)
+    recording_studio_trashable (1.2.1)
       flat_pack (>= 0.1.315)
       rails (~> 8.1.0)
       recording_studio (>= 7.0, < 8.0)
@@ -102,10 +101,10 @@ GIT
 
 GIT
   remote: https://github.com/bowerbird-app/flatpack.git
-  revision: 1e7d5be3f206d4e044791271b4da432b2bbef842
-  tag: v0.1.377
+  revision: 26ff760b7a4c3657d3197d275a95050a221b6961
+  tag: v0.1.378
   specs:
-    flat_pack (0.1.377)
+    flat_pack (0.1.378)
       pagy (~> 9.0)
       rails (>= 7.1, < 9)
       tailwind_merge (>= 1.5.2, < 2)
@@ -114,7 +113,7 @@ GIT
 PATH
   remote: ../..
   specs:
-    recording_studio_orderable (0.11.0)
+    recording_studio_orderable (0.11.1)
       flat_pack (>= 0.1.315)
       rails (~> 8.1.0)
       recording_studio (>= 7.0, < 8.0)

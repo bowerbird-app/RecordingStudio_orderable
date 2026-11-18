@@ -289,6 +289,13 @@ configuration load errors, and stored recording names stay English.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
 
+## Upgrading to 0.11.1
+
+1. Install Orderable `0.11.1`. No Orderable migration.
+2. Hosts MUST run the Recording Studio `7.4`, `7.5`, and `7.7` migrations (`add_recording_studio_recordings_root_type_creation_index`, `enforce_recording_studio_recording_root_invariant`, and `replace_recording_studio_recordings_root_index`). This repository's dummy app does not copy those migrations.
+3. Hosts on Recording Studio API `1.4` or newer run `20261117000024_add_owner_to_recording_studio_api_api_clients` and set `owner` on each existing API client.
+4. Hosts that mount API `1.12` or newer need `config/recording_studio_api.yml`. `shared: {}` is enough to boot.
+
 ## Upgrading to 0.11.0
 
 1. Install Orderable `0.11.0`. No migration.
@@ -329,7 +336,7 @@ configuration load errors, and stored recording names stay English.
 
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v7.3.0`, Accessible tag `v0.45.1`, Trashable tag `v1.0.1`, Metrics tag `v0.9.0`, Flatpack tag `v0.1.377`, Recording Studio API tag `v1.2.1`, Logs tag `v0.8.0`, Moveable tag `v6.0.0`, Icons tag `v0.4.0`, and Admin tag `v2.18.0`. Those pins are for this repository. Hosts still need Recording Studio 7.0 or newer and below 8, Accessible 0.44.0 or newer and below 1.0, and Flatpack 0.1.315 or newer. `view_component` stays at 4.19.0. Trashable `1.0.1` registers the trash filter, so the dummy does not. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`. Seeds create that root with `create_root_recording!`. The dummy `authorize_write` callback allows a write when an actor is present.
+`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v7.7.1`, Accessible tag `v0.54.1`, Trashable tag `v1.2.1`, Metrics tag `v0.9.2`, Flatpack tag `v0.1.378`, Recording Studio API tag `v1.16.0`, Logs tag `v0.8.1`, Moveable tag `v6.0.2`, Icons tag `v0.4.2`, and Admin tag `v2.19.0`. Those pins are for this repository. Hosts still need Recording Studio 7.0 or newer and below 8, Accessible 0.44.0 or newer and below 1.0, and Flatpack 0.1.315 or newer. Hosts MUST run the Recording Studio 7.4, 7.5, and 7.7 migrations. This dummy does not copy them. `view_component` stays at 4.19.0. Trashable `1.2.1` registers the trash filter, so the dummy does not. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`. Seeds create that root with `create_root_recording!`. The dummy `authorize_write` callback allows a write when an actor is present. The dummy `config/recording_studio_api.yml` is `shared: {}` so API 1.16 can boot, and the dummy copies API migration `20261117000024` so new API clients can store `owner`.
 
 Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 
