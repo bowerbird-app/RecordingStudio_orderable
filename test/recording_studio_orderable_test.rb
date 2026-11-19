@@ -56,14 +56,15 @@ class RecordingStudioOrderableTest < Minitest::Test
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
       assert_includes gemfile,
                       %(gem "recording_studio", "~> 7.8", github: "bowerbird-app/RecordingStudio", tag: "v7.8.0")
-      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.56.0")
-      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.10.0")
-      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v1.2.3")
-      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v1.19.0")
-      assert_includes gemfile, github_pin("recording_studio_admin", "RecordingStudio_admin", "v2.19.1")
-      assert_includes gemfile, github_pin("recording_studio_icons", "RecordingStudio_icons", "v0.5.0")
-      assert_includes gemfile, github_pin("recording_studio_logs", "RecordingStudio_logs", "v0.8.2")
-      assert_includes gemfile, github_pin("recording_studio_moveable", "RecordingStudio_moveable", "v6.0.3")
+      assert_includes gemfile,
+                      github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.56.0", "~> 0.56")
+      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.10.0", "~> 0.10")
+      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v1.2.3", "~> 1.2")
+      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v1.19.0", "~> 1.19")
+      assert_includes gemfile, github_pin("recording_studio_admin", "RecordingStudio_admin", "v2.19.1", "~> 2.19")
+      assert_includes gemfile, github_pin("recording_studio_icons", "RecordingStudio_icons", "v0.5.0", "~> 0.5")
+      assert_includes gemfile, github_pin("recording_studio_logs", "RecordingStudio_logs", "v0.8.2", "~> 0.8")
+      assert_includes gemfile, github_pin("recording_studio_moveable", "RecordingStudio_moveable", "v6.0.3", "~> 6.0")
       assert_includes gemfile, %(gem "flat_pack", "~> 0.2", github: "bowerbird-app/flatpack", tag: "v0.2.0")
       refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
       refute_includes gemfile, 'tag: "v6.14.0"'
@@ -386,7 +387,7 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_includes source, snippet
   end
 
-  def github_pin(gem_name, repo, tag)
-    %(gem "#{gem_name}", github: "bowerbird-app/#{repo}", tag: "#{tag}")
+  def github_pin(gem_name, repo, tag, requirement)
+    %(gem "#{gem_name}", "#{requirement}", github: "bowerbird-app/#{repo}", tag: "#{tag}")
   end
 end
