@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-19
+
+### Changed
+
+- Development and dummy Gemfiles pin Recording Studio `v7.8.0` (`~> 7.8`), Accessible `v0.56.0`, Trashable `v1.2.3`, Metrics `v0.10.0`, Admin `v2.19.1`, API `v1.19.0`, Icons `v0.5.0`, Logs `v0.8.2`, Moveable `v6.0.3`, and Flatpack `v0.2.0` (`~> 0.2`).
+- The dummy app drops the manual `flat_pack/heroicons` importmap pin. Reorder modal coverage asserts the server-rendered bars icon SVG.
+
+### Upgrade notes
+
+- Bump to `0.12.0`. No Orderable migration. Gemspec floors stay Recording Studio `>= 7.0`, `< 8.0`, Accessible `>= 0.44.0`, `< 1.0`, and Flatpack `>= 0.1.315`.
+- Hosts MUST run the Recording Studio `7.4`, `7.5`, and `7.7` migrations if they have not: `add_recording_studio_recordings_root_type_creation_index`, `enforce_recording_studio_recording_root_invariant`, and `replace_recording_studio_recordings_root_index`. This dummy does not copy those migrations.
+- flat_pack 0.2.0 is supported; hosts moving to 0.2 must remove the manual `flat_pack/heroicons` importmap pin and any `flat-pack--icon` controller registration.
+
 ## [0.11.1] - 2026-11-18
 
 ### Changed
@@ -389,7 +402,8 @@ Cloud Agent Builds match Recording Studio Billing v0.9.13. Skills fetch at Build
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.11.1...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.11.1...v0.12.0
 [0.11.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.11.0...v0.11.1
 [0.7.1]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/bowerbird-app/RecordingStudio_orderable/compare/v0.6.0...v0.7.0

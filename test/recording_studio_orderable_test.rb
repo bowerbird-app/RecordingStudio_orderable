@@ -40,30 +40,31 @@ class RecordingStudioOrderableTest < Minitest::Test
     logs = Gem.loaded_specs.fetch("recording_studio_logs")
     moveable = Gem.loaded_specs.fetch("recording_studio_moveable")
 
-    assert_equal Gem::Version.new("7.7.1"), spec.version
-    assert_equal Gem::Version.new("0.54.1"), accessible.version
-    assert_equal Gem::Version.new("1.2.1"), trashable.version
-    assert_equal Gem::Version.new("0.9.2"), metrics.version
-    assert_equal Gem::Version.new("2.19.0"), admin.version
-    assert_equal Gem::Version.new("1.16.0"), api.version
-    assert_equal Gem::Version.new("0.4.2"), icons.version
-    assert_equal Gem::Version.new("0.8.1"), logs.version
-    assert_equal Gem::Version.new("6.0.2"), moveable.version
-    assert_equal Gem::Version.new("0.1.378"), flat_pack.version
+    assert_equal Gem::Version.new("7.8.0"), spec.version
+    assert_equal Gem::Version.new("0.56.0"), accessible.version
+    assert_equal Gem::Version.new("1.2.3"), trashable.version
+    assert_equal Gem::Version.new("0.10.0"), metrics.version
+    assert_equal Gem::Version.new("2.19.1"), admin.version
+    assert_equal Gem::Version.new("1.19.0"), api.version
+    assert_equal Gem::Version.new("0.5.0"), icons.version
+    assert_equal Gem::Version.new("0.8.2"), logs.version
+    assert_equal Gem::Version.new("6.0.3"), moveable.version
+    assert_equal Gem::Version.new("0.2.0"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
 
     %w[Gemfile test/dummy/Gemfile].each do |relative|
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
-      assert_includes gemfile, github_pin("recording_studio", "RecordingStudio", "v7.7.1")
-      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.54.1")
-      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.9.2")
-      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v1.2.1")
-      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v1.16.0")
-      assert_includes gemfile, github_pin("recording_studio_admin", "RecordingStudio_admin", "v2.19.0")
-      assert_includes gemfile, github_pin("recording_studio_icons", "RecordingStudio_icons", "v0.4.2")
-      assert_includes gemfile, github_pin("recording_studio_logs", "RecordingStudio_logs", "v0.8.1")
-      assert_includes gemfile, github_pin("recording_studio_moveable", "RecordingStudio_moveable", "v6.0.2")
-      assert_includes gemfile, github_pin("flat_pack", "flatpack", "v0.1.378")
+      assert_includes gemfile,
+                      %(gem "recording_studio", "~> 7.8", github: "bowerbird-app/RecordingStudio", tag: "v7.8.0")
+      assert_includes gemfile, github_pin("recording_studio_accessible", "RecordingStudio_accessible", "v0.56.0")
+      assert_includes gemfile, github_pin("recording_studio_metrics", "RecordingStudio_metrics", "v0.10.0")
+      assert_includes gemfile, github_pin("recording_studio_trashable", "RecordingStudio_trashable", "v1.2.3")
+      assert_includes gemfile, github_pin("recording_studio_api", "RecordingStudio_api", "v1.19.0")
+      assert_includes gemfile, github_pin("recording_studio_admin", "RecordingStudio_admin", "v2.19.1")
+      assert_includes gemfile, github_pin("recording_studio_icons", "RecordingStudio_icons", "v0.5.0")
+      assert_includes gemfile, github_pin("recording_studio_logs", "RecordingStudio_logs", "v0.8.2")
+      assert_includes gemfile, github_pin("recording_studio_moveable", "RecordingStudio_moveable", "v6.0.3")
+      assert_includes gemfile, %(gem "flat_pack", "~> 0.2", github: "bowerbird-app/flatpack", tag: "v0.2.0")
       refute_includes gemfile, "1fcbafe94f8eb118f0a22182f63f5110fcc97a56"
       refute_includes gemfile, 'tag: "v6.14.0"'
       refute_includes gemfile, 'tag: "v6.3.0"'
@@ -84,7 +85,8 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     assert_includes readme, "Hosts MUST run the Recording Studio 7.4, 7.5, and 7.7 migrations"
     assert_includes changelog, "Hosts MUST run the Recording Studio `7.4`, `7.5`, and `7.7` migrations"
-    assert_includes changelog, "compare/v0.11.0...v0.11.1"
+    assert_includes changelog, "compare/v0.11.1...v0.12.0"
+    assert_includes changelog, "flat_pack 0.2.0 is supported"
     assert_includes api_config, "shared: {}"
     assert_includes owner_migration, ":owner_type"
     assert_includes owner_migration, ":owner_id"
