@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Creating a child on an orderable parent now assigns the end sibling position, the same as a parent change. A non-orderable parent or a type the parent does not `allows` still keeps a blank or default position.
+- Dummy Puma is `8.1.2` so `bin/bundler-audit` is clean of GHSA-4v6q-hvv7-49h9 and GHSA-rhww-p99c-hgj9.
 
 ### Upgrade notes
 
