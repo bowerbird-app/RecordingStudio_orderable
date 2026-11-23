@@ -2,19 +2,19 @@
 
 module RecordingStudioOrderable
   class ParentPosition
-    def self.sync(recording)
-      new(recording).sync
+    def self.sync(recording, clear: true)
+      new(recording).sync(clear: clear)
     end
 
     def initialize(recording)
       @recording = recording
     end
 
-    def sync
+    def sync(clear: true)
       parent = recording.parent_recording if recording.respond_to?(:parent_recording)
       if append_to?(parent)
         SiblingOrder.new(parent).assign_end_position!(recording)
-      else
+      elsif clear
         clear_position!
       end
     end

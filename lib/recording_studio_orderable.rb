@@ -15,10 +15,15 @@ require "recording_studio/orderable/capabilities/orderable"
 module RecordingStudioOrderable
   PARENT_POSITION_EXTENSION = proc do
     unless method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
+      after_create :recording_studio_orderable_sync_position_on_create
       before_update :recording_studio_orderable_sync_position_on_parent_change,
                     if: :will_save_change_to_parent_recording_id?
       before_update :recording_studio_orderable_normalize_restored_position,
                     if: :recording_studio_orderable_restoring_from_trash?
+
+      define_method(:recording_studio_orderable_sync_position_on_create) do
+        RecordingStudioOrderable::ParentPosition.sync(self, clear: false)
+      end
 
       define_method(:recording_studio_orderable_sync_position_on_parent_change) do
         RecordingStudioOrderable::ParentPosition.sync(self)

@@ -92,6 +92,7 @@ class RecordingStudioOrderableTest < Minitest::Test
 
     assert_includes readme, "Hosts MUST run the Recording Studio 7.4, 7.5, and 7.7 migrations"
     assert_includes changelog, "Hosts MUST run the Recording Studio `7.4`, `7.5`, and `7.7` migrations"
+    assert_includes changelog, "compare/v0.12.0...v0.12.1"
     assert_includes changelog, "compare/v0.11.1...v0.12.0"
     assert_includes changelog, "flat_pack 0.2.0 is supported"
     assert_includes api_config, "shared: {}"
