@@ -63,7 +63,7 @@ class ProductInvariantsTest < Minitest::Test
     assert_includes workflow, "bundle exec rails test"
     assert_equal 2, workflow.scan("BUNDLE_GEMFILE: test/dummy/Gemfile").size
     assert_equal 4, workflow.scan("BUNDLE_GEMFILE: ${{ github.workspace }}/test/dummy/Gemfile").size
-    assert_equal 5, workflow.scan("BUNDLE_PATH: ${{ github.workspace }}/vendor/bundle").size
+    assert_equal 6, workflow.scan("BUNDLE_PATH: ${{ github.workspace }}/vendor/bundle").size
   end
 
   def test_merged_line_coverage_gate_stays_at_94
@@ -80,6 +80,7 @@ class ProductInvariantsTest < Minitest::Test
     assert_includes rake, '"COVERAGE_PART" => "dummy"'
     assert_includes rake, "SimpleCov.collate"
     assert_includes rake, "minimum_coverage line: 94"
+    assert_includes rake, "Bundler.settings[:path]"
     refute_includes rake, '"bundle", "install"'
   end
 

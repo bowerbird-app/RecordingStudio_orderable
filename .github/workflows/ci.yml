@@ -71,6 +71,7 @@ jobs:
     - name: Run gem tests
       run: bundle exec rake app:test
       env:
+        BUNDLE_PATH: ${{ github.workspace }}/vendor/bundle
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/recording_studio_orderable_test
 
     - name: Run dummy tests

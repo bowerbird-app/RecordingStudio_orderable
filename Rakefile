@@ -19,13 +19,20 @@ task :test do
 end
 
 def run_dummy_mcp_tests
-  bundle_path = ENV.fetch("BUNDLE_PATH", nil)
-  bundle_path = File.expand_path(bundle_path) if bundle_path
+  bundle_path = absolute_bundle_path
   Bundler.with_unbundled_env do
     Dir.chdir("test/dummy") do
       run_dummy_mcp_suite(bundle_path)
     end
   end
+end
+
+def absolute_bundle_path
+  raw = ENV.fetch("BUNDLE_PATH", nil)
+  raw = Bundler.settings[:path] if raw.nil? || raw.empty?
+  return if raw.nil? || raw.to_s.empty?
+
+  File.expand_path(raw.to_s)
 end
 
 def run_dummy_mcp_suite(bundle_path)
