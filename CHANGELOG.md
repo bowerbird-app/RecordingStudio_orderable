@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Creating a child on an orderable parent now assigns the end sibling position, the same as a parent change. A non-orderable parent or a type the parent does not `allows` still keeps a blank or default position.
 - Dummy Puma is `8.1.2` so `bin/bundler-audit` is clean of GHSA-4v6q-hvv7-49h9 and GHSA-rhww-p99c-hgj9.
+- Dummy Brakeman is `8.1.1`. `.ruby-version` is `3.3.14` so `bin/brakeman --ensure-latest` is clean of CVE-2026-132825.
 
 ### Upgrade notes
 
 - Bump to `0.12.1`. No Orderable migration. Existing children keep their stored positions. New children of an orderable parent land at the end of that parent's list.
+- Dummy and development `.ruby-version` is `3.3.14`. Gemspec still requires `>= 3.3.0`.
 
 ## [0.12.0] - 2026-11-19
 

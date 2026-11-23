@@ -293,6 +293,7 @@ configuration load errors, and stored recording names stay English.
 
 1. Install Orderable `0.12.1`. No Orderable migration.
 2. New children of an orderable parent now take the end sibling position. Existing rows keep their stored positions. A non-orderable parent or a type outside `allows` is unchanged.
+3. Dummy and this repository's `.ruby-version` is `3.3.14`. Hosts stay on `>= 3.3.0`.
 
 ## Upgrading to 0.12.0
 
