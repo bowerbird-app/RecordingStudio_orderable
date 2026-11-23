@@ -9,6 +9,12 @@ RecordingStudio.configure do |config|
     RecordingStudioApi::ApiCredential
     RecordingStudioApi::ApiAccessToken
   ] if defined?(RecordingStudioApi)
+  if defined?(RecordingStudioAttachable)
+    config.recordable_types += %w[RecordingStudioAttachable::Attachment]
+  end
+  if defined?(RecordingStudioSiteSettings)
+    config.recordable_types += %w[RecordingStudioSiteSettings::SiteSetting]
+  end
   config.actor = -> { Current.actor }
   config.authorize_write = ->(actor:, **) { actor.present? }
   config.event_notifications_enabled = true
