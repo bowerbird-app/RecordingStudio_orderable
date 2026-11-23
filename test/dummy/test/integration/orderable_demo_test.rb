@@ -137,6 +137,26 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
     assert @folder_recording.events(actions: ["reordered"]).exists?
   end
 
+  test "creating a page after reorder lands at the end of the sibling list" do
+    sign_in @user
+    pages = @folder_recording.recording_studio_orderable_children.to_a
+    @folder_recording.recording_studio_orderable_reorder!(
+      ordered_recording_ids: pages.reverse.map(&:id),
+      actor: @user
+    )
+
+    created = @folder_recording.record(Page, actor: @user, parent_recording: @folder_recording) do |page|
+      page.title = "Imported After Reorder"
+      page.slug = "imported-after-reorder"
+      page.body = "Dummy created after reorder"
+    end
+
+    children = @folder_recording.reload.recording_studio_orderable_children.to_a
+    assert_equal created.id, children.last.id
+    assert_equal children.length - 1, created.reload.recording_studio_orderable_position
+    assert_equal (0...children.length).to_a, children.map(&:recording_studio_orderable_position)
+  end
+
   test "appending a page moves it to the end of the sibling list" do
     sign_in @user
     pages = @folder_recording.recording_studio_orderable_children.to_a
