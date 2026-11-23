@@ -1,48 +1,30 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "json"
 require_relative "support/load_mcp_tool_name"
 
 class McpCopyTest < Minitest::Test
-  ABSENT = {
-    loaded: defined?(::RecordingStudioMcp),
-    names: RecordingStudioOrderable::McpCopy.tool_names.freeze,
-    registrations: RecordingStudioOrderable::McpCopy.registrations.freeze,
-    registered: RecordingStudioOrderable::McpCopy.register!
-  }.freeze
   PRESS_CENTER = "RecordingStudioPressCenters::PressCenter"
   FORBIDDEN = [
     "RecordingStudioOrderable", "Accessible", "permission", "Admin", ":edit", ":view", " role"
   ].freeze
 
-  def setup
-    LoadMcpToolName.load!
-    enable("List", allows: ["ListItem"])
-    enable("Shelf", allows: %w[Page Note])
-    enable("Bin")
-    enable("Alpha", allows: ["Widget"])
-    enable("Beta", allows: ["Widget"])
-    enable("Binder", allows: ["Statuses"])
-  end
-
-  def teardown
-    RecordingStudio::Orderable::Api::OpenapiOverrides.reset!
-  end
-
   def test_register_is_a_no_op_when_mcp_is_absent
-    assert_nil ABSENT.fetch(:loaded)
-    assert_empty ABSENT.fetch(:names)
-    assert_empty ABSENT.fetch(:registrations)
-    assert_nil ABSENT.fetch(:registered)
+    refute defined?(::RecordingStudioMcp)
+    refute Object.const_defined?(:RecordingStudioApi, false)
+    assert_empty RecordingStudioOrderable::McpCopy.tool_names
+    assert_empty RecordingStudioOrderable::McpCopy.registrations
+    assert_nil RecordingStudioOrderable::McpCopy.register!
   end
 
   def test_an_orderable_type_gets_order_and_move_tools_named_for_the_allowed_child
     tools = tools_for("List")
 
     assert_equal(%w[order_list_item move_list_item], tools.map { |tool| tool.fetch(:name) })
-    assert_equal RecordingStudioMcp.tool_name("ListItem", "order"), tools.first.fetch(:name)
-    assert_equal RecordingStudioMcp.tool_name("ListItem", "move"), tools.last.fetch(:name)
-    assert_equal(%i[reorder move_position], tools.map { |tool| tool.fetch(:action) })
+    assert_equal mcp_snapshot.fetch(:list_order), tools.first.fetch(:name)
+    assert_equal mcp_snapshot.fetch(:list_move), tools.last.fetch(:name)
+    assert_equal(%w[reorder move_position], tools.map { |tool| tool.fetch(:action) })
     assert_equal(%w[List List], tools.map { |tool| tool.fetch(:type) })
     assert_equal(["Order list item", "Move list item"], tools.map { |tool| tool.fetch(:title) })
     tools.each do |tool|
@@ -56,12 +38,13 @@ class McpCopyTest < Minitest::Test
   end
 
   def test_a_type_without_orderable_gets_no_tool
-    refute RecordingStudio.capability_enabled?(:orderable, for: "Order")
+    refute mcp_snapshot.fetch(:order_enabled)
     assert_empty tools_for("Order")
-    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "order_order"
-    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "reorder_children"
-    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "move_child_position"
-    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "capability_action"
+    names = mcp_snapshot.fetch(:registrations).map { |tool| tool.fetch(:name) }
+    refute_includes names, "order_order"
+    refute_includes names, "reorder_children"
+    refute_includes names, "move_child_position"
+    refute_includes names, "capability_action"
   end
 
   def test_a_plural_public_name_is_singularized
@@ -130,26 +113,115 @@ class McpCopyTest < Minitest::Test
       title: "Reorder press center",
       description: "Sets the order of children in this press center."
     )
-
     document = api.openapi_for(type: PRESS_CENTER, action: :reorder)
+    tool = tools_for("List").first
 
     assert_equal "Reorder press center", document.fetch(:title)
     assert_equal "Sets the order of children in this press center.", document.fetch(:description)
-    assert_equal "Order list item", tools_for("List").first.fetch(:title)
-    refute_equal document.fetch(:description), tools_for("List").first.fetch(:description)
-    refute_includes tools_for("List").first.fetch(:description), "press center"
+    assert_equal "Order list item", tool.fetch(:title)
+    refute_equal document.fetch(:description), tool.fetch(:description)
+    refute_includes tool.fetch(:description), "press center"
+  ensure
+    RecordingStudio::Orderable::Api::OpenapiOverrides.reset!
   end
 
   private
+
+  def tools_for(type)
+    registrations.select { |tool| tool.fetch(:type) == type }
+  end
+
+  def registrations
+    mcp_snapshot.fetch(:registrations)
+  end
+
+  def mcp_snapshot
+    @mcp_snapshot ||= in_mcp_process do
+      enable("List", allows: ["ListItem"])
+      enable("Shelf", allows: %w[Page Note])
+      enable("Bin")
+      enable("Alpha", allows: ["Widget"])
+      enable("Beta", allows: ["Widget"])
+      enable("Binder", allows: ["Statuses"])
+      {
+        registrations: RecordingStudioOrderable::McpCopy.registrations,
+        list_order: RecordingStudioMcp.tool_name("ListItem", "order"),
+        list_move: RecordingStudioMcp.tool_name("ListItem", "move"),
+        order_enabled: RecordingStudio.capability_enabled?(:orderable, for: "Order")
+      }
+    end
+  end
+
+  def in_mcp_process(&block)
+    reader, writer = IO.pipe
+    pid = fork do
+      reader.close
+      write_mcp_result(writer, &block)
+    end
+    writer.close
+    raw = reader.read
+    reader.close
+    _pid, status = Process.wait2(pid)
+    flunk("mcp process failed: #{status.inspect} #{raw}") unless status.success?
+
+    kind, value = JSON.parse(raw)
+    flunk(value) unless kind == "ok"
+    normalize_snapshot(value)
+  end
+
+  def write_mcp_result(writer)
+    LoadMcpToolName.load!
+    writer.write(JSON.generate(["ok", json_ready(yield)]))
+  rescue StandardError => e
+    writer.write(JSON.generate(["err", "#{e.class}: #{e.message}"]))
+  ensure
+    writer.close
+    Minitest::Runnable.runnables.clear
+    flush_child_coverage
+  end
+
+  def flush_child_coverage
+    return unless defined?(SimpleCov) && SimpleCov.running
+
+    SimpleCov.pid = Process.pid
+    SimpleCov.command_name "mcp copy #{Process.pid}"
+    SimpleCov.print_error_status = false
+    SimpleCov.minimum_coverage 0
+    SimpleCov.result
+  end
+
+  def normalize_snapshot(value)
+    {
+      registrations: value.fetch("registrations").map { |tool| normalize_tool(tool) },
+      list_order: value.fetch("list_order"),
+      list_move: value.fetch("list_move"),
+      order_enabled: value.fetch("order_enabled")
+    }
+  end
+
+  def normalize_tool(tool)
+    tool.to_h do |key, item|
+      if key == "input"
+        [:input, item.transform_values { |field| field.transform_keys(&:to_sym) }]
+      else
+        [key.to_sym, item]
+      end
+    end
+  end
+
+  def json_ready(value)
+    case value
+    when Hash then value.transform_keys(&:to_s).transform_values { |item| json_ready(item) }
+    when Array then value.map { |item| json_ready(item) }
+    when Symbol then value.to_s
+    else value
+    end
+  end
 
   def enable(type, allows: nil)
     RecordingStudio.enable_capability(:orderable, on: type)
     return if allows.nil?
 
     RecordingStudio.set_capability_options(:orderable, on: type, allows: allows)
-  end
-
-  def tools_for(type)
-    RecordingStudioOrderable::McpCopy.registrations.select { |tool| tool.fetch(:type) == type }
   end
 end

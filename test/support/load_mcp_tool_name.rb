@@ -9,7 +9,7 @@ module LoadMcpToolName
   def load!
     return if defined?(::RecordingStudioMcp) && ::RecordingStudioMcp.respond_to?(:tool_name)
 
-    require "recording_studio_api" unless defined?(::RecordingStudioApi)
+    load_api_names unless defined?(::RecordingStudioApi)
     lib = lib_path
     $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
     require "recording_studio_mcp/tool_name"
@@ -18,6 +18,14 @@ module LoadMcpToolName
     ::RecordingStudioMcp.define_singleton_method(:tool_name) do |type, action|
       ::RecordingStudioMcp::ToolName.call(type, action)
     end
+  end
+
+  def load_api_names
+    verbose = $VERBOSE
+    $VERBOSE = nil
+    require "recording_studio_api"
+  ensure
+    $VERBOSE = verbose
   end
 
   def lib_path
