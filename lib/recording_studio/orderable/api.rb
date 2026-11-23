@@ -5,6 +5,7 @@ require "recording_studio/orderable/api/move_position_recording"
 require "recording_studio/orderable/api/reorder_recording"
 require "recording_studio/orderable/api/openapi_overrides"
 require "recording_studio/orderable/api/registration"
+require "recording_studio_orderable/mcp_copy"
 
 module RecordingStudio
   module Orderable
@@ -13,63 +14,53 @@ module RecordingStudio
       ACTIONS = {
         reorder: {
           handler: ReorderRecording,
-          summary: "Change the order of the children under this recording.",
-          description: "Sets the sibling order of children under this recording. Run this on the parent recording, " \
-                       "not on a child. Create this recording first, then create the children under it. Pass " \
-                       "ordered_recording_ids as those children's ids from this recording's children list, or the " \
-                       "ids returned when they were created. Do not pass this recording's own id. A partial list is " \
-                       "allowed: listed children move to the front, and omitted eligible children are appended by " \
-                       "created_at then id. Any missing, foreign, already-trashed, or duplicate id is rejected, and " \
-                       "nothing is changed. An empty list is allowed: eligible children are then ordered by " \
-                       "created_at then id. Position is not set through create or update. If the children are " \
-                       "already in that order, the call succeeds and the order stays the same. Returns this recording.",
-          success: "Children reordered.",
-          forbidden: "API access is not authorized to reorder this recording.",
-          invalid: "Reorder request is invalid.",
+          summary: "Reorder the direct children of this recording.",
+          description: "POST sets the sibling order of the direct children of the recording in the URL. " \
+                       "The body field ordered_recording_ids lists child recording ids in the new order. " \
+                       "Listed children move to the front. Eligible children omitted from the list are appended " \
+                       "by created_at, then id. An empty list orders every eligible child by created_at, then id. " \
+                       "A missing, foreign, already-trashed, or duplicate id raises InvalidChild and positions " \
+                       "stay unchanged. The response is this recording. Create and update do not set position.",
+          success: "This recording is returned with its children in the new order.",
+          forbidden: "The caller cannot reorder the children of this recording.",
+          invalid: "The reorder body is invalid.",
           fields: {
             ordered_recording_ids: {
               type: :array,
               required: true,
-              description: "The child recording ids in the new sibling order. These are the children's ids from this " \
-                           "recording's children list, or the ids returned when they were created, not this " \
-                           "recording's own id. A partial list is allowed: listed children move to the front, and " \
-                           "omitted eligible children are appended by created_at then id. Any missing, foreign, " \
-                           "already-trashed, or duplicate id is rejected, and nothing is changed. An empty list is " \
-                           "allowed."
+              description: "Child recording ids in the requested order. Listed ids come first. Eligible children " \
+                           "omitted from the array are appended by created_at, then id. An empty array orders " \
+                           "every eligible child by created_at, then id. A missing, foreign, already-trashed, or " \
+                           "duplicate id raises InvalidChild and positions stay unchanged."
             }
           }
         }.freeze,
         move_position: {
           handler: MovePositionRecording,
-          summary: "Move one child to a new place among this recording's children.",
-          description: "Moves one child to a sibling index under this recording. The child stays under this " \
-                       "recording. This does not change parent. To change parent, use the gem that moves recordings. " \
-                       "Run this on the parent recording, not on the child. Create this recording first, then create " \
-                       "the child under it. Pass recording_id as that child's id from this recording's children " \
-                       "list, or the id returned when it was created. Pass to_index as a zero-based sibling index " \
-                       "among eligible children (0 is first). A missing, foreign, or already-trashed recording_id is " \
-                       "rejected, and nothing is changed. A to_index that is not an integer is rejected, and nothing " \
-                       "is changed. A to_index below 0 is treated as 0. A to_index past the last sibling puts the " \
-                       "child last. Position is not set through create or update. If the child is already at that " \
-                       "index, the call succeeds and the order stays the same. Returns this recording.",
-          success: "Child moved in sibling order.",
-          forbidden: "API access is not authorized to move this recording.",
-          invalid: "Move request is invalid.",
+          summary: "Move one direct child to a new index.",
+          description: "POST moves one direct child to a sibling index under the recording in the URL. " \
+                       "The child stays under this parent. The body field recording_id is the child recording id. " \
+                       "The body field to_index is the index among eligible children, counting from 0. " \
+                       "0 is first. An index below 0 is treated as 0. An index past the last child puts the child " \
+                       "last. A missing, foreign, or already-trashed recording_id raises InvalidChild and positions " \
+                       "stay unchanged. A to_index that is not an integer is rejected and positions stay unchanged. " \
+                       "The response is this recording. Create and update do not set position.",
+          success: "This recording is returned with the child at the requested index.",
+          forbidden: "The caller cannot move a child of this recording.",
+          invalid: "The move body is invalid.",
           fields: {
             recording_id: {
               type: :string,
               required: true,
               allow_blank: false,
-              description: "The id of the child recording to move. Use the id from this recording's children list, " \
-                           "or the id returned when the child was created. Not this recording's own id. A missing, " \
-                           "foreign, or already-trashed id is rejected."
+              description: "Id of the direct child to move. A missing, foreign, or already-trashed id raises " \
+                           "InvalidChild and positions stay unchanged."
             },
             to_index: {
               type: :integer,
               required: true,
-              description: "Where the child should sit among this recording's eligible children, counting from 0. " \
-                           "0 is first. A number past the last sibling puts it last. A number below 0 is treated as " \
-                           "0. Must be an integer."
+              description: "Index among eligible children, counting from 0. 0 is first. A value below 0 is " \
+                           "treated as 0. A value past the last child puts the child last. A non-integer is rejected."
             }
           }
         }.freeze
@@ -84,7 +75,9 @@ module RecordingStudio
       end
 
       def self.register_capability_action!
-        Registration.register!
+        registered = Registration.register!
+        RecordingStudioOrderable::McpCopy.register!
+        registered
       end
     end
   end

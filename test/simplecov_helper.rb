@@ -7,5 +7,11 @@ SimpleCov.start do
   add_filter "/test/"
   add_filter "/config/"
   add_filter "/db/"
-  minimum_coverage line: 94
+  if ENV["COVERAGE_PART"] == "unit"
+    command_name "Unit Tests"
+    coverage_dir "coverage/parts"
+    minimum_coverage 0
+  else
+    minimum_coverage line: 94
+  end
 end

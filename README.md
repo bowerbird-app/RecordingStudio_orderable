@@ -192,9 +192,26 @@ There is no host resolver and no fail-open switch. Grant Accessible roles on the
 
 ## JSON API and MCP
 
-When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. MCP uses those through the generic `capability_action` path. This gem does not ship an MCP tool. Summaries, action text, and input field descriptions for those pages live in `RecordingStudio::Orderable::Api::ACTIONS`.
+When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. HTTP summaries, descriptions, field descriptions, and success text live in `RecordingStudio::Orderable::Api::ACTIONS`. MCP tool descriptions, field descriptions, and success text live in `RecordingStudioOrderable::McpCopy`.
 
-A host can replace the MCP title and description for one recordable type. Other types keep the generic summary and description, and MCP still builds the generic title from the recordable label, such as "Folder - Reorder".
+When Recording Studio MCP is loaded, `RecordingStudioOrderable::McpCopy.register!` adds named tools for each recordable type that includes `RecordingStudio::Capabilities::Orderable`. Include `RecordingStudioOrderable::McpCopy.tool_names` on the host MCP server. The host calls `register_server`. A type that does not include Orderable gets no tool.
+
+Each orderable parent gets two tools, because `register_tool` takes one action and `reorder` and `move_position` stay separate actions.
+
+| Tool | Action | What it does |
+|---|---|---|
+| `order_<noun>` | `reorder` | Sets the sibling order of the direct children this parent allows. |
+| `move_<noun>` | `move_position` | Moves one direct child to a new index under the same parent. |
+
+The noun is the type token from `RecordingStudioMcp.tool_name`. That helper uses the type's public name on the public API when the registration exists, and otherwise the class name without its namespace. It singularizes the name. `tool_names` and `registrations` are empty until Recording Studio MCP is loaded.
+
+When `allows:` names one child type, the noun is that child. `List` with `allows: ["ListItem"]` gets `order_list_item` and `move_list_item`. When `allows:` names more than one type, or is omitted, the noun is the parent. `Folder` with no `allows:` gets `order_folder` and `move_folder`. When two parents would share a tool name, each name gains that parent's token as a prefix. `Alpha` and `Beta` that both allow `Widget` get `order_alpha_widget` and `order_betum_widget`, because the helper singularizes `Beta` to `betum`.
+
+`order_list_item` rejects a missing, foreign, already-trashed, or duplicate id and leaves the order unchanged. A partial list moves the listed children to the front and appends omitted eligible children. `move_list_item` keeps the child under the same parent.
+
+Hosts that load MCP need `recording_studio_mcp` `>= 0.45` and `< 0.46`. The gemspec leaves that gem optional. `McpCopy.register!` returns before it registers tools until the gem is loaded.
+
+`override_openapi` still sets the OpenAPI title and description for one recordable type. It does not rename `order_list_item` or `move_list_item`. A title such as "Reorder press center" stays on that type's OpenAPI operation.
 
 ```ruby
 RecordingStudio::Orderable::Api.override_openapi(
@@ -212,7 +229,7 @@ RecordingStudio::Orderable::Api.override_openapi(
 )
 ```
 
-`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI and MCP read the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy.
+`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI reads the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy. Named MCP tools keep the titles from the naming rule above.
 
 Hosts list the actions on orderable parent types. Position stays off create and update:
 
@@ -289,6 +306,13 @@ configuration load errors, and stored recording names stay English.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
 
+## Upgrading to 0.12.2
+
+1. Install Orderable `0.12.2`. No Orderable migration.
+2. Hosts that load Recording Studio MCP `0.45` or newer and below `0.46` include `RecordingStudioOrderable::McpCopy.tool_names` on the MCP server. A type that includes Orderable gets `order_<noun>` and `move_<noun>`. The noun comes from `RecordingStudioMcp.tool_name`. One `allows:` entry uses that child, so `List` allowing `ListItem` gets `order_list_item` and `move_list_item`. Several `allows:` entries, or none, use the parent. A type without Orderable gets no tool. `tool_names` is empty until MCP is loaded.
+3. `override_openapi` still sets the OpenAPI title and description for one type. It does not rename the named tools.
+4. Action names, fields, routes, authorization, position writes, and the `reordered` event stay the same.
+
 ## Upgrading to 0.12.1
 
 1. Install Orderable `0.12.1`. No Orderable migration.
@@ -348,7 +372,7 @@ configuration load errors, and stored recording names stay English.
 
 ## Dummy app
 
-`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v7.8.0` (`~> 7.8`), Accessible tag `v0.56.0`, Trashable tag `v1.2.3`, Metrics tag `v0.10.0`, Flatpack tag `v0.2.0` (`~> 0.2`), Recording Studio API tag `v1.19.0`, Logs tag `v0.8.2`, Moveable tag `v6.0.3`, Icons tag `v0.5.0`, and Admin tag `v2.19.1`. Those pins are for this repository. Hosts still need Recording Studio 7.0 or newer and below 8, Accessible 0.44.0 or newer and below 1.0, and Flatpack 0.1.315 or newer. Hosts MUST run the Recording Studio 7.4, 7.5, and 7.7 migrations if they have not. This dummy does not copy them. `view_component` stays at 4.19.0. Trashable `1.2.3` registers the trash filter, so the dummy does not. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`. Seeds create that root with `create_root_recording!`. The dummy `authorize_write` callback allows a write when an actor is present. The dummy `config/recording_studio_api.yml` is `shared: {}` so API 1.19 can boot, and the dummy copies API migration `20261117000024` so new API clients can store `owner`. Hosts moving to Flatpack 0.2 remove the manual `flat_pack/heroicons` importmap pin and any `flat-pack--icon` controller registration. The dummy already dropped that pin.
+`test/dummy` is a host that proves the gem. The root Gemfile and the dummy Gemfile pin Recording Studio tag `v7.8.0` (`~> 7.8`), Accessible tag `v0.56.0`, Trashable tag `v1.2.3`, Metrics tag `v0.10.0`, Flatpack tag `v0.2.0` (`~> 0.2`), Logs tag `v0.8.2`, Moveable tag `v6.0.3`, Icons tag `v0.5.0`, and Admin tag `v2.19.1`. The root Gemfile pins Recording Studio API tag `v1.19.0`. The dummy Gemfile pins API tag `v1.21.3` and Recording Studio MCP tag `v0.45.2` (`>= 0.45`, `< 0.46`). MCP 0.45.2 also needs OAuth tag `v0.26.0`, Cache tag `v0.8.0`, Site Settings tag `v0.7.0`, and Attachable tag `v0.34.0` in that Gemfile. The gemspec does not depend on `recording_studio_mcp`. Those pins are for this repository. Hosts still need Recording Studio 7.0 or newer and below 8, Accessible 0.44.0 or newer and below 1.0, and Flatpack 0.1.315 or newer. Hosts MUST run the Recording Studio 7.4, 7.5, and 7.7 migrations if they have not. This dummy does not copy them. `view_component` stays at 4.19.0. Trashable `1.2.3` registers the trash filter, so the dummy does not. Dummy Workspace enables `:accessible` and `:api_access_point`. The seeded admin owns that workspace. Home loads the workspace through Accessible, not `Workspace.first`. Seeds create that root with `create_root_recording!`. The dummy `authorize_write` callback allows a write when an actor is present. The dummy `config/recording_studio_api.yml` is `shared: {}` so API 1.21 can boot, and the dummy copies API migration `20261117000024` so new API clients can store `owner`. The dummy lists `RecordingStudioAttachable::Attachment` and `RecordingStudioSiteSettings::SiteSetting` in `config.recordable_types` because those engines declare recordables. Hosts moving to Flatpack 0.2 remove the manual `flat_pack/heroicons` importmap pin and any `flat-pack--icon` controller registration. The dummy already dropped that pin.
 
 Orderable's `config.layout` stays nil, so signed-in pages use `RecordingStudio.configuration.layout` and then the default layout. Sign-in uses the application layout. Flatpack stylesheets load before the Tailwind sheet. The home page lists sibling positions and reorders those pages by dragging rows in a modal. The modal table posts FlatPack's reorder payload to the dummy reorder path. Each item id is the recording id string.
 
@@ -377,3 +401,5 @@ with Draft off to load a new pack. See
 bundle exec rubocop
 bundle exec rake app:test
 ```
+
+`rake app:test` runs the gem suite, then `test/dummy/test/orderable_mcp_tools_test.rb`. Each of those writes coverage with the minimum turned off. The rake task then collates `coverage/parts` and enforces the 94% line gate on the merged result. Install the dummy bundle into the same `vendor/bundle` as the root bundle, and migrate the dummy test database, before that command. CI does that install with `BUNDLE_GEMFILE` set to `test/dummy/Gemfile` and `BUNDLE_PATH` set to `vendor/bundle`. The rake task forwards that path, from `BUNDLE_PATH` or the root bundle config, into the dummy process. The gem suite does not load Recording Studio API or Recording Studio MCP. The dummy file does, and calls `RecordingStudioMcp.register_tool`. The rest of the dummy suite is `bundle exec rails test` from `test/dummy`.

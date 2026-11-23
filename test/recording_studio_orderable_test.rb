@@ -52,7 +52,10 @@ class RecordingStudioOrderableTest < Minitest::Test
     assert_equal Gem::Version.new("0.2.0"), flat_pack.version
     assert_equal Gem::Version.new("4.19.0"), view_component.version
 
-    %w[Gemfile test/dummy/Gemfile].each do |relative|
+    {
+      "Gemfile" => ["v1.19.0", "~> 1.19"],
+      "test/dummy/Gemfile" => ["v1.21.3", "~> 1.21"]
+    }.each do |relative, (api_tag, api_requirement)|
       gemfile = File.read(File.expand_path("../#{relative}", __dir__))
       assert_includes gemfile,
                       %(gem "recording_studio", "~> 7.8", github: "bowerbird-app/RecordingStudio", tag: "v7.8.0")
@@ -60,7 +63,7 @@ class RecordingStudioOrderableTest < Minitest::Test
         ["recording_studio_accessible", "RecordingStudio_accessible", "v0.56.0", "~> 0.56"],
         ["recording_studio_metrics", "RecordingStudio_metrics", "v0.10.0", "~> 0.10"],
         ["recording_studio_trashable", "RecordingStudio_trashable", "v1.2.3", "~> 1.2"],
-        ["recording_studio_api", "RecordingStudio_api", "v1.19.0", "~> 1.19"],
+        ["recording_studio_api", "RecordingStudio_api", api_tag, api_requirement],
         ["recording_studio_admin", "RecordingStudio_admin", "v2.19.1", "~> 2.19"],
         ["recording_studio_icons", "RecordingStudio_icons", "v0.5.0", "~> 0.5"],
         ["recording_studio_logs", "RecordingStudio_logs", "v0.8.2", "~> 0.8"],
@@ -79,6 +82,24 @@ class RecordingStudioOrderableTest < Minitest::Test
       refute_includes gemfile, 'tag: "v0.1.332"'
       refute_includes gemfile, "allow_unauthorized_writes"
     end
+
+    dummy_gemfile = File.read(File.expand_path("../test/dummy/Gemfile", __dir__))
+    root_gemfile = File.read(File.expand_path("../Gemfile", __dir__))
+    %w[
+      recording_studio_attachable
+      recording_studio_cache
+      recording_studio_site_settings
+      recording_studio_oauth
+      recording_studio_mcp
+    ].each { |name| refute_includes root_gemfile, name }
+    assert_includes dummy_gemfile, github_pin("recording_studio_attachable", "RecordingStudio_attachable", "v0.34.0")
+    assert_includes dummy_gemfile, github_pin("recording_studio_cache", "RecordingStudio_cache", "v0.8.0")
+    assert_includes dummy_gemfile,
+                    github_pin("recording_studio_site_settings", "RecordingStudio_site_settings", "v0.7.0")
+    assert_includes dummy_gemfile, github_pin("recording_studio_oauth", "RecordingStudio_Oauth", "v0.26.0")
+    assert_includes dummy_gemfile, 'gem "recording_studio_mcp", ">= 0.45", "< 0.46"'
+    assert_includes dummy_gemfile, 'github: "bowerbird-app/RecordingStudio_MCP", tag: "v0.45.2"'
+    refute_includes gemspec, 'add_dependency "recording_studio_mcp"'
 
     readme = File.read(File.expand_path("../README.md", __dir__))
     changelog = File.read(File.expand_path("../CHANGELOG.md", __dir__))

@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", "~> 8.1.0"
   spec.add_dependency "recording_studio", ">= 7.0", "< 8.0"
   spec.add_dependency "recording_studio_accessible", ">= 0.44.0", "< 1.0"
+  # recording_studio_mcp is optional. Hosts that load it need >= 0.45 and < 0.46.
 end

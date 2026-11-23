@@ -61,6 +61,27 @@ class ProductInvariantsTest < Minitest::Test
     assert_includes workflow, "bundle exec rubocop"
     assert_includes workflow, "bundle exec rake app:test"
     assert_includes workflow, "bundle exec rails test"
+    assert_equal 2, workflow.scan("BUNDLE_GEMFILE: test/dummy/Gemfile").size
+    assert_equal 4, workflow.scan("BUNDLE_GEMFILE: ${{ github.workspace }}/test/dummy/Gemfile").size
+    assert_equal 6, workflow.scan("BUNDLE_PATH: ${{ github.workspace }}/vendor/bundle").size
+  end
+
+  def test_merged_line_coverage_gate_stays_at_94
+    helper = File.read(File.join(ROOT, "test/simplecov_helper.rb"))
+    boot = File.read(File.join(ROOT, "test/dummy/config/boot.rb"))
+    rake = File.read(File.join(ROOT, "Rakefile"))
+
+    assert_includes helper, 'if ENV["COVERAGE_PART"] == "unit"'
+    assert_includes helper, "minimum_coverage 0"
+    assert_includes boot, 'if ENV["COVERAGE_PART"] == "dummy"'
+    assert_includes boot, "minimum_coverage 0"
+    assert_includes boot, "coverage/parts"
+    assert_includes rake, 'ENV["COVERAGE_PART"] = "unit"'
+    assert_includes rake, '"COVERAGE_PART" => "dummy"'
+    assert_includes rake, "SimpleCov.collate"
+    assert_includes rake, "minimum_coverage line: 94"
+    assert_includes rake, "Bundler.settings[:path]"
+    refute_includes rake, '"bundle", "install"'
   end
 
   def test_dummy_database_defaults_use_the_addon_name
