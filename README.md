@@ -402,4 +402,4 @@ bundle exec rubocop
 bundle exec rake app:test
 ```
 
-`rake app:test` runs the gem suite, then `test/dummy/test/orderable_mcp_tools_test.rb`, so the gem coverage gate includes the named MCP tools. Install the dummy bundle and migrate the dummy test database before that command. The gem suite does not load Recording Studio API or Recording Studio MCP. The dummy file does, and calls `RecordingStudioMcp.register_tool`. The rest of the dummy suite is `bundle exec rails test` from `test/dummy`.
+`rake app:test` runs the gem suite, then `test/dummy/test/orderable_mcp_tools_test.rb`. The gem suite writes its coverage with the minimum turned off. The dummy file boots with `COVERAGE_PART=dummy` and enforces the 94% line gate on the merged result. Install the dummy bundle into the same `vendor/bundle` as the root bundle, and migrate the dummy test database, before that command. CI does that install with `BUNDLE_GEMFILE` set to `test/dummy/Gemfile`. The gem suite does not load Recording Studio API or Recording Studio MCP. The dummy file does, and calls `RecordingStudioMcp.register_tool`. The rest of the dummy suite is `bundle exec rails test` from `test/dummy`.
