@@ -5,6 +5,7 @@ require "recording_studio/orderable/api/move_position_recording"
 require "recording_studio/orderable/api/reorder_recording"
 require "recording_studio/orderable/api/openapi_overrides"
 require "recording_studio/orderable/api/registration"
+require "recording_studio_orderable/mcp_copy"
 
 module RecordingStudio
   module Orderable
@@ -84,7 +85,9 @@ module RecordingStudio
       end
 
       def self.register_capability_action!
-        Registration.register!
+        registered = Registration.register!
+        RecordingStudioOrderable::McpCopy.register!
+        registered
       end
     end
   end

@@ -192,9 +192,20 @@ There is no host resolver and no fail-open switch. Grant Accessible roles on the
 
 ## JSON API and MCP
 
-When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. MCP uses those through the generic `capability_action` path. This gem does not ship an MCP tool. Summaries, action text, and input field descriptions for those pages live in `RecordingStudio::Orderable::Api::ACTIONS`.
+When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. Summaries, action text, and input field descriptions for those actions live in `RecordingStudio::Orderable::Api::ACTIONS`.
 
-A host can replace the MCP title and description for one recordable type. Other types keep the generic summary and description, and MCP still builds the generic title from the recordable label, such as "Folder - Reorder".
+When Recording Studio MCP is loaded, `RecordingStudioOrderable::McpCopy.register!` adds two named tools. Include `RecordingStudioOrderable::McpCopy.tool_names` on the host MCP server. The host calls `register_server`. Ordering is a capability on a parent type the host already registered, so these tools leave `type` unset and the caller passes that parent.
+
+| Tool | Action | What it does |
+|---|---|---|
+| `reorder_children` | `reorder` | Sets the sibling order of the parent's direct children. |
+| `move_child_position` | `move_position` | Moves one direct child to a new index under the same parent. |
+
+The parent type must opt in to ordering. A child must be a direct child that parent allows. `reorder_children` rejects a missing, foreign, already-trashed, or duplicate id and leaves the order unchanged. A partial list moves the listed children to the front and appends omitted eligible children. `move_child_position` keeps the child under the same parent.
+
+Hosts that load MCP need `recording_studio_mcp` `>= 0.45` and `< 0.46`. The gemspec leaves that gem optional. `McpCopy.register!` returns before it registers tools until the gem is loaded.
+
+`override_openapi` still sets the OpenAPI title and description for one recordable type. Named tool titles stay "Reorder children" and "Move child position" for every parent. A title such as "Reorder press center" stays on that type's OpenAPI operation.
 
 ```ruby
 RecordingStudio::Orderable::Api.override_openapi(
@@ -212,7 +223,7 @@ RecordingStudio::Orderable::Api.override_openapi(
 )
 ```
 
-`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI and MCP read the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy.
+`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI reads the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy. Named MCP tools keep the generic titles in the table above.
 
 Hosts list the actions on orderable parent types. Position stays off create and update:
 
@@ -288,6 +299,13 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.6.0`. No Orderable migration.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
+## Upgrading to 0.12.2
+
+1. Install Orderable `0.12.2`. No Orderable migration.
+2. Hosts that load Recording Studio MCP `0.45` or newer and below `0.46` include `reorder_children` and `move_child_position` on the MCP server. `RecordingStudioOrderable::McpCopy.tool_names` returns those names. Hosts that do not load MCP stay the same.
+3. `override_openapi` still sets the OpenAPI title and description for one type. It does not rename the named tools.
+4. Action names, fields, routes, authorization, position writes, and the `reordered` event stay the same.
 
 ## Upgrading to 0.12.1
 
