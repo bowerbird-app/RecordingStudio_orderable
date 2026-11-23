@@ -3,6 +3,10 @@
 require "test_helper"
 
 class ApiRegistrationTest < Minitest::Test
+  WITHOUT_API = {
+    loaded: Object.const_defined?(:RecordingStudioApi, false),
+    registered: RecordingStudio::Orderable::Api.register_capability_action!
+  }.freeze
   FakeGrant = Struct.new(:authorized) do
     def authorize!(recording:, role:)
       authorized << [recording, role]
@@ -24,9 +28,8 @@ class ApiRegistrationTest < Minitest::Test
   Context = Struct.new(:recording, :access_grant, :params, :actor, keyword_init: true)
 
   def test_registration_is_a_noop_without_recording_studio_api
-    refute Object.const_defined?(:RecordingStudioApi, false)
-
-    assert_nil RecordingStudio::Orderable::Api.register_capability_action!
+    refute WITHOUT_API.fetch(:loaded)
+    assert_nil WITHOUT_API.fetch(:registered)
   end
 
   def test_reorder_handler_authorizes_and_calls_the_recording_method

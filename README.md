@@ -203,9 +203,9 @@ Each orderable parent gets two tools, because `register_tool` takes one action a
 | `order_<noun>` | `reorder` | Sets the sibling order of the direct children this parent allows. |
 | `move_<noun>` | `move_position` | Moves one direct child to a new index under the same parent. |
 
-The noun is a public name, underscored. A name that ends in s is singularized, so `Pages` becomes `page`. A public name is the type's `public_name` on the public API when that registration exists. Otherwise it is the class name without its namespace.
+The noun is the type token from `RecordingStudioMcp.tool_name`. That helper uses the type's public name on the public API when the registration exists, and otherwise the class name without its namespace. It singularizes the name. `tool_names` and `registrations` are empty until Recording Studio MCP is loaded.
 
-When `allows:` names one child type, the noun is that child's public name. `List` with `allows: ["ListItem"]` gets `order_list_item` and `move_list_item`. When `allows:` names more than one type, or is omitted, the noun is the parent's public name. `Folder` with no `allows:` gets `order_folder` and `move_folder`. When two parents would share a tool name, each name gains that parent's public name as a prefix, so `Alpha` and `Beta` that both allow `Widget` get `order_alpha_widget` and `order_beta_widget`.
+When `allows:` names one child type, the noun is that child. `List` with `allows: ["ListItem"]` gets `order_list_item` and `move_list_item`. When `allows:` names more than one type, or is omitted, the noun is the parent. `Folder` with no `allows:` gets `order_folder` and `move_folder`. When two parents would share a tool name, each name gains that parent's token as a prefix. `Alpha` and `Beta` that both allow `Widget` get `order_alpha_widget` and `order_betum_widget`, because the helper singularizes `Beta` to `betum`.
 
 `order_list_item` rejects a missing, foreign, already-trashed, or duplicate id and leaves the order unchanged. A partial list moves the listed children to the front and appends omitted eligible children. `move_list_item` keeps the child under the same parent.
 
@@ -309,7 +309,7 @@ configuration load errors, and stored recording names stay English.
 ## Upgrading to 0.12.2
 
 1. Install Orderable `0.12.2`. No Orderable migration.
-2. Hosts that load Recording Studio MCP `0.45` or newer and below `0.46` include `RecordingStudioOrderable::McpCopy.tool_names` on the MCP server. A type that includes Orderable gets `order_<noun>` and `move_<noun>`. One `allows:` entry uses that child's public name, so `List` allowing `ListItem` gets `order_list_item` and `move_list_item`. Several `allows:` entries, or none, use the parent's public name. A type without Orderable gets no tool. Hosts that do not load MCP stay the same.
+2. Hosts that load Recording Studio MCP `0.45` or newer and below `0.46` include `RecordingStudioOrderable::McpCopy.tool_names` on the MCP server. A type that includes Orderable gets `order_<noun>` and `move_<noun>`. The noun comes from `RecordingStudioMcp.tool_name`. One `allows:` entry uses that child, so `List` allowing `ListItem` gets `order_list_item` and `move_list_item`. Several `allows:` entries, or none, use the parent. A type without Orderable gets no tool. `tool_names` is empty until MCP is loaded.
 3. `override_openapi` still sets the OpenAPI title and description for one type. It does not rename the named tools.
 4. Action names, fields, routes, authorization, position writes, and the `reordered` event stay the same.
 

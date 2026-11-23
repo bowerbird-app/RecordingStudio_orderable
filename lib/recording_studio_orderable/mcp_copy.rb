@@ -12,7 +12,7 @@ module RecordingStudioOrderable
     module_function
 
     def register!
-      return unless defined?(::RecordingStudioMcp)
+      return unless tool_name_ready?
       return unless ::RecordingStudioMcp.respond_to?(:register_tool)
 
       registrations.each { |registration| ::RecordingStudioMcp.register_tool(**registration) }
@@ -23,6 +23,8 @@ module RecordingStudioOrderable
     end
 
     def registrations
+      return [] unless tool_name_ready?
+
       nouns = noun_by_parent
       orderable_parents.flat_map { |parent| tools_for(parent, nouns.fetch(parent)) }
     end
@@ -40,31 +42,26 @@ module RecordingStudioOrderable
 
     def proposed_noun(parent)
       allows = allowed_type_names(parent)
-      public_token(allows.one? ? allows.first : parent)
+      token_for(allows.one? ? allows.first : parent)
     end
 
     def disambiguated_noun(parent, noun, counts)
-      return noun unless counts[noun] > 1 && noun != public_token(parent)
+      parent_token = token_for(parent)
+      return noun unless counts[noun] > 1 && noun != parent_token
 
-      "#{public_token(parent)}_#{noun}"
+      "#{parent_token}_#{noun}"
     end
 
     def allowed_type_names(parent)
       Array(RecordingStudioOrderable.capability_options_for(parent)[:allows]).map(&:to_s).reject(&:blank?)
     end
 
-    def public_token(type_name)
-      token = api_public_name(type_name).to_s.strip
-      token = type_name.to_s if token.empty?
-      snake = ActiveSupport::Inflector.underscore(ActiveSupport::Inflector.demodulize(token)).tr(" ", "_")
-      snake.end_with?("s") ? ActiveSupport::Inflector.singularize(snake) : snake
+    def token_for(type_name)
+      ::RecordingStudioMcp.tool_name(type_name, "order").delete_prefix("order_")
     end
 
-    def api_public_name(type_name)
-      return unless defined?(::RecordingStudioApi)
-      return unless ::RecordingStudioApi.respond_to?(:recordable_registration_for)
-
-      ::RecordingStudioApi.recordable_registration_for(type_name, api: :public)&.public_name
+    def tool_name_ready?
+      defined?(::RecordingStudioMcp) && ::RecordingStudioMcp.respond_to?(:tool_name)
     end
 
     def tools_for(parent, noun)
@@ -98,7 +95,7 @@ module RecordingStudioOrderable
       fields.to_h { |field, _spec| [field.to_s, { description: copy.fetch(field.to_s) }] }
     end
     private_class_method :orderable_parents, :noun_by_parent, :proposed_noun, :disambiguated_noun,
-                         :allowed_type_names, :public_token, :api_public_name, :tools_for, :tool_for,
+                         :allowed_type_names, :token_for, :tool_name_ready?, :tools_for, :tool_for,
                          :title_for, :input_for, :field_inputs
   end
 end

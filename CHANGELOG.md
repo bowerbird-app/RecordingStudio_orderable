@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - API summaries, descriptions, field descriptions, and success text for `reorder` and `move_position` are written for HTTP clients. MCP tool text stays in `RecordingStudioOrderable::McpCopy`.
+- MCP tool nouns come from `RecordingStudioMcp.tool_name`. `tool_names` is empty until that gem is loaded.
 
 ### Upgrade notes
 

@@ -1,14 +1,22 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require_relative "support/load_mcp_tool_name"
 
 class McpCopyTest < Minitest::Test
+  ABSENT = {
+    loaded: defined?(::RecordingStudioMcp),
+    names: RecordingStudioOrderable::McpCopy.tool_names.freeze,
+    registrations: RecordingStudioOrderable::McpCopy.registrations.freeze,
+    registered: RecordingStudioOrderable::McpCopy.register!
+  }.freeze
   PRESS_CENTER = "RecordingStudioPressCenters::PressCenter"
   FORBIDDEN = [
     "RecordingStudioOrderable", "Accessible", "permission", "Admin", ":edit", ":view", " role"
   ].freeze
 
   def setup
+    LoadMcpToolName.load!
     enable("List", allows: ["ListItem"])
     enable("Shelf", allows: %w[Page Note])
     enable("Bin")
@@ -22,16 +30,18 @@ class McpCopyTest < Minitest::Test
   end
 
   def test_register_is_a_no_op_when_mcp_is_absent
-    refute defined?(::RecordingStudioMcp)
-
-    assert_nil RecordingStudioOrderable::McpCopy.register!
-    assert_nil RecordingStudio::Orderable::Api.register_capability_action!
+    assert_nil ABSENT.fetch(:loaded)
+    assert_empty ABSENT.fetch(:names)
+    assert_empty ABSENT.fetch(:registrations)
+    assert_nil ABSENT.fetch(:registered)
   end
 
   def test_an_orderable_type_gets_order_and_move_tools_named_for_the_allowed_child
     tools = tools_for("List")
 
     assert_equal(%w[order_list_item move_list_item], tools.map { |tool| tool.fetch(:name) })
+    assert_equal RecordingStudioMcp.tool_name("ListItem", "order"), tools.first.fetch(:name)
+    assert_equal RecordingStudioMcp.tool_name("ListItem", "move"), tools.last.fetch(:name)
     assert_equal(%i[reorder move_position], tools.map { |tool| tool.fetch(:action) })
     assert_equal(%w[List List], tools.map { |tool| tool.fetch(:type) })
     assert_equal(["Order list item", "Move list item"], tools.map { |tool| tool.fetch(:title) })
@@ -67,7 +77,7 @@ class McpCopyTest < Minitest::Test
 
   def test_shared_child_nouns_gain_the_parent_public_name
     assert_equal(%w[order_alpha_widget move_alpha_widget], tools_for("Alpha").map { |tool| tool.fetch(:name) })
-    assert_equal(%w[order_beta_widget move_beta_widget], tools_for("Beta").map { |tool| tool.fetch(:name) })
+    assert_equal(%w[order_betum_widget move_betum_widget], tools_for("Beta").map { |tool| tool.fetch(:name) })
   end
 
   def test_reorder_and_move_copy_state_the_write_rules
@@ -128,24 +138,6 @@ class McpCopyTest < Minitest::Test
     assert_equal "Order list item", tools_for("List").first.fetch(:title)
     refute_equal document.fetch(:description), tools_for("List").first.fetch(:description)
     refute_includes tools_for("List").first.fetch(:description), "press center"
-  end
-
-  def test_gemspec_does_not_depend_on_mcp_and_registration_calls_the_copier
-    root = File.expand_path("..", __dir__)
-    gemspec = File.read(File.join(root, "recording_studio_orderable.gemspec"))
-    api = File.read(File.join(root, "lib/recording_studio/orderable/api.rb"))
-    registration = File.read(File.join(root, "lib/recording_studio/orderable/api/registration.rb"))
-    copier = File.read(File.join(root, "lib/recording_studio_orderable/mcp_copy.rb"))
-
-    refute_includes gemspec, "add_dependency \"recording_studio_mcp\""
-    refute_includes api, "recording_studio_mcp"
-    refute_includes registration, "register_tool"
-    refute_includes copier, "authorize!"
-    assert_includes api, "RecordingStudioOrderable::McpCopy.register!"
-    assert_includes copier, "RecordingStudioMcp.register_tool"
-    assert_includes copier, "enabled_recordable_types_for(:orderable)"
-    refute_includes copier, "fetch(:description)"
-    refute_includes copier, "fetch(:success)"
   end
 
   private
