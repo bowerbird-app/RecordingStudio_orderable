@@ -19,32 +19,28 @@ task :test do
 end
 
 def run_dummy_mcp_tests
+  bundle_path = ENV.fetch("BUNDLE_PATH", nil)
+  bundle_path = File.expand_path(bundle_path) if bundle_path
   Bundler.with_unbundled_env do
     Dir.chdir("test/dummy") do
-      abort "dummy bundle install failed" unless install_dummy_bundle
-
-      run_dummy_mcp_suite
+      run_dummy_mcp_suite(bundle_path)
     end
   end
 end
 
-def install_dummy_bundle
-  return true if system(dummy_test_env, "bundle", "check", out: File::NULL)
-
-  system(dummy_test_env, "bundle", "install")
-end
-
-def run_dummy_mcp_suite
-  passed = system(dummy_test_env, "bundle", "exec", "rails", "test", "test/orderable_mcp_tools_test.rb")
+def run_dummy_mcp_suite(bundle_path)
+  passed = system(dummy_test_env(bundle_path), "bundle", "exec", "rails", "test", "test/orderable_mcp_tools_test.rb")
   abort "dummy named MCP tool tests failed" unless passed
 end
 
-def dummy_test_env
-  {
+def dummy_test_env(bundle_path)
+  env = {
     "COVERAGE_PART" => "dummy",
     "BUNDLE_GEMFILE" => File.expand_path("test/dummy/Gemfile", __dir__),
     "RAILS_ENV" => "test"
   }
+  env["BUNDLE_PATH"] = bundle_path if bundle_path
+  env
 end
 
 def check_merged_coverage

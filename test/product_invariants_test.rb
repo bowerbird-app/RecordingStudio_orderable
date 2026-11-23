@@ -74,10 +74,13 @@ class ProductInvariantsTest < Minitest::Test
     assert_includes helper, 'if ENV["COVERAGE_PART"] == "unit"'
     assert_includes helper, "minimum_coverage 0"
     assert_includes boot, 'if ENV["COVERAGE_PART"] == "dummy"'
-    assert_includes boot, "minimum_coverage line: 94"
+    assert_includes boot, "minimum_coverage 0"
     assert_includes boot, "coverage/parts"
     assert_includes rake, 'ENV["COVERAGE_PART"] = "unit"'
     assert_includes rake, '"COVERAGE_PART" => "dummy"'
+    assert_includes rake, "SimpleCov.collate"
+    assert_includes rake, "minimum_coverage line: 94"
+    refute_includes rake, '"bundle", "install"'
   end
 
   def test_dummy_database_defaults_use_the_addon_name
