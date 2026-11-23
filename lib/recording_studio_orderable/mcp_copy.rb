@@ -1,29 +1,13 @@
 # frozen_string_literal: true
 
+require_relative "mcp_copy/copy"
+
 module RecordingStudioOrderable
   module McpCopy
     VERBS = {
       "order" => :reorder,
       "move" => :move_position
     }.freeze
-
-    ID_INPUT = {
-      description: "Recording id of this parent."
-    }.freeze
-
-    REORDER = "Sets the sibling order of the direct children under this parent so they show in a " \
-              "chosen order. Pass ordered_recording_ids as ids of direct children this parent allows. " \
-              "Listed children move to the front. Omitted eligible children are appended by created_at, " \
-              "then id. A missing, foreign, already-trashed, or duplicate id is rejected and the order " \
-              "stays as it was. An empty list orders every eligible child by created_at, then id. " \
-              "Children stay under this parent."
-
-    MOVE = "Moves one direct child to a new index under this same parent so that child sits at a " \
-           "chosen place. The child must be a direct child this parent allows. Pass recording_id as " \
-           "that child's id. Pass to_index as an index counting from 0. 0 is first. An index past the " \
-           "last child puts the child last. An index below 0 is treated as 0. A missing, foreign, or " \
-           "already-trashed id is rejected and the order stays as it was. An index that is not an " \
-           "integer is rejected. The child stays under this parent."
 
     module_function
 
@@ -93,9 +77,9 @@ module RecordingStudioOrderable
         type: parent,
         action: action,
         title: title_for(verb, noun),
-        description: action == :reorder ? REORDER : MOVE,
+        description: action == :reorder ? Copy::REORDER : Copy::MOVE,
         input: input_for(action),
-        output: RecordingStudio::Orderable::Api::ACTIONS.fetch(action).fetch(:success)
+        output: Copy::OUTPUTS.fetch(action)
       }
     end
 
@@ -105,12 +89,13 @@ module RecordingStudioOrderable
     end
 
     def input_for(action)
-      { "id" => ID_INPUT }.merge(field_inputs(action))
+      { "id" => Copy::ID_INPUT }.merge(field_inputs(action))
     end
 
     def field_inputs(action)
       fields = RecordingStudio::Orderable::Api::ACTIONS.fetch(action).fetch(:fields)
-      fields.to_h { |field, spec| [field.to_s, { description: spec.fetch(:description) }] }
+      copy = Copy::FIELD_COPY.fetch(action)
+      fields.to_h { |field, _spec| [field.to_s, { description: copy.fetch(field.to_s) }] }
     end
     private_class_method :orderable_parents, :noun_by_parent, :proposed_noun, :disambiguated_noun,
                          :allowed_type_names, :public_token, :api_public_name, :tools_for, :tool_for,

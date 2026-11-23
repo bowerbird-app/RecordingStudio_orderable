@@ -83,8 +83,33 @@ class McpCopyTest < Minitest::Test
     assert_includes move.fetch(:description), "The child stays under this parent"
     assert_equal %w[id ordered_recording_ids], reorder.fetch(:input).keys
     assert_equal %w[id recording_id to_index], move.fetch(:input).keys
-    assert_equal RecordingStudio::Orderable::Api::ACTIONS.dig(:reorder, :success), reorder.fetch(:output)
-    assert_equal RecordingStudio::Orderable::Api::ACTIONS.dig(:move_position, :success), move.fetch(:output)
+    assert_equal "The children are in the new order.", reorder.fetch(:output)
+    assert_equal "The child is at the new index.", move.fetch(:output)
+  end
+
+  def test_api_copy_is_for_http_clients_and_differs_from_mcp_copy
+    api = RecordingStudio::Orderable::Api::ACTIONS
+    reorder = tools_for("List").first
+    move = tools_for("List").last
+    reorder_api = api.fetch(:reorder)
+    move_api = api.fetch(:move_position)
+
+    assert_equal "Reorder the direct children of this recording.", reorder_api.fetch(:summary)
+    assert_equal "Move one direct child to a new index.", move_api.fetch(:summary)
+    assert_includes reorder_api.fetch(:description), "POST"
+    assert_includes reorder_api.fetch(:description), "appended"
+    assert_includes reorder_api.fetch(:description), "InvalidChild"
+    assert_includes move_api.fetch(:description), "InvalidChild"
+    refute_includes reorder_api.fetch(:description), "Run this"
+    refute_includes move_api.fetch(:description), "Run this"
+    refute_equal reorder_api.fetch(:description), reorder.fetch(:description)
+    refute_equal move_api.fetch(:description), move.fetch(:description)
+    refute_equal reorder_api.fetch(:success), reorder.fetch(:output)
+    refute_equal move_api.fetch(:success), move.fetch(:output)
+    refute_equal reorder_api.dig(:fields, :ordered_recording_ids, :description),
+                 reorder.dig(:input, "ordered_recording_ids", :description)
+    refute_equal move_api.dig(:fields, :recording_id, :description),
+                 move.dig(:input, "recording_id", :description)
   end
 
   def test_per_type_openapi_titles_stay_off_the_named_tools
@@ -96,8 +121,12 @@ class McpCopyTest < Minitest::Test
       description: "Sets the order of children in this press center."
     )
 
-    assert_equal "Reorder press center", api.openapi_for(type: PRESS_CENTER, action: :reorder).fetch(:title)
+    document = api.openapi_for(type: PRESS_CENTER, action: :reorder)
+
+    assert_equal "Reorder press center", document.fetch(:title)
+    assert_equal "Sets the order of children in this press center.", document.fetch(:description)
     assert_equal "Order list item", tools_for("List").first.fetch(:title)
+    refute_equal document.fetch(:description), tools_for("List").first.fetch(:description)
     refute_includes tools_for("List").first.fetch(:description), "press center"
   end
 
@@ -115,6 +144,8 @@ class McpCopyTest < Minitest::Test
     assert_includes api, "RecordingStudioOrderable::McpCopy.register!"
     assert_includes copier, "RecordingStudioMcp.register_tool"
     assert_includes copier, "enabled_recordable_types_for(:orderable)"
+    refute_includes copier, "fetch(:description)"
+    refute_includes copier, "fetch(:success)"
   end
 
   private

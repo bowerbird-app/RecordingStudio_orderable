@@ -192,7 +192,7 @@ There is no host resolver and no fail-open switch. Grant Accessible roles on the
 
 ## JSON API and MCP
 
-When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. Summaries, action text, and input field descriptions for those actions live in `RecordingStudio::Orderable::Api::ACTIONS`.
+When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. HTTP summaries, descriptions, field descriptions, and success text live in `RecordingStudio::Orderable::Api::ACTIONS`. MCP tool descriptions, field descriptions, and success text live in `RecordingStudioOrderable::McpCopy`.
 
 When Recording Studio MCP is loaded, `RecordingStudioOrderable::McpCopy.register!` adds named tools for each recordable type that includes `RecordingStudio::Capabilities::Orderable`. Include `RecordingStudioOrderable::McpCopy.tool_names` on the host MCP server. The host calls `register_server`. A type that does not include Orderable gets no tool.
 
