@@ -194,18 +194,24 @@ There is no host resolver and no fail-open switch. Grant Accessible roles on the
 
 When Recording Studio API is loaded, this gem registers `reorder` and `move_position` as member capability actions on capability `:orderable`. Summaries, action text, and input field descriptions for those actions live in `RecordingStudio::Orderable::Api::ACTIONS`.
 
-When Recording Studio MCP is loaded, `RecordingStudioOrderable::McpCopy.register!` adds two named tools. Include `RecordingStudioOrderable::McpCopy.tool_names` on the host MCP server. The host calls `register_server`. Ordering is a capability on a parent type the host already registered, so these tools leave `type` unset and the caller passes that parent.
+When Recording Studio MCP is loaded, `RecordingStudioOrderable::McpCopy.register!` adds named tools for each recordable type that includes `RecordingStudio::Capabilities::Orderable`. Include `RecordingStudioOrderable::McpCopy.tool_names` on the host MCP server. The host calls `register_server`. A type that does not include Orderable gets no tool.
+
+Each orderable parent gets two tools, because `register_tool` takes one action and `reorder` and `move_position` stay separate actions.
 
 | Tool | Action | What it does |
 |---|---|---|
-| `reorder_children` | `reorder` | Sets the sibling order of the parent's direct children. |
-| `move_child_position` | `move_position` | Moves one direct child to a new index under the same parent. |
+| `order_<noun>` | `reorder` | Sets the sibling order of the direct children this parent allows. |
+| `move_<noun>` | `move_position` | Moves one direct child to a new index under the same parent. |
 
-The parent type must opt in to ordering. A child must be a direct child that parent allows. `reorder_children` rejects a missing, foreign, already-trashed, or duplicate id and leaves the order unchanged. A partial list moves the listed children to the front and appends omitted eligible children. `move_child_position` keeps the child under the same parent.
+The noun is a public name, underscored. A name that ends in s is singularized, so `Pages` becomes `page`. A public name is the type's `public_name` on the public API when that registration exists. Otherwise it is the class name without its namespace.
+
+When `allows:` names one child type, the noun is that child's public name. `List` with `allows: ["ListItem"]` gets `order_list_item` and `move_list_item`. When `allows:` names more than one type, or is omitted, the noun is the parent's public name. `Folder` with no `allows:` gets `order_folder` and `move_folder`. When two parents would share a tool name, each name gains that parent's public name as a prefix, so `Alpha` and `Beta` that both allow `Widget` get `order_alpha_widget` and `order_beta_widget`.
+
+`order_list_item` rejects a missing, foreign, already-trashed, or duplicate id and leaves the order unchanged. A partial list moves the listed children to the front and appends omitted eligible children. `move_list_item` keeps the child under the same parent.
 
 Hosts that load MCP need `recording_studio_mcp` `>= 0.45` and `< 0.46`. The gemspec leaves that gem optional. `McpCopy.register!` returns before it registers tools until the gem is loaded.
 
-`override_openapi` still sets the OpenAPI title and description for one recordable type. Named tool titles stay "Reorder children" and "Move child position" for every parent. A title such as "Reorder press center" stays on that type's OpenAPI operation.
+`override_openapi` still sets the OpenAPI title and description for one recordable type. It does not rename `order_list_item` or `move_list_item`. A title such as "Reorder press center" stays on that type's OpenAPI operation.
 
 ```ruby
 RecordingStudio::Orderable::Api.override_openapi(
@@ -223,7 +229,7 @@ RecordingStudio::Orderable::Api.override_openapi(
 )
 ```
 
-`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI reads the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy. Named MCP tools keep the generic titles in the table above.
+`openapi_for(action:, type: nil)` returns that copy. `openapi_for(type:, action:)` is the same call. The registered action uses the same lookup, so OpenAPI reads the title and description. `ACTIONS` stays the generic copy. An unknown type, a type with no override, or the other action keeps that generic copy. Named MCP tools keep the titles from the naming rule above.
 
 Hosts list the actions on orderable parent types. Position stays off create and update:
 
@@ -303,7 +309,7 @@ configuration load errors, and stored recording names stay English.
 ## Upgrading to 0.12.2
 
 1. Install Orderable `0.12.2`. No Orderable migration.
-2. Hosts that load Recording Studio MCP `0.45` or newer and below `0.46` include `reorder_children` and `move_child_position` on the MCP server. `RecordingStudioOrderable::McpCopy.tool_names` returns those names. Hosts that do not load MCP stay the same.
+2. Hosts that load Recording Studio MCP `0.45` or newer and below `0.46` include `RecordingStudioOrderable::McpCopy.tool_names` on the MCP server. A type that includes Orderable gets `order_<noun>` and `move_<noun>`. One `allows:` entry uses that child's public name, so `List` allowing `ListItem` gets `order_list_item` and `move_list_item`. Several `allows:` entries, or none, use the parent's public name. A type without Orderable gets no tool. Hosts that do not load MCP stay the same.
 3. `override_openapi` still sets the OpenAPI title and description for one type. It does not rename the named tools.
 4. Action names, fields, routes, authorization, position writes, and the `reordered` event stay the same.
 

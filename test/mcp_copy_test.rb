@@ -4,10 +4,18 @@ require "test_helper"
 
 class McpCopyTest < Minitest::Test
   PRESS_CENTER = "RecordingStudioPressCenters::PressCenter"
-  GENERIC_NAMES = %w[capability_action reorder move_position list show create update delete].freeze
   FORBIDDEN = [
     "RecordingStudioOrderable", "Accessible", "permission", "Admin", ":edit", ":view", " role"
   ].freeze
+
+  def setup
+    enable("List", allows: ["ListItem"])
+    enable("Shelf", allows: %w[Page Note])
+    enable("Bin")
+    enable("Alpha", allows: ["Widget"])
+    enable("Beta", allows: ["Widget"])
+    enable("Binder", allows: ["Statuses"])
+  end
 
   def teardown
     RecordingStudio::Orderable::Api::OpenapiOverrides.reset!
@@ -20,74 +28,63 @@ class McpCopyTest < Minitest::Test
     assert_nil RecordingStudio::Orderable::Api.register_capability_action!
   end
 
-  def test_named_tools_are_reorder_children_and_move_child_position
-    names = RecordingStudioOrderable::McpCopy.tool_names
-    registrations = RecordingStudioOrderable::McpCopy.registrations
-    by_name = registrations.to_h { |tool| [tool.fetch(:name), tool] }
+  def test_an_orderable_type_gets_order_and_move_tools_named_for_the_allowed_child
+    tools = tools_for("List")
 
-    assert_equal %w[reorder_children move_child_position], names
-    assert_equal names, by_name.keys
-    GENERIC_NAMES.each { |name| refute_includes names, name }
-
-    reorder = by_name.fetch("reorder_children")
-    move = by_name.fetch("move_child_position")
-
-    assert_equal :reorder, reorder.fetch(:action)
-    assert_equal "Reorder children", reorder.fetch(:title)
-    assert_equal :move_position, move.fetch(:action)
-    assert_equal "Move child position", move.fetch(:title)
-    [reorder, move].each do |tool|
-      refute tool.key?(:type)
+    assert_equal(%w[order_list_item move_list_item], tools.map { |tool| tool.fetch(:name) })
+    assert_equal(%i[reorder move_position], tools.map { |tool| tool.fetch(:action) })
+    assert_equal(%w[List List], tools.map { |tool| tool.fetch(:type) })
+    assert_equal(["Order list item", "Move list item"], tools.map { |tool| tool.fetch(:title) })
+    tools.each do |tool|
       refute tool.key?(:public_name)
       refute tool.key?(:operation)
       refute tool.key?(:endpoint)
-      assert_includes tool.fetch(:description), "opt in to ordering"
-      assert_includes tool.fetch(:description), "direct child"
+      refute tool.fetch(:input).key?("type")
+      refute_includes tool.fetch(:name), "::"
       FORBIDDEN.each { |phrase| refute_includes tool.fetch(:description), phrase }
-      refute_includes tool.fetch(:title), "RecordingStudio"
     end
   end
 
-  def test_reorder_copy_states_partial_lists_and_rejected_ids
-    description = description_for("reorder_children")
-
-    assert_includes description, "Listed children move to the front"
-    assert_includes description, "Omitted eligible children are appended"
-    assert_includes description, "missing, foreign, already-trashed, or duplicate id is rejected"
-    assert_includes description, "An empty list orders every eligible child"
-    assert_includes description, "Children stay under this parent"
+  def test_a_type_without_orderable_gets_no_tool
+    refute RecordingStudio.capability_enabled?(:orderable, for: "Order")
+    assert_empty tools_for("Order")
+    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "order_order"
+    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "reorder_children"
+    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "move_child_position"
+    refute_includes RecordingStudioOrderable::McpCopy.tool_names, "capability_action"
   end
 
-  def test_move_copy_states_the_child_stays_and_bad_ids_are_rejected
-    description = description_for("move_child_position")
+  def test_a_plural_public_name_is_singularized
+    names = tools_for("Binder").map { |tool| tool.fetch(:name) }
 
-    assert_includes description, "direct child that parent allows"
-    assert_includes description, "counting from 0"
-    assert_includes description, "puts the child last"
-    assert_includes description, "missing, foreign, or already-trashed id is rejected"
-    assert_includes description, "not an integer"
-    assert_includes description, "The child stays under this parent"
+    assert_equal %w[order_status move_status], names
   end
 
-  def test_inputs_reuse_action_field_copy_and_name_the_parent
-    api = RecordingStudio::Orderable::Api
-    reorder = registration("reorder_children")
-    move = registration("move_child_position")
+  def test_several_or_omitted_allows_use_the_parent_public_name
+    assert_equal(%w[order_shelf move_shelf], tools_for("Shelf").map { |tool| tool.fetch(:name) })
+    assert_equal(%w[order_bin move_bin], tools_for("Bin").map { |tool| tool.fetch(:name) })
+  end
 
-    assert_equal "Public name of the parent type. That type must opt in to ordering.",
-                 reorder.dig(:input, "type", :description)
-    assert_equal "Recording id of the parent. Run this on the parent, not on a child.",
-                 reorder.dig(:input, "id", :description)
-    assert_equal api::ACTIONS.dig(:reorder, :fields, :ordered_recording_ids, :description),
-                 reorder.dig(:input, "ordered_recording_ids", :description)
-    assert_equal api::ACTIONS.dig(:move_position, :fields, :recording_id, :description),
-                 move.dig(:input, "recording_id", :description)
-    assert_equal api::ACTIONS.dig(:move_position, :fields, :to_index, :description),
-                 move.dig(:input, "to_index", :description)
-    assert_equal api::ACTIONS.dig(:reorder, :success), reorder.fetch(:output)
-    assert_equal api::ACTIONS.dig(:move_position, :success), move.fetch(:output)
-    assert_equal %w[type id ordered_recording_ids], reorder.fetch(:input).keys
-    assert_equal %w[type id recording_id to_index], move.fetch(:input).keys
+  def test_shared_child_nouns_gain_the_parent_public_name
+    assert_equal(%w[order_alpha_widget move_alpha_widget], tools_for("Alpha").map { |tool| tool.fetch(:name) })
+    assert_equal(%w[order_beta_widget move_beta_widget], tools_for("Beta").map { |tool| tool.fetch(:name) })
+  end
+
+  def test_reorder_and_move_copy_state_the_write_rules
+    reorder = tools_for("List").first
+    move = tools_for("List").last
+
+    assert_includes reorder.fetch(:description), "Listed children move to the front"
+    assert_includes reorder.fetch(:description), "Omitted eligible children are appended"
+    assert_includes reorder.fetch(:description), "missing, foreign, already-trashed, or duplicate id is rejected"
+    assert_includes reorder.fetch(:description), "Children stay under this parent"
+    assert_includes move.fetch(:description), "direct child this parent allows"
+    assert_includes move.fetch(:description), "counting from 0"
+    assert_includes move.fetch(:description), "The child stays under this parent"
+    assert_equal %w[id ordered_recording_ids], reorder.fetch(:input).keys
+    assert_equal %w[id recording_id to_index], move.fetch(:input).keys
+    assert_equal RecordingStudio::Orderable::Api::ACTIONS.dig(:reorder, :success), reorder.fetch(:output)
+    assert_equal RecordingStudio::Orderable::Api::ACTIONS.dig(:move_position, :success), move.fetch(:output)
   end
 
   def test_per_type_openapi_titles_stay_off_the_named_tools
@@ -98,19 +95,10 @@ class McpCopyTest < Minitest::Test
       title: "Reorder press center",
       description: "Sets the order of children in this press center."
     )
-    api.override_openapi(
-      type: PRESS_CENTER,
-      action: :move_position,
-      title: "Move press center position",
-      description: "Moves one child to a new index in this press center."
-    )
 
     assert_equal "Reorder press center", api.openapi_for(type: PRESS_CENTER, action: :reorder).fetch(:title)
-    assert_equal "Move press center position",
-                 api.openapi_for(type: PRESS_CENTER, action: :move_position).fetch(:title)
-    assert_equal "Reorder children", registration("reorder_children").fetch(:title)
-    assert_equal "Move child position", registration("move_child_position").fetch(:title)
-    refute_includes registration("reorder_children").fetch(:description), "press center"
+    assert_equal "Order list item", tools_for("List").first.fetch(:title)
+    refute_includes tools_for("List").first.fetch(:description), "press center"
   end
 
   def test_gemspec_does_not_depend_on_mcp_and_registration_calls_the_copier
@@ -123,19 +111,22 @@ class McpCopyTest < Minitest::Test
     refute_includes gemspec, "add_dependency \"recording_studio_mcp\""
     refute_includes api, "recording_studio_mcp"
     refute_includes registration, "register_tool"
+    refute_includes copier, "authorize!"
     assert_includes api, "RecordingStudioOrderable::McpCopy.register!"
     assert_includes copier, "RecordingStudioMcp.register_tool"
-    refute_includes copier, "register_type"
-    refute_includes copier, "public_name"
+    assert_includes copier, "enabled_recordable_types_for(:orderable)"
   end
 
   private
 
-  def registration(name)
-    RecordingStudioOrderable::McpCopy.registrations.find { |tool| tool.fetch(:name) == name }
+  def enable(type, allows: nil)
+    RecordingStudio.enable_capability(:orderable, on: type)
+    return if allows.nil?
+
+    RecordingStudio.set_capability_options(:orderable, on: type, allows: allows)
   end
 
-  def description_for(name)
-    registration(name).fetch(:description)
+  def tools_for(type)
+    RecordingStudioOrderable::McpCopy.registrations.select { |tool| tool.fetch(:type) == type }
   end
 end

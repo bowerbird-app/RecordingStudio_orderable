@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Named Recording Studio MCP tools `reorder_children` and `move_child_position` for the `reorder` and `move_position` capability actions. Registration does nothing when Recording Studio MCP is not loaded. The gemspec does not depend on `recording_studio_mcp`.
+- Named Recording Studio MCP tools for each recordable type that includes Orderable. One allowed child type names the tools from that child's public name (`order_list_item` and `move_list_item`). Several allowed types, or no `allows:`, use the parent's public name. A type without Orderable gets no tool. Registration does nothing when Recording Studio MCP is not loaded. The gemspec does not depend on `recording_studio_mcp`.
 
 ### Upgrade notes
 
 - Bump to `0.12.2`. No Orderable migration.
-- Hosts that load Recording Studio MCP need `>= 0.45` and `< 0.46`. Include `reorder_children` and `move_child_position` on the MCP server. `RecordingStudioOrderable::McpCopy.tool_names` returns those names.
-- `RecordingStudio::Orderable::Api.override_openapi` still sets the OpenAPI title and description for one type and one action. Named tool titles stay "Reorder children" and "Move child position".
+- Hosts that load Recording Studio MCP need `>= 0.45` and `< 0.46`. Include `RecordingStudioOrderable::McpCopy.tool_names` on the MCP server. `order_<noun>` runs `reorder`. `move_<noun>` runs `move_position`.
+- `RecordingStudio::Orderable::Api.override_openapi` still sets the OpenAPI title and description for one type and one action. It does not rename the named tools.
 - Action names, fields, routes, authorization, position writes, and the `reordered` event are unchanged.
 
 ## [0.12.1] - 2026-11-23

@@ -2,38 +2,28 @@
 
 module RecordingStudioOrderable
   module McpCopy
-    TOOLS = {
-      "reorder_children" => {
-        action: :reorder,
-        title: "Reorder children",
-        description: "Sets the sibling order of the direct children under this parent so they show in a " \
-                     "chosen order. The parent type must opt in to ordering. Pass ordered_recording_ids " \
-                     "as ids of direct children that parent allows. Listed children move to the front. " \
-                     "Omitted eligible children are appended by created_at, then id. A missing, foreign, " \
-                     "already-trashed, or duplicate id is rejected and the order stays as it was. An empty " \
-                     "list orders every eligible child by created_at, then id. Children stay under this parent."
-      }.freeze,
-      "move_child_position" => {
-        action: :move_position,
-        title: "Move child position",
-        description: "Moves one direct child to a new index under this same parent so that child sits at a " \
-                     "chosen place. The parent type must opt in to ordering, and the child must be a direct " \
-                     "child that parent allows. Pass recording_id as that child's id. Pass to_index as an " \
-                     "index counting from 0. 0 is first. An index past the last child puts the child last. " \
-                     "An index below 0 is treated as 0. A missing, foreign, or already-trashed id is rejected " \
-                     "and the order stays as it was. An index that is not an integer is rejected. The child " \
-                     "stays under this parent."
-      }.freeze
+    VERBS = {
+      "order" => :reorder,
+      "move" => :move_position
     }.freeze
 
-    SHARED_INPUT = {
-      "type" => {
-        description: "Public name of the parent type. That type must opt in to ordering."
-      }.freeze,
-      "id" => {
-        description: "Recording id of the parent. Run this on the parent, not on a child."
-      }.freeze
+    ID_INPUT = {
+      description: "Recording id of this parent."
     }.freeze
+
+    REORDER = "Sets the sibling order of the direct children under this parent so they show in a " \
+              "chosen order. Pass ordered_recording_ids as ids of direct children this parent allows. " \
+              "Listed children move to the front. Omitted eligible children are appended by created_at, " \
+              "then id. A missing, foreign, already-trashed, or duplicate id is rejected and the order " \
+              "stays as it was. An empty list orders every eligible child by created_at, then id. " \
+              "Children stay under this parent."
+
+    MOVE = "Moves one direct child to a new index under this same parent so that child sits at a " \
+           "chosen place. The child must be a direct child this parent allows. Pass recording_id as " \
+           "that child's id. Pass to_index as an index counting from 0. 0 is first. An index past the " \
+           "last child puts the child last. An index below 0 is treated as 0. A missing, foreign, or " \
+           "already-trashed id is rejected and the order stays as it was. An index that is not an " \
+           "integer is rejected. The child stays under this parent."
 
     module_function
 
@@ -45,37 +35,85 @@ module RecordingStudioOrderable
     end
 
     def tool_names
-      TOOLS.keys
+      registrations.map { |tool| tool.fetch(:name) }
     end
 
     def registrations
-      TOOLS.map { |name, spec| registration_for(name, spec) }
+      nouns = noun_by_parent
+      orderable_parents.flat_map { |parent| tools_for(parent, nouns.fetch(parent)) }
     end
 
-    def registration_for(name, spec)
-      action = spec.fetch(:action)
+    def orderable_parents
+      RecordingStudio.configuration.enabled_recordable_types_for(:orderable)
+    end
+
+    def noun_by_parent
+      parents = orderable_parents
+      proposed = parents.to_h { |parent| [parent, proposed_noun(parent)] }
+      counts = proposed.values.tally
+      proposed.to_h { |parent, noun| [parent, disambiguated_noun(parent, noun, counts)] }
+    end
+
+    def proposed_noun(parent)
+      allows = allowed_type_names(parent)
+      public_token(allows.one? ? allows.first : parent)
+    end
+
+    def disambiguated_noun(parent, noun, counts)
+      return noun unless counts[noun] > 1 && noun != public_token(parent)
+
+      "#{public_token(parent)}_#{noun}"
+    end
+
+    def allowed_type_names(parent)
+      Array(RecordingStudioOrderable.capability_options_for(parent)[:allows]).map(&:to_s).reject(&:blank?)
+    end
+
+    def public_token(type_name)
+      token = api_public_name(type_name).to_s.strip
+      token = type_name.to_s if token.empty?
+      snake = ActiveSupport::Inflector.underscore(ActiveSupport::Inflector.demodulize(token)).tr(" ", "_")
+      snake.end_with?("s") ? ActiveSupport::Inflector.singularize(snake) : snake
+    end
+
+    def api_public_name(type_name)
+      return unless defined?(::RecordingStudioApi)
+      return unless ::RecordingStudioApi.respond_to?(:recordable_registration_for)
+
+      ::RecordingStudioApi.recordable_registration_for(type_name, api: :public)&.public_name
+    end
+
+    def tools_for(parent, noun)
+      VERBS.map { |verb, action| tool_for(parent, noun, verb, action) }
+    end
+
+    def tool_for(parent, noun, verb, action)
       {
-        name: name,
+        name: "#{verb}_#{noun}",
+        type: parent,
         action: action,
-        title: spec.fetch(:title),
-        description: spec.fetch(:description),
+        title: title_for(verb, noun),
+        description: action == :reorder ? REORDER : MOVE,
         input: input_for(action),
-        output: success_for(action)
+        output: RecordingStudio::Orderable::Api::ACTIONS.fetch(action).fetch(:success)
       }
     end
 
+    def title_for(verb, noun)
+      label = noun.tr("_", " ")
+      verb == "order" ? "Order #{label}" : "Move #{label}"
+    end
+
     def input_for(action)
-      SHARED_INPUT.merge(field_inputs(action))
+      { "id" => ID_INPUT }.merge(field_inputs(action))
     end
 
     def field_inputs(action)
       fields = RecordingStudio::Orderable::Api::ACTIONS.fetch(action).fetch(:fields)
       fields.to_h { |field, spec| [field.to_s, { description: spec.fetch(:description) }] }
     end
-
-    def success_for(action)
-      RecordingStudio::Orderable::Api::ACTIONS.fetch(action).fetch(:success)
-    end
-    private_class_method :registration_for, :input_for, :field_inputs, :success_for
+    private_class_method :orderable_parents, :noun_by_parent, :proposed_noun, :disambiguated_noun,
+                         :allowed_type_names, :public_token, :api_public_name, :tools_for, :tool_for,
+                         :title_for, :input_for, :field_inputs
   end
 end
