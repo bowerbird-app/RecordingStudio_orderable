@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-11-24
+
+### Fixed
+
+- Creating several children at the same time under one orderable parent no longer deadlocks. Orderable locks that parent before Recording Studio takes its share lock, and the insert stores the end position. A child outside `allows`, or a parent that is not orderable, still gets no position. A parent change and a restore from trash still assign position the same way.
+
+### Upgrade notes
+
+- Bump to `0.12.3`. No Orderable migration. No host change.
+
 ## [0.12.2] - 2026-11-23
 
 ### Added

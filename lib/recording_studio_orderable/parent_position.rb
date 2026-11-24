@@ -6,6 +6,35 @@ module RecordingStudioOrderable
       new(recording).sync(clear: clear)
     end
 
+    def self.with_create_lock(parent, recordable, &)
+      return yield unless assigns_end_position?(parent, child_type(recordable))
+
+      parent.with_lock(&)
+    end
+
+    def self.assigns_end_position?(parent, child_type)
+      return false unless parent
+      return false unless orderable_parent?(parent)
+
+      allowed = allowed_child_types(parent)
+      allowed.empty? || allowed.include?(child_type.to_s)
+    end
+
+    def self.child_type(recordable)
+      RecordingStudio::Identity.type_name_for(recordable)
+    end
+
+    def self.orderable_parent?(parent)
+      return false unless defined?(RecordingStudio)
+      return false unless parent.respond_to?(:recordable_type)
+
+      RecordingStudio.capability_enabled?(:orderable, for: parent.recordable_type)
+    end
+
+    def self.allowed_child_types(parent)
+      Array(RecordingStudioOrderable.capability_options_for(parent)[:allows]).map(&:to_s).reject(&:blank?)
+    end
+
     def initialize(recording)
       @recording = recording
     end
@@ -25,20 +54,9 @@ module RecordingStudioOrderable
 
     def append_to?(parent)
       return false unless parent
-      return false unless orderable_parent?(parent)
+      return false unless recording.respond_to?(:recordable_type)
 
-      allowed = allowed_child_types(parent)
-      allowed.empty? || allowed.include?(recording.recordable_type.to_s)
-    end
-
-    def orderable_parent?(parent)
-      return false unless defined?(RecordingStudio)
-
-      RecordingStudio.capability_enabled?(:orderable, for: parent.recordable_type)
-    end
-
-    def allowed_child_types(parent)
-      Array(RecordingStudioOrderable.capability_options_for(parent)[:allows]).map(&:to_s).reject(&:blank?)
+      self.class.assigns_end_position?(parent, recording.recordable_type)
     end
 
     def clear_position!

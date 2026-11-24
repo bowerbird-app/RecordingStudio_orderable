@@ -145,7 +145,7 @@ folder_recording.recording_studio_orderable_append!(
 
 `recording_studio_orderable_move!` changes the sibling index on the same parent. Do not call Moveable to reorder siblings. Do not use Orderable move! to change parent.
 
-When a recording is created under an orderable parent, or its parent changes, Orderable assigns the end position if that parent allows the child type. Create leaves a stored position alone when the parent is not orderable or the type is outside `allows`. A parent change still clears `recording_studio_orderable_position` in those cases. The parent change stays in `saved_changes`. Orderable does not assign the parent. The end position is one past `maximum(:recording_studio_orderable_position)` among eligible siblings. Create uses a second write after the row exists. Parent change still assigns in the same save.
+When a recording is created under an orderable parent, or its parent changes, Orderable assigns the end position if that parent allows the child type. Create leaves a stored position alone when the parent is not orderable or the type is outside `allows`. A parent change still clears `recording_studio_orderable_position` in those cases. The parent change stays in `saved_changes`. Orderable does not assign the parent. The end position is one past `maximum(:recording_studio_orderable_position)` among eligible siblings. Create locks that parent before Recording Studio takes its share lock, then stores the end position on the insert. Parent change and restore from trash still assign in the same save.
 
 Sibling lists omit recordings that `Recording.kept` leaves out. Core applies the recording filters addons register. Orderable does not check for a `trashed_at` column and does not load RecordingStudio_trashable. Trashable `1.0.1` registers the trash filter.
 
@@ -305,6 +305,11 @@ configuration load errors, and stored recording names stay English.
 1. Install Orderable `0.6.0`. No Orderable migration.
 2. If the host mounts Recording Studio API, list `reorder` and `move_position` on orderable types. Do not add `recording_studio_orderable_position` to writable API fields.
 3. Grant Accessible `:edit` (or `authorization_role`) on the parent, the same as the HTML screens. MCP needs no extra Orderable code.
+
+## Upgrading to 0.12.3
+
+1. Install Orderable `0.12.3`. No Orderable migration.
+2. Creating several allowed children under one orderable parent at the same time no longer deadlocks. Each new child takes the end position on insert. Existing positions stay. A non-orderable parent or a type outside `allows` is unchanged.
 
 ## Upgrading to 0.12.2
 

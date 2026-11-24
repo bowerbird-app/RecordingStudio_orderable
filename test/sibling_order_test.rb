@@ -636,14 +636,14 @@ class SiblingOrderTest < Minitest::Test
       class << self
         attr_reader :callback_names
 
+        def before_create(*)
+          @callback_names ||= []
+          @callback_names << :before_create
+        end
+
         def before_update(*)
           @callback_names ||= []
           @callback_names << :before_update
-        end
-
-        def after_create(*)
-          @callback_names ||= []
-          @callback_names << :after_create
         end
 
         def after_update(*)
@@ -659,15 +659,80 @@ class SiblingOrderTest < Minitest::Test
     assert host.method_defined?(:recording_studio_orderable_sync_position_on_create)
     assert host.method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
     assert host.method_defined?(:recording_studio_orderable_normalize_restored_position)
-    assert_equal %i[after_create before_update before_update], host.callback_names
+    assert_equal %i[before_create before_update before_update], host.callback_names
+    assert_includes RecordingStudio.singleton_class.ancestors, RecordingStudioOrderable::RecordParentLock
+    RecordingStudioOrderable.install_record_parent_lock!
+    installed = RecordingStudio.singleton_class.ancestors.count(RecordingStudioOrderable::RecordParentLock)
+    assert_equal 1, installed
     host.new.recording_studio_orderable_sync_position_on_parent_change
     assert_nil RecordingStudioOrderable.install_parent_position_hook!
+  end
+
+  def test_create_lock_runs_before_the_block_for_an_allowed_child
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
+    seen = []
+
+    with_page_allows do
+      RecordingStudioOrderable::ParentPosition.with_create_lock(parent, "Page") do
+        seen << parent.lock_count
+      end
+    end
+
+    assert_equal [1], seen
+  end
+
+  def test_create_lock_skips_a_child_the_parent_does_not_allow
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
+    ran = false
+
+    with_page_allows do
+      RecordingStudioOrderable::ParentPosition.with_create_lock(parent, "Note") { ran = true }
+    end
+
+    assert ran
+    assert_equal 0, parent.lock_count
+  end
+
+  def test_create_lock_skips_a_parent_that_is_not_orderable
+    parent = FakeRecording.new(id: "project", recordable_type: "Project")
+    ran = false
+
+    RecordingStudio.stub(:capability_enabled?, false) do
+      RecordingStudioOrderable::ParentPosition.with_create_lock(parent, "Page") { ran = true }
+    end
+
+    assert ran
+    assert_equal 0, parent.lock_count
+  end
+
+  def test_record_parent_lock_locks_a_new_child_and_skips_an_existing_recording
+    calls = []
+    host = Class.new do
+      define_method(:record!) do |recording: nil, recordable: nil, parent_recording: nil, **|
+        calls << [recording, recordable, parent_recording]
+        :wrote
+      end
+    end
+    host.prepend(RecordingStudioOrderable::RecordParentLock)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
+    existing = FakeRecording.new(id: "existing", recordable_type: "Page")
+
+    with_page_allows do
+      created = host.new.record!(action: "created", recordable: "Page", parent_recording: parent, actor: "user")
+      revised = host.new.record!(recording: existing, recordable: "Page", parent_recording: parent)
+
+      assert_equal :wrote, created
+      assert_equal :wrote, revised
+    end
+
+    assert_equal 1, parent.lock_count
+    assert_equal [[nil, "Page", parent], [existing, "Page", parent]], calls
   end
 
   def test_restore_callback_moves_a_colliding_position_on_an_orderable_parent
     host = Class.new(FakeRecording) do
       class << self
-        def after_create(*); end
+        def before_create(*); end
 
         def before_update(*); end
       end
@@ -929,6 +994,12 @@ class SiblingOrderTest < Minitest::Test
     assert_equal([%w[b c]], FakeRelation.updates.map { |update| update[:ids] })
     assert_includes FakeRelation.updates.first[:assignment], "CASE"
     refute_match(/ [+-] 1\z/, FakeRelation.updates.first[:assignment])
+  end
+
+  def with_page_allows(&block)
+    RecordingStudio.stub(:capability_enabled?, true) do
+      RecordingStudio.stub(:capability_options, { allows: ["Page"] }, &block)
+    end
   end
 
   def dense_pages(count)

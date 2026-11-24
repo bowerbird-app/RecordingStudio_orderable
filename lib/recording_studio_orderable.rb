@@ -13,9 +13,17 @@ require "recording_studio_orderable/engine"
 require "recording_studio/orderable/capabilities/orderable"
 
 module RecordingStudioOrderable
+  module RecordParentLock
+    def record!(recording: nil, recordable: nil, parent_recording: nil, **)
+      return super if recording
+
+      ParentPosition.with_create_lock(parent_recording, recordable) { super }
+    end
+  end
+
   PARENT_POSITION_EXTENSION = proc do
     unless method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
-      after_create :recording_studio_orderable_sync_position_on_create
+      before_create :recording_studio_orderable_sync_position_on_create
       before_update :recording_studio_orderable_sync_position_on_parent_change,
                     if: :will_save_change_to_parent_recording_id?
       before_update :recording_studio_orderable_normalize_restored_position,
@@ -49,10 +57,20 @@ module RecordingStudioOrderable
 
   class << self
     def install_recording_capabilities!
+      install_record_parent_lock!
       return unless defined?(RecordingStudio::Recording)
 
       RecordingStudio.apply_capabilities!
       install_parent_position_hook!
+    end
+
+    def install_record_parent_lock!
+      return unless defined?(RecordingStudio)
+
+      singleton = RecordingStudio.singleton_class
+      return if singleton.ancestors.include?(RecordParentLock)
+
+      singleton.prepend(RecordParentLock)
     end
 
     def install_parent_position_hook!
