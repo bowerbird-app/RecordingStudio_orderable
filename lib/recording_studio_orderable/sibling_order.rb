@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "arel"
+
 module RecordingStudioOrderable
   class InvalidChild < StandardError; end
 
@@ -300,7 +302,14 @@ module RecordingStudioOrderable
     end
 
     def ordered_relation(scope)
-      scope.reorder(:recording_studio_orderable_position, :created_at, :id)
+      scope.reorder(position_order, :created_at, :id)
+    end
+
+    def position_order
+      model = parent_recording.class
+      return ::Arel.sql("#{quoted_position_column} ASC NULLS LAST") unless model.respond_to?(:arel_table)
+
+      model.arel_table[POSITION_COLUMN].asc.nulls_last
     end
 
     def current_eligible_recordings

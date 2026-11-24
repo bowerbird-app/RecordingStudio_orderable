@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-11-24
+
+### Fixed
+
+- Creating several children at the same time under one orderable parent no longer deadlocks. Orderable does not assign a position when a child is created. New children keep a `NULL` `recording_studio_orderable_position` and list after positioned siblings, by `created_at` then `id`, until reorder, move, or append writes a contiguous position for every eligible sibling.
+
+### Upgrade notes
+
+- Bump to `0.12.3`. No Orderable migration.
+- Consumers that read `recording_studio_orderable_position` directly must handle `NULL`. A new child stays `NULL` until reorder, move, or append. A parent change or a restore from trash can still write that one child. The `reordered` event shape is unchanged.
+
 ## [0.12.2] - 2026-11-23
 
 ### Added
