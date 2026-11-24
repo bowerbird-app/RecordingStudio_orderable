@@ -88,11 +88,14 @@ class SiblingOrderTest < Minitest::Test
       0
     end
 
-    def reorder(*)
+    def reorder(*orderings)
       ordered = @records.sort_by do |record|
         [record.recording_studio_orderable_position || Float::INFINITY, record.created_at || Time.at(0), record.id.to_s]
       end
-      self.class.new(ordered)
+      relation = self.class.new(ordered)
+      relation.klass = klass
+      relation.order_sql = orderings.map(&:to_s).join(", ")
+      relation
     end
 
     def kept
@@ -108,7 +111,7 @@ class SiblingOrderTest < Minitest::Test
       @preloaded == true
     end
 
-    attr_accessor :klass
+    attr_accessor :klass, :order_sql
 
     def to_a
       @records
@@ -556,7 +559,52 @@ class SiblingOrderTest < Minitest::Test
     assert_equal 4, second.recording_studio_orderable_position
   end
 
-  def test_create_appends_after_reordered_or_removed_siblings
+  def test_children_list_positioned_siblings_before_unpositioned_ones
+    positioned_first = FakeRecording.new(
+      id: "positioned-first", created_at: Time.at(9), recording_studio_orderable_position: 0
+    )
+    positioned_second = FakeRecording.new(
+      id: "positioned-second", created_at: Time.at(1), recording_studio_orderable_position: 2
+    )
+    earlier_blank = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: nil)
+    later_blank = FakeRecording.new(id: "a", created_at: Time.at(3), recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(
+      id: "folder",
+      recordable_type: "Folder",
+      child_records: [later_blank, positioned_second, earlier_blank, positioned_first]
+    )
+
+    children = RecordingStudioOrderable::SiblingOrder.new(parent).children
+
+    assert_equal [positioned_first, positioned_second, earlier_blank, later_blank], children.to_a
+    assert_includes children.order_sql, "recording_studio_orderable_position ASC NULLS LAST"
+    assert_includes children.order_sql, "created_at"
+    assert_includes children.order_sql, "id"
+  end
+
+  def test_move_assigns_contiguous_positions_when_siblings_are_unpositioned
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: nil)
+    third = FakeRecording.new(id: "c", created_at: Time.at(3), recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [third, first, second])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).move!(third, to_index: 0, actor: :admin)
+
+    assert_equal [0, 1, 2], [third, first, second].map(&:recording_studio_orderable_position)
+  end
+
+  def test_append_assigns_contiguous_positions_when_siblings_are_unpositioned
+    first = FakeRecording.new(id: "a", created_at: Time.at(1), recording_studio_orderable_position: 0)
+    second = FakeRecording.new(id: "b", created_at: Time.at(2), recording_studio_orderable_position: nil)
+    third = FakeRecording.new(id: "c", created_at: Time.at(3), recording_studio_orderable_position: nil)
+    parent = FakeRecording.new(id: "folder", recordable_type: "Folder", child_records: [first, second, third])
+
+    RecordingStudioOrderable::SiblingOrder.new(parent).append!(first, actor: :admin)
+
+    assert_equal [2, 0, 1], [first, second, third].map(&:recording_studio_orderable_position)
+  end
+
+  def test_parent_change_appends_after_reordered_or_removed_siblings
     first = FakeRecording.new(id: "a", recording_studio_orderable_position: 1)
     second = FakeRecording.new(id: "b", recording_studio_orderable_position: 0)
     created = FakeRecording.new(id: "new-page", recording_studio_orderable_position: 0)
@@ -574,34 +622,6 @@ class SiblingOrderTest < Minitest::Test
     assert_equal 2, created.recording_studio_orderable_position
     assert_equal [second, first, created], children
     assert_equal [0, 1, 2], children.map(&:recording_studio_orderable_position)
-  end
-
-  def test_create_keeps_position_when_the_parent_is_not_orderable
-    parent = FakeRecording.new(id: "project", recordable_type: "Project")
-    created = FakeRecording.new(id: "page", recording_studio_orderable_position: 0)
-    created.parent_recording = parent
-    parent.child_records = [created]
-
-    RecordingStudio.stub(:capability_enabled?, false) do
-      RecordingStudioOrderable::ParentPosition.sync(created, clear: false)
-    end
-
-    assert_equal 0, created.recording_studio_orderable_position
-  end
-
-  def test_create_keeps_position_when_the_child_type_is_not_allowed
-    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
-    created = FakeRecording.new(id: "note", recordable_type: "Note", recording_studio_orderable_position: 0)
-    created.parent_recording = parent
-    parent.child_records = [created]
-
-    RecordingStudio.stub(:capability_enabled?, true) do
-      RecordingStudio.stub(:capability_options, { allows: ["Page"] }) do
-        RecordingStudioOrderable::ParentPosition.sync(created, clear: false)
-      end
-    end
-
-    assert_equal 0, created.recording_studio_orderable_position
   end
 
   def test_parent_change_appends_on_an_orderable_parent
@@ -636,11 +656,6 @@ class SiblingOrderTest < Minitest::Test
       class << self
         attr_reader :callback_names
 
-        def before_create(*)
-          @callback_names ||= []
-          @callback_names << :before_create
-        end
-
         def before_update(*)
           @callback_names ||= []
           @callback_names << :before_update
@@ -656,84 +671,18 @@ class SiblingOrderTest < Minitest::Test
     host.class_eval(&RecordingStudioOrderable::PARENT_POSITION_EXTENSION)
     host.class_eval(&RecordingStudioOrderable::PARENT_POSITION_EXTENSION)
 
-    assert host.method_defined?(:recording_studio_orderable_sync_position_on_create)
+    refute host.method_defined?(:recording_studio_orderable_sync_position_on_create)
     assert host.method_defined?(:recording_studio_orderable_sync_position_on_parent_change)
     assert host.method_defined?(:recording_studio_orderable_normalize_restored_position)
-    assert_equal %i[before_create before_update before_update], host.callback_names
-    assert_includes RecordingStudio.singleton_class.ancestors, RecordingStudioOrderable::RecordParentLock
-    RecordingStudioOrderable.install_record_parent_lock!
-    installed = RecordingStudio.singleton_class.ancestors.count(RecordingStudioOrderable::RecordParentLock)
-    assert_equal 1, installed
+    assert_equal %i[before_update before_update], host.callback_names
+    refute_includes RecordingStudio.singleton_class.ancestors.map(&:name), "RecordingStudioOrderable::RecordParentLock"
     host.new.recording_studio_orderable_sync_position_on_parent_change
     assert_nil RecordingStudioOrderable.install_parent_position_hook!
-  end
-
-  def test_create_lock_runs_before_the_block_for_an_allowed_child
-    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
-    seen = []
-
-    with_page_allows do
-      RecordingStudioOrderable::ParentPosition.with_create_lock(parent, "Page") do
-        seen << parent.lock_count
-      end
-    end
-
-    assert_equal [1], seen
-  end
-
-  def test_create_lock_skips_a_child_the_parent_does_not_allow
-    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
-    ran = false
-
-    with_page_allows do
-      RecordingStudioOrderable::ParentPosition.with_create_lock(parent, "Note") { ran = true }
-    end
-
-    assert ran
-    assert_equal 0, parent.lock_count
-  end
-
-  def test_create_lock_skips_a_parent_that_is_not_orderable
-    parent = FakeRecording.new(id: "project", recordable_type: "Project")
-    ran = false
-
-    RecordingStudio.stub(:capability_enabled?, false) do
-      RecordingStudioOrderable::ParentPosition.with_create_lock(parent, "Page") { ran = true }
-    end
-
-    assert ran
-    assert_equal 0, parent.lock_count
-  end
-
-  def test_record_parent_lock_locks_a_new_child_and_skips_an_existing_recording
-    calls = []
-    host = Class.new do
-      define_method(:record!) do |recording: nil, recordable: nil, parent_recording: nil, **|
-        calls << [recording, recordable, parent_recording]
-        :wrote
-      end
-    end
-    host.prepend(RecordingStudioOrderable::RecordParentLock)
-    parent = FakeRecording.new(id: "folder", recordable_type: "Folder")
-    existing = FakeRecording.new(id: "existing", recordable_type: "Page")
-
-    with_page_allows do
-      created = host.new.record!(action: "created", recordable: "Page", parent_recording: parent, actor: "user")
-      revised = host.new.record!(recording: existing, recordable: "Page", parent_recording: parent)
-
-      assert_equal :wrote, created
-      assert_equal :wrote, revised
-    end
-
-    assert_equal 1, parent.lock_count
-    assert_equal [[nil, "Page", parent], [existing, "Page", parent]], calls
   end
 
   def test_restore_callback_moves_a_colliding_position_on_an_orderable_parent
     host = Class.new(FakeRecording) do
       class << self
-        def before_create(*); end
-
         def before_update(*); end
       end
     end
@@ -994,12 +943,6 @@ class SiblingOrderTest < Minitest::Test
     assert_equal([%w[b c]], FakeRelation.updates.map { |update| update[:ids] })
     assert_includes FakeRelation.updates.first[:assignment], "CASE"
     refute_match(/ [+-] 1\z/, FakeRelation.updates.first[:assignment])
-  end
-
-  def with_page_allows(&block)
-    RecordingStudio.stub(:capability_enabled?, true) do
-      RecordingStudio.stub(:capability_options, { allows: ["Page"] }, &block)
-    end
   end
 
   def dense_pages(count)

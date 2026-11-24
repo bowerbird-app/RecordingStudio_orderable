@@ -120,7 +120,7 @@ The addon uses addon-owned method names on `RecordingStudio::Recording`:
 
 ```ruby
 folder_recording.recording_studio_orderable_children
-# => Page recordings under the folder, ordered by position then created_at
+# => positioned pages first, then pages with no position, by created_at and id
 
 folder_recording.recording_studio_orderable_reorder!(
   ordered_recording_ids: [page_b.id, page_a.id, page_c.id],
@@ -145,7 +145,9 @@ folder_recording.recording_studio_orderable_append!(
 
 `recording_studio_orderable_move!` changes the sibling index on the same parent. Do not call Moveable to reorder siblings. Do not use Orderable move! to change parent.
 
-When a recording is created under an orderable parent, or its parent changes, Orderable assigns the end position if that parent allows the child type. Create leaves a stored position alone when the parent is not orderable or the type is outside `allows`. A parent change still clears `recording_studio_orderable_position` in those cases. The parent change stays in `saved_changes`. Orderable does not assign the parent. The end position is one past `maximum(:recording_studio_orderable_position)` among eligible siblings. Create locks that parent before Recording Studio takes its share lock, then stores the end position on the insert. Parent change and restore from trash still assign in the same save.
+Creating a child does not set `recording_studio_orderable_position`. The column stays `NULL`, including when the parent is orderable and `allows` the child type. `recording_studio_orderable_children` lists children that already have a position first, by that position, then children whose position is `NULL`, by `created_at` and then `id`. The position sort is `ASC NULLS LAST`.
+
+A parent change assigns the end position when the new parent is orderable and allows the child type. Otherwise it clears `recording_studio_orderable_position`. The parent change stays in `saved_changes`. Orderable does not assign the parent. The end position is one past `maximum(:recording_studio_orderable_position)` among eligible siblings. That write happens in the same save.
 
 Sibling lists omit recordings that `Recording.kept` leaves out. Core applies the recording filters addons register. Orderable does not check for a `trashed_at` column and does not load RecordingStudio_trashable. Trashable `1.0.1` registers the trash filter.
 
@@ -156,15 +158,14 @@ Restoring a trashed child on an orderable parent keeps its position when no acti
 A partial list of unique eligible ids is allowed:
 
 - listed children move to the front in that order
-- omitted eligible children are appended in `created_at`, `id` order
+- omitted eligible children are appended in `created_at`, `id` order, including children whose position is `NULL`
 - an empty list still appends every eligible child in that same order
-- `NULL` positions sort last
 
-Reorder, move, and append lock the parent recording, then read the current siblings, write positions, and log the reorder event before releasing that lock. Concurrent reorder writes for the same parent run one at a time.
+Reorder, move, and append are the calls that give every eligible sibling a position. They lock the parent recording, then read the current siblings, write a contiguous `0..n-1` sequence (including children whose position was `NULL`), and log the reorder event before releasing that lock. Concurrent reorder writes for the same parent run one at a time.
 
 Writes set `recording_studio_orderable_position` on the child recordings. They skip callbacks and do not change `updated_at`. They do not create, revise, or nest a `RecordingOrder` recordable.
 
-Positions stay a dense `0..n-1` sequence. A move shifts the indexes between the old and new position in one update, scoped to that parent's kept children, then writes the moved row. Reorder writes one update for the rows whose positions change. Append writes the appended row when the other siblings already have their final positions. Moving a child to the end of a dense list shifts that open tail in one update, then writes the appended row. Gaps, duplicates, and nils are normalized by rewriting the rows that differ. The sibling index is `idx_rs_recordings_orderable_sibling_position` on `(parent_recording_id, recording_studio_orderable_position)`.
+After reorder, move, or append, positions are a dense `0..n-1` sequence. A newly created child is not in that sequence until one of those calls runs. A move shifts the indexes between the old and new position in one update, scoped to that parent's kept children, then writes the moved row. Reorder writes one update for the rows whose positions change. Append writes the appended row when the other siblings already have their final positions. Moving a child to the end of a dense list shifts that open tail in one update, then writes the appended row. Gaps, duplicates, and nils are normalized by rewriting the rows that differ. The sibling index is `idx_rs_recordings_orderable_sibling_position` on `(parent_recording_id, recording_studio_orderable_position)`.
 
 ## Events
 
@@ -309,7 +310,8 @@ configuration load errors, and stored recording names stay English.
 ## Upgrading to 0.12.3
 
 1. Install Orderable `0.12.3`. No Orderable migration.
-2. Creating several allowed children under one orderable parent at the same time no longer deadlocks. Each new child takes the end position on insert. Existing positions stay. A non-orderable parent or a type outside `allows` is unchanged.
+2. New children keep a `NULL` `recording_studio_orderable_position` and list after positioned siblings until reorder, move, or append. Creating many children under one parent no longer deadlocks.
+3. Code that reads `recording_studio_orderable_position` directly must handle `NULL`. A parent change or a restore from trash can still write that one child. The `reordered` event shape is unchanged.
 
 ## Upgrading to 0.12.2
 

@@ -153,8 +153,25 @@ class OrderableDemoTest < ActionDispatch::IntegrationTest
 
     children = @folder_recording.reload.recording_studio_orderable_children.to_a
     assert_equal created.id, children.last.id
-    assert_equal children.length - 1, created.reload.recording_studio_orderable_position
-    assert_equal (0...children.length).to_a, children.map(&:recording_studio_orderable_position)
+    assert_nil created.reload.recording_studio_orderable_position
+    assert_equal (0...(children.length - 1)).to_a, children[0...-1].map(&:recording_studio_orderable_position)
+  end
+
+  test "a page with no position still shows its place in the list" do
+    sign_in @user
+    created = @folder_recording.record(Page, actor: @user, parent_recording: @folder_recording) do |page|
+      page.title = "Unplaced Page"
+      page.slug = "unplaced-page"
+      page.body = "Created without a stored position"
+    end
+
+    get root_path
+
+    assert_response :success
+    assert_nil created.reload.recording_studio_orderable_position
+    cells = position_cells("order-demo-table")
+    assert_equal %w[0 1 2], cells
+    refute_includes cells, ""
   end
 
   test "appending a page moves it to the end of the sibling list" do
